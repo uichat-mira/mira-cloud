@@ -35,6 +35,12 @@ Source validation is `node scripts/check-docs.mjs`, reported as the `Docs Contra
 
 No other agent, review provider, server, environment or deployment automation is connected by this change.
 
+## Design system and component plan
+
+- [`DESIGN.md`](DESIGN.md) is the **Mira Cloud Web design-consumption specification**. It inherits the current Mira Mobile Token/palette and `DESIGN.md` owners, including four light/dark presets. This is not an independent token database or an implemented CSS package.
+- [Component library contract](docs/design/component-library.md): Tailwind 4, Radix only where appropriate, Lucide, locally owned typed React components. Begin inside the future Web app; **no separate npm component package or frontend scaffold now**.
+- The existing [workbench prototype](prototypes/workbench-v0.1/) is mock HTML and predates this specification; it has not been migrated or validated for all themes.
+
 ## Technology stack initiative
 
 The [AGT-040 initial technology design work item](https://github.com/uichat-mira/mira-cloud/issues/4) is governed by **[ADR-003 · Hono + Drizzle + PostgreSQL + Docker Compose/Caddy](docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md)** and the [initial technical design](docs/architecture/initial-technical-design.md). **ADR-002 is historical and superseded for Core/database/deployment choices.** Future Web remains React/Vite; existing Cloud Pi owns the Pi SDK runtime; Cloud Auth retains independent Fastify identity services. The [agent/contributor coding standard](docs/engineering/coding-standard.md) describes scoped implementation requirements. These documents are design decisions, **not implemented services**.
