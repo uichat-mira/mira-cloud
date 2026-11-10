@@ -18,3 +18,14 @@ Before engineering judgments or mutations involving the `uichat-mira` organizati
 ## Change boundaries
 
 Design changes may be made only when requested. Do not create Issues, implement services, alter production, change credentials, or deploy without the applicable explicit authorization. If design is accepted for implementation later, create scoped contracts in the appropriate owning repositories and follow organization branch and testing rules.
+
+## Branches, environment stages and testing
+
+Follow the current Organization [environment model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md) and [testing standard](https://github.com/uichat-mira/.github/blob/main/docs/engineering/testing-standard.md). The repository-specific [environment contract](docs/engineering/environment.md) records the actual state.
+
+- `feat/* → dev → test → prod` is a source promotion path, not a command to provision servers.
+- `dev` is the working integration/default branch, and `test` is a source acceptance branch. **Neither has a configured server.** `prod` is only a future production source; no Mira Cloud runtime deployment has been authorized.
+- Retained `main` does not mean production, is not a deployment branch, and should not bypass `prod`.
+- Docs-only `Mira Gate` validates source integrity. Do not report T3/T4/T5, smoke, OAuth, Agent execution or service availability based on this CI.
+- Do not introduce dev/test GitHub deployment Environments, hostnames, API keys, release secrets or deploy workflows absent a separately authorized runtime contract. Never point non-production to production as a workaround.
+- Keep GitHub engineering work items in the canonical Issue/Project fields; governance changes to the repository do not grant authority to create, accept, close or promote unrelated work items.
