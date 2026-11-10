@@ -12,7 +12,7 @@ Before engineering judgments or mutations involving the `uichat-mira` organizati
 - Cloud Pi owns current cloud-agent runtime facts; any future Core or persistence change is proposed until implemented and verified.
 - Mira Desktop, Mobile and Cloud have separate runtime and data ownership. Login does not grant remote tool permissions.
 - GitHub Issues/Projects/PRs remain authoritative for engineering workflow; Mira Cloud only references them.
-- UI color, typography and theme decisions are grounded in the **current** Mira Mobile source; do not create a drifting second token standard.
+- UI color, typography and theme decisions are grounded in the **current** Mira Mobile source; do not create a drifting second token standard. Read root [DESIGN.md](DESIGN.md) and [component library contract](docs/design/component-library.md) for the Mira Cloud Web consumer rules. These are design documents, **not** an implemented theme or React component package.
 - Files under `prototypes/` are reference artifacts, not deployable implementations.
 
 ## Change boundaries
