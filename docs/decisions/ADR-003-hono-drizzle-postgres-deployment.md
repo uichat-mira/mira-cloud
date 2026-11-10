@@ -47,6 +47,8 @@ Mira Cloud 是独立产品；**未来新 Core/BFF 采用 Hono + Drizzle + Postgr
 
 - PostgreSQL：运维容量预留 **约 500 MiB**，建议初始试验值 shared_buffers 128 MiB、max_connections 20、work_mem 4 MiB、maintenance_work_mem 64 MiB，Core pool 3–5；须考虑共享页缓存、其它数据库连接、慢查询和 worker 峰值。
 - PostgreSQL 单主容器、**本地持久化数据卷**，仅加入 Compose 私有网络，不把 5432 映射到公网或宿主机。禁用凭据日志，密码来自非版本库密钥注入。
+- **网络可达性必须显式设计**：若 Caddy 已运行在宿主机，则未来 Compose 中 Hono API 的 host port 只能绑定到 **127.0.0.1**，由宿主机 Caddy 反代该 loopback upstream；不能让宿主 Caddy 直接依赖 Compose 内部服务 DNS，也不能将 API 绑定到 0.0.0.0 对公网开放。若改为 Caddy 容器，则必须由明确批准的共享网络连接 API，不能同时运行两套默认代理。
+- Web 静态构建产物必须以版本化、可回滚的方式交给 Caddy 可读取的发布目录（或经批准由 API 提供）；不能假设 Vite dist 自然可被宿主 Caddy 访问。
 - 初始化前指定主数据库及备份归属；采用有恢复证明的逻辑备份/文件备份（和必要的 WAL 归档策略），**定期验证恢复**，预留 WAL/备份/Artifact 空间，不把备份存放在唯一的同一块盘上。
 - 部署必须有 health checks、日志限量、镜像 digest/版本锚点、回滚流程；镜像构建与生产部署只能在获批的 prod 路径运行。
 - PostgreSQL 主版本、确切参数、Docker 镜像 digest、部署主机、域名、证书、备份存储、模型额度，都需实施 PR 根据当前实测决定；设计不预设真实环境可达。
