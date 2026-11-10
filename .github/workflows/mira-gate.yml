@@ -30,19 +30,42 @@ jobs:
       - name: Check design source integrity
         run: node scripts/check-docs.mjs
 
+  prod_promotion:
+    name: Prod Promotion Route (advisory until GitHub protection available)
+    if: github.event_name == 'pull_request' && github.base_ref == 'prod'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify reviewed test-to-prod source
+        env:
+          PR_SOURCE_BRANCH: ${{ github.head_ref }}
+          PR_SOURCE_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          TARGET_REPO: ${{ github.repository }}
+        run: |
+          if [ "$PR_SOURCE_BRANCH" != "test" ] || [ "$PR_SOURCE_REPO" != "$TARGET_REPO" ]; then
+            echo "::error::prod accepts a source-only promotion PR from this repository's test branch."
+            exit 1
+          fi
+
   gate:
     name: Mira Gate
     if: ${{ always() }}
     needs:
       - docs_contract
+      - prod_promotion
     runs-on: ubuntu-latest
     steps:
       - name: Assert required jobs succeeded
         env:
           DOCS_RESULT: ${{ needs.docs_contract.result }}
+          PROD_PROMOTION_RESULT: ${{ needs.prod_promotion.result }}
+          IS_PROD_PR: ${{ github.event_name == 'pull_request' && github.base_ref == 'prod' }}
         run: |
           if [ "$DOCS_RESULT" != "success" ]; then
             echo "Docs Contract is required but finished: $DOCS_RESULT" >&2
             exit 1
           fi
-          echo "Mira Gate: docs source checks passed; no runtime or deployment checks were run."
+          if [ "$IS_PROD_PR" = "true" ] && [ "$PROD_PROMOTION_RESULT" != "success" ]; then
+            echo "::error::prod promotion source policy failed or was skipped." >&2
+            exit 1
+          fi
+          echo "Mira Gate: docs source checks passed; prod promotion PR source checked when applicable; no runtime or deployment checks were run."
