@@ -15,19 +15,23 @@ Mira Cloud is the future independent, continuously available agent workspace, gr
 - **Permissions:** same-account sign-in is not tool authority. Desktop-owned runs and files stay local until explicitly shared.
 - **UI:** future Web UI aligns with canonical [Mira Mobile design tokens](https://github.com/uichat-mira/mira-mobile/blob/dev/src/theme/tokens.ts). This repository currently contains **no frontend or backend application implementation**.
 
+## Open-source license
+
+Mira Cloud is **publicly available under the [MIT License](LICENSE)**. Contributions must respect third-party license and privacy boundaries; product design docs and mock interfaces are not proof of running cloud services.
+
 ## Repository governance and environment reality
 
 The working source branch is **`dev`**; ordinary design changes flow through `feat/*` PRs and deliberate `dev → test → prod` source promotions. `main` is a retained bootstrap/history branch and **never means production**. The repository is still **design-only**, so no Mira Cloud runtime is deployed from any branch. In particular, **`dev` and `test` have no configured servers**; do not add fake deployment URLs or claim T4/T5 evidence.
 
 Source validation is `node scripts/check-docs.mjs`, reported as the `Docs Contract` job and the aggregate `Mira Gate` status. These checks validate documentation only, not Agent functionality or deployment. See [environment and promotion contract](docs/engineering/environment.md) and the [organization environment model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md).
 
-GitHub branch protection/Rulesets are not currently available for this private repository under the connected subscription; PR review discipline applies but is not an enforced branch-protection setting.
+**Public, MIT-licensed:** see [LICENSE](LICENSE). GitHub default branch is `dev`. GitHub-native **`prod` branch protection is active**: PR required, at least one approving review, successful `Mira Gate` required with up-to-date branch, stale reviews dismissed, conversations resolved, administrator enforcement, no force pushes or deletion. This does not imply production deployment.
 
 ## Repository automation (limited scope)
 
 - **OpenCode paid Worker:** [Mira External Worker](.github/workflows/mira-external-worker.yml) is a thin caller of an immutable [Organization reusable workflow](https://github.com/uichat-mira/.github/blob/main/.github/workflows/mira-external-worker.yml). It runs **only** when a repository maintainer with verified write access explicitly comments `/worker run` on an eligible open Issue, or manually dispatches that Issue from the default `dev` branch. One Issue is serialized at a time; Worker proposes a **Draft PR into dev**, not a merge or release. The run needs the private Actions secret `AI_PROVIDER_OPENCODE_GO_KEY` to be accessible to this repository. The existence of an org secret grant is **not verified** by committing this workflow. Do not invoke a paid run merely to test enrollment.
 - **CodeRabbit:** Already installed at the Organization level and has posted on [this repository's PR #6](https://github.com/uichat-mira/mira-cloud/pull/6). Inherited Organization settings are retained; no repository override or duplicate review workflow is necessary. On the current Free plan, complete reviews can be rate-limited or limited to summaries. CodeRabbit is **advisory**, not Mira Gate or acceptance authority. See the [Organization CodeRabbit integration](https://github.com/uichat-mira/.github/blob/main/ai-review/providers/coderabbit.md).
-- **prod source guard:** The [Mira Gate](.github/workflows/mira-gate.yml) checks that a PR into `prod` originates from this repository's `test` branch. **This is a CI detection only, not an enforceable GitHub branch protection rule.** GitHub rejected an attempted private-`prod` protection configuration with 403 (plan restriction); direct writes cannot be blocked by this job while protection remains unavailable. Do not treat prod as protected.
+- **prod source guard:** The [Mira Gate](.github/workflows/mira-gate.yml) checks that a PR into `prod` originates from this repository's `test` branch. **GitHub-native `prod` branch protection is also enabled** and enforces PR approval plus passing `Mira Gate` for merge. The original private-repo 403 is historical; changing to Public enabled protection. No production service is deployed.
 
 No other agent, review provider, server, environment or deployment automation is connected by this change.
 

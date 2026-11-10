@@ -37,11 +37,17 @@ feat/* --PR, checks--> dev --reviewed promotion--> test --reviewed promotion--> 
 
 T1–T3 runtime layers are not applicable while this remains a design-only repository. T4 and T5 are unavailable until real corresponding environments and a working service exist.
 
-## Protection limitation
+## Public MIT repository and `prod` protection
 
-When normalized, GitHub reported that branch protection and Rulesets are unavailable for this **private** repository under the current subscription. A direct API attempt to **set `prod` protection** (required approving review, required `Mira Gate` status, no force pushes/deletion) returned **403, upgrade plan or make public** on 2026-11-11. No protection was applied. **Keep the repository Private.**
+On 2026-11-11, the maintainer switched `uichat-mira/mira-cloud` from Private to **Public** and adopted the root [MIT License](../../LICENSE). The former GitHub API 403 for private repository protection is historical, not current. The repository default branch remains `dev`.
 
-As a *detective but non-enforcing substitute*, the existing Docs-only Mira Gate also checks that a pull request targeting `prod` originates from the same repository's `test` branch. This check can fail a PR, but **without native GitHub protection it cannot prevent force-pushes, direct writes, PR merge bypasses or deletion**; never report `prod` as protected. Once plan policy permits protection, set it through GitHub branch protection/Rulesets and verify via API. Until then the repository owner must manually enforce PR-only promotions and refrain from direct writes.
+**Native GitHub branch protection was created and read back successfully for `prod`:**
+- Require PR with **at least one approval**; dismiss stale reviews; require conversation resolution.
+- Require **`Mira Gate`** status and require branch up to date before merging.
+- `enforce_admins=true`; **force pushes and branch deletion disabled**.
+- The Docs-only Mira Gate separately rejects `prod` promotion PRs not sourced from this repository's `test` branch. Do not equate this source check with production acceptance or full server tests.
+
+This protection is GitHub-enforced for `prod`, not for `dev` or `test` (not requested). A new review or repo setting may change the effective rules; verify live branch protection via GitHub API before relying on it. `prod` remains a **source branch** with no Mira Cloud production runtime, despite the branch protection. No dev/test server or deployment Environment exists.
 
 ## Gate for future implementation
 
