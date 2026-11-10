@@ -95,6 +95,8 @@ packages/
 
 未来生产候选：一台 2 vCPU/4 GiB VPS；Docker Compose 承载 Hono API 与 PostgreSQL 单主实例，静态 React Web 经 Caddy 提供，**优先复用已安装的宿主机 Caddy**。Cloud Pi 先保持现状，容器化需要另一份迁移与运行合同。
 
+**反代网络路径（设计候选）**：若沿用宿主机 Caddy，Docker Compose 只把 Hono API 映射到宿主机 **127.0.0.1** 的受控端口，Caddy 从 localhost 反代；PostgreSQL 只使用 Compose 内网、**不做 host port 映射**。宿主 Caddy 无法直接通过 Compose 服务名访问容器。Vite dist 必须被原子发布到宿主机 Caddy 可读取的带版本路径，或者经明确协议由 API 提供，不能假设容器里的文件自然对宿主可见。
+
 PostgreSQL 初始容量预算约 500 MiB（非监控结果）；连接池候选 3–5、数据库总连接预算约 20。监测 RSS、CPU、查询延迟、WAL、磁盘和重启恢复后再定实值。数据库 5432 不向公网发布，Docker 私有网络、持久化卷、独立备份目的地、恢复演练、镜像版本回滚都是上线前置条件。Caddy SSE stream 转发须在真实目标环境测量。
 
 **dev 与 test 都没有服务器**。目前不能添加虚假 domain、GitHub Deployment Environments、部署 Secrets 或假装做过 T4。生产只有 prod 分支有资格触发真实 deploy；当前 prod 仅为设计源基线，尚无服务、目标地址或 T5。
