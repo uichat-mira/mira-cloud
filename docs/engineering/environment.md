@@ -39,7 +39,9 @@ T1–T3 runtime layers are not applicable while this remains a design-only repos
 
 ## Protection limitation
 
-When normalized, GitHub reported that branch protection and Rulesets are unavailable for this **private** repository under the current subscription (403 upgrade/public requirement). This is a **documented enforcement gap**, not an applied protection rule. Keep the repo private; use PR review and evidence discipline. Reconsider branch protection when supported, without declaring it enabled meanwhile.
+When normalized, GitHub reported that branch protection and Rulesets are unavailable for this **private** repository under the current subscription. A direct API attempt to **set `prod` protection** (required approving review, required `Mira Gate` status, no force pushes/deletion) returned **403, upgrade plan or make public** on 2026-11-11. No protection was applied. **Keep the repository Private.**
+
+As a *detective but non-enforcing substitute*, the existing Docs-only Mira Gate also checks that a pull request targeting `prod` originates from the same repository's `test` branch. This check can fail a PR, but **without native GitHub protection it cannot prevent force-pushes, direct writes, PR merge bypasses or deletion**; never report `prod` as protected. Once plan policy permits protection, set it through GitHub branch protection/Rulesets and verify via API. Until then the repository owner must manually enforce PR-only promotions and refrain from direct writes.
 
 ## Gate for future implementation
 
