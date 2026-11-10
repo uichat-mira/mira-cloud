@@ -35,7 +35,7 @@ The [AGT-040 initial technology design work item](https://github.com/uichat-mira
 | [`docs/architecture/initial-technical-design.md`](docs/architecture/initial-technical-design.md) | Initial Core API, data, auth and failure semantics design |
 | [`docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`](docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md) | Current preferred technology/deployment decision |
 | [`docs/engineering/coding-standard.md`](docs/engineering/coding-standard.md) | Agent/contributor coding and security conventions |
-| [`docs/decisions/ADR-002-full-stack-technology.md`](docs/decisions/ADR-002-full-stack-technology.md) | Full-stack technology decision and future implementation gates |
+| [`docs/decisions/ADR-002-full-stack-technology.md`](docs/decisions/ADR-002-full-stack-technology.md) | Historical technology decision; superseded for new Core, DB and deployment by ADR-003 |
 | [`docs/product/workbench.md`](docs/product/workbench.md) | User-facing workbench scope and core journeys |
 | [`docs/decisions/ADR-001-repository-scope.md`](docs/decisions/ADR-001-repository-scope.md) | Scope and truth-source boundaries for this design phase |
 | [`prototypes/workbench-v0.1/`](prototypes/workbench-v0.1/) | Previously created standalone HTML interaction demo, **non-production reference only** |
