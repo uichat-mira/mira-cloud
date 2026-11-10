@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository currently houses the Mira Cloud **product vision, interaction references and system architecture only**. Its canonical design draft is `docs/architecture/v0.4.md`. There is no authorized frontend/backend implementation yet.
+This repository currently houses the Mira Cloud **product vision, interaction references and system architecture only**. Its product design baseline is `docs/architecture/v0.4.md`, and the proposed implementation technology baseline is `docs/decisions/ADR-002-full-stack-technology.md`. There is no authorized frontend/backend implementation yet.
 
 Before engineering judgments or mutations involving the `uichat-mira` organization, read the current [organization AGENTS.md](https://github.com/uichat-mira/.github/blob/main/AGENTS.md), relevant instructions, actual target-repository code and applicable Issue/PR/task contracts. Never infer runtime facts from design diagrams.
 
@@ -29,3 +29,8 @@ Follow the current Organization [environment model](https://github.com/uichat-mi
 - Docs-only `Mira Gate` validates source integrity. Do not report T3/T4/T5, smoke, OAuth, Agent execution or service availability based on this CI.
 - Do not introduce dev/test GitHub deployment Environments, hostnames, API keys, release secrets or deploy workflows absent a separately authorized runtime contract. Never point non-production to production as a workaround.
 - Keep GitHub engineering work items in the canonical Issue/Project fields; governance changes to the repository do not grant authority to create, accept, close or promote unrelated work items.
+
+
+## Technology design vs execution
+
+The [AGT-040 technology initiative](https://github.com/uichat-mira/mira-cloud/issues/4) authorizes technology documentation only. ADR-002 selects future implementation options, but it is **not** evidence that Web OAuth, a new Core API, a new SQLite store, independent Task orchestration, or cross-endpoint handoff already runs. Do not install deps, scaffold apps, migrate Cloud Pi state, or configure `dev`/`test` servers without separate implementation authority. Cloud Pi's current Pi Runtime / file store and Cloud Auth's actual OAuth contracts remain their respective truth sources.
