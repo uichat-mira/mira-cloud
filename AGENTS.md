@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository currently houses the Mira Cloud **product vision, interaction references and system architecture only**. Its product design baseline is `docs/architecture/v0.4.md`, and the proposed implementation technology baseline is `docs/decisions/ADR-002-full-stack-technology.md`. There is no authorized frontend/backend implementation yet.
+This repository currently houses the Mira Cloud **product vision, interaction references and system architecture only**. Its product design baseline is `docs/architecture/v0.4.md`, and the current implementation technology design baseline is `docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`. There is no authorized frontend/backend implementation yet.
 
 Before engineering judgments or mutations involving the `uichat-mira` organization, read the current [organization AGENTS.md](https://github.com/uichat-mira/.github/blob/main/AGENTS.md), relevant instructions, actual target-repository code and applicable Issue/PR/task contracts. Never infer runtime facts from design diagrams.
 
@@ -33,4 +33,13 @@ Follow the current Organization [environment model](https://github.com/uichat-mi
 
 ## Technology design vs execution
 
-The [AGT-040 technology initiative](https://github.com/uichat-mira/mira-cloud/issues/4) authorizes technology documentation only. ADR-002 selects future implementation options, but it is **not** evidence that Web OAuth, a new Core API, a new SQLite store, independent Task orchestration, or cross-endpoint handoff already runs. Do not install deps, scaffold apps, migrate Cloud Pi state, or configure `dev`/`test` servers without separate implementation authority. Cloud Pi's current Pi Runtime / file store and Cloud Auth's actual OAuth contracts remain their respective truth sources.
+The [AGT-040 technology design contract](https://github.com/uichat-mira/mira-cloud/issues/4) authorizes technology documentation only. ADR-003 supersedes ADR-002 for Core, database and deployment choices, but it is **not** evidence that Web OAuth, a new Core API, a new PostgreSQL database, independent Task orchestration, or cross-endpoint handoff already runs. Do not install deps, scaffold apps, migrate Cloud Pi state, or configure `dev`/`test` servers without separate implementation authority. Cloud Pi's current Pi Runtime / file store and Cloud Auth's actual OAuth contracts remain their respective truth sources.
+
+
+## Implementation guidance for future authorized tasks
+
+- Read [initial technical design](docs/architecture/initial-technical-design.md) and [coding standard](docs/engineering/coding-standard.md) when working on API/contracts/schema/agent-facing code. The files are **repo-specific extension points** to the current Organization constitution; they do not copy or replace Organization governance.
+- Backend preference **Hono + TypeScript + Drizzle + PostgreSQL**; production packaging candidate **Docker Compose + Caddy**; no deployed implementation exists. Cloud Auth Fastify and existing Cloud Pi SDK remain independent owners.
+- Never confuse a signed-in Cloud Client with a permitted local Host tool invocation; no unscoped credentials, long-running Agent work inside HTTP requests, or duplicate Scheduler/Run writers.
+- Explicitly isolate database queries, ORM migrations, auth adapters and external runtime boundaries. Design/PR text does not waive the need for T1/T2/T3 evidence once code exists.
+- **No dev/test servers, deployment environments, URLs or secrets.** Production design is not an authorization to deploy.
