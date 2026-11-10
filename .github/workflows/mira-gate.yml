@@ -1,0 +1,48 @@
+name: Mira Cloud Design Gate
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - test
+      - prod
+      - 'feat/**'
+  pull_request:
+    branches:
+      - dev
+      - test
+      - prod
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs_contract:
+    name: Docs Contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check design source integrity
+        run: node scripts/check-docs.mjs
+
+  gate:
+    name: Mira Gate
+    if: ${{ always() }}
+    needs:
+      - docs_contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assert required jobs succeeded
+        env:
+          DOCS_RESULT: ${{ needs.docs_contract.result }}
+        run: |
+          if [ "$DOCS_RESULT" != "success" ]; then
+            echo "Docs Contract is required but finished: $DOCS_RESULT" >&2
+            exit 1
+          fi
+          echo "Mira Gate: docs source checks passed; no runtime or deployment checks were run."
