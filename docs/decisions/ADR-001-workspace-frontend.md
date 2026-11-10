@@ -1,3 +1,5 @@
+> **Historical design exploration — not an approved implementation plan.** Mira Cloud is currently design-only. The [v0.4 architecture](../architecture/v0.4.md) and [environment contract](../engineering/environment.md) supersede any implication below that a frontend must now be scaffolded or deployed. No runtime implementation or OAuth expansion has been authorized.
+
 # ADR-001 · Mira Cloud Workspace 前端工程方案
 
 状态：技术方案 v0.1（拟定；尚未创建远程仓库或修改生产）  
