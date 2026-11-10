@@ -1,7 +1,7 @@
 # Mira Cloud
 
 > **Status: Design / Research only. No implementation has been started.**  
-> Design baseline: **product architecture v0.4** and **technology ADR-002** (2026-11-11).  
+> Design baseline: **product architecture v0.4** and **technology ADR-003** (2026-11-11).  
 > Principle: **One Account, Multiple Runtimes, Shared Work.**
 
 Mira Cloud is the future independent, continuously available agent workspace, growing out of the existing [Cloud Pi](https://github.com/uichat-mira/cloud-pi) runtime. It is **not** a cloud copy of Mira Desktop, an extension of Cloud Auth's database, or a new replacement for established GitHub engineering records.
@@ -25,14 +25,17 @@ GitHub branch protection/Rulesets are not currently available for this private r
 
 ## Technology stack initiative
 
-The [AGT-040 technology selection work item](https://github.com/uichat-mira/mira-cloud/issues/4) has a single design artifact owner: [ADR-002 · full-stack technology](docs/decisions/ADR-002-full-stack-technology.md). It selects a future **React 19 / Vite / TypeScript Web UI**, **Node 24 / Fastify 5 / Zod Core+BFF**, **existing Cloud Pi Pi SDK runtime**, and **single-writer SQLite WAL + controlled Artifact files**. It also states why Web OAuth, Desktop/Mobile authority, GitHub App and Skills/MCP are not assumed to be implemented. No application scaffold, runtime install or deployment is authorized by this ADR.
+The [AGT-040 initial technology design work item](https://github.com/uichat-mira/mira-cloud/issues/4) is governed by **[ADR-003 · Hono + Drizzle + PostgreSQL + Docker Compose/Caddy](docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md)** and the [initial technical design](docs/architecture/initial-technical-design.md). **ADR-002 is historical and superseded for Core/database/deployment choices.** Future Web remains React/Vite; existing Cloud Pi owns the Pi SDK runtime; Cloud Auth retains independent Fastify identity services. The [agent/contributor coding standard](docs/engineering/coding-standard.md) describes scoped implementation requirements. These documents are design decisions, **not implemented services**.
 
 ## Contents
 
 | Path | Purpose |
 | --- | --- |
-| [`docs/architecture/v0.4.md`](docs/architecture/v0.4.md) | Full product and system architecture proposal; the main product baseline |
-| [`docs/decisions/ADR-002-full-stack-technology.md`](docs/decisions/ADR-002-full-stack-technology.md) | Full-stack technology decision and future implementation gates |
+| [`docs/architecture/v0.4.md`](docs/architecture/v0.4.md) | Product architecture v0.4; follow latest technical ADR for backend/storage choices |
+| [`docs/architecture/initial-technical-design.md`](docs/architecture/initial-technical-design.md) | Initial Core API, data, auth and failure semantics design |
+| [`docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`](docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md) | Current preferred technology/deployment decision |
+| [`docs/engineering/coding-standard.md`](docs/engineering/coding-standard.md) | Agent/contributor coding and security conventions |
+| [`docs/decisions/ADR-002-full-stack-technology.md`](docs/decisions/ADR-002-full-stack-technology.md) | Historical technology decision; superseded for new Core, DB and deployment by ADR-003 |
 | [`docs/product/workbench.md`](docs/product/workbench.md) | User-facing workbench scope and core journeys |
 | [`docs/decisions/ADR-001-repository-scope.md`](docs/decisions/ADR-001-repository-scope.md) | Scope and truth-source boundaries for this design phase |
 | [`prototypes/workbench-v0.1/`](prototypes/workbench-v0.1/) | Previously created standalone HTML interaction demo, **non-production reference only** |
