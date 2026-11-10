@@ -1,12 +1,14 @@
-# ADR-002 · Mira Cloud 全栈技术栈立项
+# ADR-002 · Mira Cloud 全栈技术栈立项（历史决策，已被部分替代）
 
-- **状态**：Accepted as **design baseline**；**not implementation authorization**（2026-11-11）
+- **状态**：**Superseded for new Core/backend, database, and production packaging** by [ADR-003](ADR-003-hono-drizzle-postgres-deployment.md)（2026-11-11）。其余不冲突部分保留为历史讨论，不可单独引用为当前选型。
 - **Work item**：[AGT-040](https://github.com/uichat-mira/mira-cloud/issues/4)
 - **产品合同**：[Mira Cloud v0.4](../architecture/v0.4.md)
 - **环境合同**：[environment.md](../engineering/environment.md)
 - **原则**：One Account, Multiple Runtimes, Shared Work；复用现有事实源、单主写入、轻量优先、按可验证行为演进。
 
-> 本 ADR 决定未来实现的优先技术路线，不宣称这些模块已构建、已联通或已上线。具体依赖版本以未来实施时锁文件 + 可重复测试为准。本文的技术取舍不授权扩张 Phase III 的 Desktop Host 能力，也不改变 Cloud Auth、Cloud Pi 等仓库现行合同。
+> **维护者决策更新：** 新 Mira Cloud Core 选 Hono + Drizzle + PostgreSQL，目标生产 Docker Compose + Caddy；Fastify + SQLite 主张已失效。当前权威是 [ADR-003](ADR-003-hono-drizzle-postgres-deployment.md) 和 [初始技术设计](../architecture/initial-technical-design.md)。
+>
+> 本 ADR 记录旧决策时决定的技术路线，不宣称这些模块已构建、已联通或已上线。具体依赖版本以未来实施时锁文件 + 可重复测试为准。本文的技术取舍不授权扩张 Phase III 的 Desktop Host 能力，也不改变 Cloud Auth、Cloud Pi 等仓库现行合同。
 
 ## 1. 最终选型（一页表）
 
