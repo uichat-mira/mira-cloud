@@ -31,7 +31,7 @@ jobs:
         run: node scripts/check-docs.mjs
 
   prod_promotion:
-    name: Prod Promotion Route (advisory until GitHub protection available)
+    name: Prod Promotion Route
     if: github.event_name == 'pull_request' && github.base_ref == 'prod'
     runs-on: ubuntu-latest
     steps:
