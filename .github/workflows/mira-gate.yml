@@ -135,6 +135,15 @@ jobs:
           curl --noproxy '*' -fsS http://127.0.0.1:34170/api/v1/health             | grep -Fq '"status":"alive"'
           curl --noproxy '*' -fsS http://127.0.0.1:34170/api/v1/ready             | grep -Fq '"status":"ready"'
           echo 'PRODUCTION_DOCKER_COMPOSE_MIGRATION_HTTP_T3=PASS'
+      - name: Collect bounded diagnostic evidence when production Compose smoke fails
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          echo 'PRODUCTION_PACKAGE_FAILURE_DIAG'
+          docker compose -p mira-cloud -f deploy/mira-cloud/compose.yaml ps --all
+          docker compose -p mira-cloud -f deploy/mira-cloud/compose.yaml             logs --no-color --tail=35 api postgres 2>&1             | sed -E 's@postgresql://[^[:space:]]+@postgresql://REDACTED@g'
+          echo 'DIAGNOSTIC_COMPLETE'
       - name: Destroy disposable CI containers and volumes
         if: always()
         shell: bash
