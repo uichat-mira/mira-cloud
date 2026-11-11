@@ -1,6 +1,6 @@
 # Mira Cloud — Engineering & Agent Coding Standard (v0.1)
 
-**状态：适用于未来已获授权的工程变更；仓库目前仍处设计阶段。**
+**状态：适用于已授权的 AGT-041–044 本地工程实现；OAuth、Agent 集成及生产部署仍未实现。**
 **权威层级：** 当前 [组织宪法](https://github.com/uichat-mira/.github/blob/main/AGENTS.md) → 当前 Issue/PR 合同 → 根目录 [AGENTS.md](../../AGENTS.md) → 本仓库特定技术规范 → 真实代码/测试。组织治理、Issue/Project 权威、通用测试与分支模型由组织拥有，**这里不复制一套新组织制度**。
 
 - [技术裁决](../decisions/ADR-003-hono-drizzle-postgres-deployment.md)

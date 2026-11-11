@@ -47,6 +47,47 @@ jobs:
       - name: Run workspace checks and T1 tests
         run: pnpm check
 
+  db_integration:
+    name: PostgreSQL Integration
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16.8-alpine
+        env:
+          POSTGRES_DB: mira_cloud_test
+          POSTGRES_USER: mira_ci
+          POSTGRES_PASSWORD: ci_ephemeral_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mira_ci -d mira_cloud_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://mira_ci:ci_ephemeral_only@127.0.0.1:5432/mira_cloud_test
+      DB_POOL_MAX: '4'
+      DB_CONNECT_TIMEOUT_MS: '2000'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Enable pinned pnpm
+        run: corepack enable
+      - name: Install frozen dependencies
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+        run: pnpm install --frozen-lockfile
+      - name: Check committed Drizzle migration snapshots
+        run: pnpm --filter @mira-cloud/api db:check
+      - name: Apply versioned Drizzle SQL
+        run: pnpm --filter @mira-cloud/api db:migrate
+      - name: Reapply migrations to prove idempotency
+        run: pnpm --filter @mira-cloud/api db:migrate
+      - name: Test real PostgreSQL isolation, constraints and transactions
+        run: pnpm --filter @mira-cloud/api test:integration
+
   prod_promotion:
     name: Prod Promotion Route
     if: github.event_name == 'pull_request' && github.base_ref == 'prod'
@@ -69,6 +110,7 @@ jobs:
     needs:
       - docs_contract
       - engineering
+      - db_integration
       - prod_promotion
     runs-on: ubuntu-latest
     steps:
@@ -76,6 +118,7 @@ jobs:
         env:
           DOCS_RESULT: ${{ needs.docs_contract.result }}
           ENGINEERING_RESULT: ${{ needs.engineering.result }}
+          DATABASE_RESULT: ${{ needs.db_integration.result }}
           PROD_PROMOTION_RESULT: ${{ needs.prod_promotion.result }}
           IS_PROD_PR: ${{ github.event_name == 'pull_request' && github.base_ref == 'prod' }}
         run: |
@@ -87,8 +130,12 @@ jobs:
             echo "::error::Engineering Checks are required but finished: $ENGINEERING_RESULT" >&2
             exit 1
           fi
+          if [ "$DATABASE_RESULT" != "success" ]; then
+            echo "::error::Real PostgreSQL T3 checks are required but finished: $DATABASE_RESULT" >&2
+            exit 1
+          fi
           if [ "$IS_PROD_PR" = "true" ] && [ "$PROD_PROMOTION_RESULT" != "success" ]; then
             echo "::error::prod promotion source policy failed or was skipped." >&2
             exit 1
           fi
-          echo "Mira Gate: docs and engineering source checks passed; prod promotion PR source checked when applicable; application source and local HTTP integration were checked; no deployed environment or T4/T5 checks were run."
+          echo "Mira Gate: docs, engineering and real PostgreSQL checks passed; prod promotion PR source checked when applicable; application source and local HTTP integration were checked; no deployed environment or T4/T5 checks were run."

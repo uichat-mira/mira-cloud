@@ -10,17 +10,25 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src tests",
-    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"tsconfig*.json\" \"package.json\"",
-    "test:unit": "NODE_USE_ENV_PROXY=0 vitest run",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build"
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"tsconfig*.json\" \"package.json\" \"drizzle.config.ts\"",
+    "test:unit": "NODE_USE_ENV_PROXY=0 vitest run --exclude \"tests/integration/**\"",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build",
+    "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check",
+    "db:migrate": "drizzle-kit migrate",
+    "test:integration": "NODE_USE_ENV_PROXY=0 vitest run tests/integration"
   },
   "dependencies": {
     "@hono/node-server": "2.1.6",
+    "drizzle-orm": "0.45.4",
     "hono": "4.13.17",
+    "pg": "8.23.1",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "drizzle-kit": "0.31.11",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "5.1.0"
