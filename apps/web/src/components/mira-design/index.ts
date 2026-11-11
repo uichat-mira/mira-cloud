@@ -127,11 +127,3 @@ export type {
 export { default as StatusIndicator } from "./StatusIndicator.tsx";
 export type { StatusIndicatorProps, StatusType } from "./StatusIndicator.tsx";
 
-export const loadMarkdownText = async () => {
-  const [, module] = await Promise.all([
-    import("katex/dist/katex.min.css"),
-    import("./MarkdownText.tsx"),
-  ]);
-  return module;
-};
-export const loadMarkdownEditor = () => import("./MarkdownEditor.tsx");
