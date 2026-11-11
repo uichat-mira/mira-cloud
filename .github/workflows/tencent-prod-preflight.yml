@@ -88,6 +88,14 @@ jobs:
           journalctl -u caddy --since '20 minutes ago' --no-pager 2>/dev/null \
             | grep -F 'cloud.tomzlab.cn' | tail -80 || true
           echo 'TX_CADDY_CLOUD_LOG_END'
+          echo 'TX_HOST_FIREWALL_BEGIN'
+          if command -v ufw >/dev/null; then
+            ufw status verbose || true
+          fi
+          if command -v iptables >/dev/null; then
+            iptables -S INPUT 2>/dev/null | head -80 || true
+          fi
+          echo 'TX_HOST_FIREWALL_END'
           for port in 34170 5432; do
             if ss -ltnH | awk '{print $4}' | grep -Eq ":$port$"; then
               echo "TX_PORT_$port=occupied"
