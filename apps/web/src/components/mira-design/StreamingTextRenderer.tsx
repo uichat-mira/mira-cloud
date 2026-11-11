@@ -109,7 +109,10 @@ export function StreamingTextRenderer({
     const wasStreaming = previousStreamingRef.current;
     const isAppend = text.startsWith(previousText);
     const shouldShowImmediately =
-      prefersReducedMotion || !isAppend || (isStreaming && !wasStreaming);
+      prefersReducedMotion ||
+      !isAppend ||
+      (isStreaming && !wasStreaming) ||
+      (wasStreaming && !isStreaming);
 
     previousTextRef.current = text;
     previousStreamingRef.current = isStreaming;

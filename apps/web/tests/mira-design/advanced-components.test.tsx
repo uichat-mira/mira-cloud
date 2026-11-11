@@ -161,6 +161,29 @@ describe("AGT-049 advanced MiraDesign components", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("shows rejected SearchSelect actions as recoverable UI errors", async () => {
+    const loadItems = vi.fn(async () => [{ id: "a", label: "Alpha" }]);
+    const onCheck = vi.fn(async () => {
+      throw new Error("Selection rejected");
+    });
+    const onClose = vi.fn();
+
+    render(
+      <SearchSelectModal
+        open
+        title="Choose"
+        loadItems={loadItems}
+        onCheck={onCheck}
+        onClose={onClose}
+      />,
+    );
+
+    await userEvent.click(await screen.findByRole("button", { name: /Alpha/ }));
+
+    expect(await screen.findByText("Selection rejected")).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("opens ExternalLink through an injected Web capability", async () => {
     const openUrl = vi.fn(async () => {});
     render(
@@ -197,6 +220,24 @@ describe("AGT-049 advanced MiraDesign components", () => {
     render(<ErrorFallback title="Oops" message="Failed" onRetry={retry} />);
     await userEvent.click(screen.getByRole("button", { name: "重试" }));
     expect(retry).toHaveBeenCalledTimes(1);
+  });
+
+  it("reveals the completed streaming text immediately when streaming ends", () => {
+    const { rerender } = render(
+      <StreamingTextRenderer text="abcdefghij" isStreaming>
+        {(visibleText) => <span data-testid="streaming-text">{visibleText}</span>}
+      </StreamingTextRenderer>,
+    );
+
+    expect(screen.getByTestId("streaming-text").textContent).not.toBe("abcdefghij");
+
+    rerender(
+      <StreamingTextRenderer text="abcdefghij" isStreaming={false}>
+        {(visibleText) => <span data-testid="streaming-text">{visibleText}</span>}
+      </StreamingTextRenderer>,
+    );
+
+    expect(screen.getByTestId("streaming-text")).toHaveTextContent("abcdefghij");
   });
 
   it("renders non-streaming text immediately", () => {

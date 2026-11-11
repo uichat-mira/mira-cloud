@@ -21,6 +21,7 @@ export interface SearchSelectModalProps {
   emptyText?: string;
   loadingText?: string;
   loadErrorText?: string;
+  submitErrorText?: string;
   onCheck: (item: SearchSelectModalItem) => boolean | Promise<boolean>;
   onClose: () => void;
 }
@@ -41,6 +42,7 @@ export default function SearchSelectModal({
   emptyText = "没有找到项目",
   loadingText = "加载中…",
   loadErrorText = "加载失败",
+  submitErrorText = "操作失败，请重试",
   onCheck,
   onClose,
 }: SearchSelectModalProps) {
@@ -94,8 +96,13 @@ export default function SearchSelectModal({
   const handleCheck = async (item: SearchSelectModalItem) => {
     if (item.disabled || submittingId) return;
     try {
+      setErrorText(null);
       setSubmittingId(item.id);
       if (await onCheck(item)) onClose();
+    } catch (error) {
+      setErrorText(
+        error instanceof Error && error.message.trim() ? error.message : submitErrorText,
+      );
     } finally {
       setSubmittingId(null);
     }
