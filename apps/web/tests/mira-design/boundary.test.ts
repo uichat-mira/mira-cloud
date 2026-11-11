@@ -63,7 +63,6 @@ describe("MiraDesign component ownership boundary", () => {
     }
   });
 
-
   it("owns every non-Tailwind MiraDesign component CSS hook in Cloud styles", () => {
     const globals = readFileSync(join(webRoot, "src/styles/globals.css"), "utf8");
     expect(globals).toContain(".mira-range-slider {");

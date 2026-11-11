@@ -36,9 +36,7 @@ export interface MessageContextType {
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
 type MessageOpenConfig = Parameters<MessageContextType["open"]>[0];
-type MessageCommand =
-  | { kind: "open"; config: MessageOpenConfig }
-  | { kind: "destroy" };
+type MessageCommand = { kind: "open"; config: MessageOpenConfig } | { kind: "destroy" };
 
 const messageEventName = "mira-design:message";
 

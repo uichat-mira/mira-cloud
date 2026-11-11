@@ -225,7 +225,6 @@ describe("Message", () => {
     vi.useRealTimers();
   });
 
-
   it("supports the static message API without module-global provider state", async () => {
     render(
       <MessageProvider>

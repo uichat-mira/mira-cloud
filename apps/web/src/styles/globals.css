@@ -156,7 +156,6 @@ button:disabled {
   outline-offset: 3px;
 }
 
-
 /* MiraDesign component-level Web primitives that cannot be expressed by Tailwind utilities alone. */
 .mira-stable-scrollbar {
   scrollbar-gutter: stable;
