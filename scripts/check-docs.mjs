@@ -13,6 +13,9 @@ const required = [
   "docs/architecture/v0.4.md",
   "docs/product/workbench.md",
   "docs/engineering/environment.md",
+  "docs/design/mira-design-components.md",
+  "docs/design/mira-design-guidelines.md",
+  "docs/design/mira-design-cutover.md",
   "docs/decisions/ADR-001-repository-scope.md",
   "prototypes/workbench-v0.1/index.html",
   "prototypes/workbench-v0.1/notes.md",
@@ -63,6 +66,25 @@ for (const file of markdown) {
     } else if (!existsSync(resolved)) {
       failures.push(`Broken relative link: ${relative(root, file)} -> ${raw}`);
     }
+  }
+}
+
+const activeDesignTruth = [
+  join(root, "README.md"),
+  join(root, "DESIGN.md"),
+  join(root, "docs/design/component-library.md"),
+  join(root, "docs/design/mira-design-components.md"),
+  join(root, "docs/design/mira-design-guidelines.md"),
+];
+
+for (const file of activeDesignTruth) {
+  if (!existsSync(file)) continue;
+  const source = readFileSync(file, "utf8");
+  if (source.includes("inherits the current Mira Mobile Token/palette")) {
+    failures.push(`Stale Mobile visual-token authority in ${relative(root, file)}`);
+  }
+  if (/\/D:\/workspace\/|[A-Z]:\\\\workspace\\\\/i.test(source)) {
+    failures.push(`Desktop-local path leaked into Cloud design docs: ${relative(root, file)}`);
   }
 }
 

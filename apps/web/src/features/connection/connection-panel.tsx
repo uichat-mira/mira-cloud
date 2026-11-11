@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Cloud, Database, LoaderCircle, RefreshCw, WifiOff } from "lucide-react";
-import { Button, Card } from "../../components/mira-design/index.ts";
+import { Button, SectionCard } from "../../components/mira-design/index.ts";
 import { checkConnection, type ConnectionFetcher, type ConnectionView } from "./connection-client";
 
 const states: Record<ConnectionView["kind"], { title: string; explanation: string }> = {
@@ -71,22 +71,23 @@ export function ConnectionPanel({ fetcher }: ConnectionPanelProps) {
 
   const content = states[view.kind];
   const checking = view.kind === "checking";
+  const statusIcon = checking ? (
+    <LoaderCircle aria-hidden="true" size={19} />
+  ) : view.kind === "ready" ? (
+    <CheckCircle2 aria-hidden="true" size={19} />
+  ) : view.kind === "api-offline" ? (
+    <WifiOff aria-hidden="true" size={19} />
+  ) : (
+    <Database aria-hidden="true" size={19} />
+  );
+
   return (
-    <Card className="p-6" aria-labelledby="link-status-title">
-      <div className="mb-4 flex items-center gap-3 text-text-secondary">
-        {checking ? (
-          <LoaderCircle aria-hidden="true" size={19} />
-        ) : view.kind === "ready" ? (
-          <CheckCircle2 aria-hidden="true" size={19} />
-        ) : view.kind === "api-offline" ? (
-          <WifiOff aria-hidden="true" size={19} />
-        ) : (
-          <Database aria-hidden="true" size={19} />
-        )}
-        <h2 id="link-status-title" className="font-semibold text-text-primary">
-          基础服务连接
-        </h2>
-      </div>
+    <SectionCard
+      title="基础服务连接"
+      icon={statusIcon}
+      contentClassName="p-4 sm:p-5"
+      aria-label="基础服务连接"
+    >
       <div aria-live="polite" aria-atomic="true" aria-busy={checking}>
         <p className="mb-3 text-xl font-semibold text-text-primary">{content.title}</p>
         <p className="text-sm leading-7 text-text-secondary">{content.explanation}</p>
@@ -98,7 +99,7 @@ export function ConnectionPanel({ fetcher }: ConnectionPanelProps) {
         <p className="mt-2 break-all text-xs text-text-secondary">请求编号：{view.requestId}</p>
       )}
       <Button
-        className="mt-5"
+        className="mira-touch-target mt-5"
         variant="secondary"
         onClick={() => void retry()}
         aria-label="重新检查基础服务"
@@ -112,6 +113,6 @@ export function ConnectionPanel({ fetcher }: ConnectionPanelProps) {
           仅检查基础设施，不代表 Cloud Auth 登录或 Cloud Pi 在线
         </span>
       </div>
-    </Card>
+    </SectionCard>
   );
 }

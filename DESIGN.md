@@ -1,15 +1,15 @@
 # Mira Cloud — Design System
 
-**Status:** Web design contract with AGT-047 Foundation plus AGT-048 Core and AGT-049 Advanced / Content MiraDesign source in the real React Web implementation. A prod-only Tencent path exists for the current Web/Hono/PostgreSQL foundation; this does not imply an authenticated Cloud business application, Cloud Pi integration, or an independently published Web component library.
+**Status:** implemented Web design-consumption contract after AGT-047 Foundation, AGT-048 Core, AGT-049 Advanced / Content and the AGT-050 Cloud UI/documentation cutover. A prod-only Tencent path exists for the current Web/Hono/PostgreSQL foundation; this does not imply an authenticated Cloud business application, Cloud Pi integration, or an independently published Web component library.
 **Owner of canonical Mira visual tokens:** [Mira Desktop `desktop/src/shared/theme/colorThemes.ts`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts), [`desktop/src/styles.css`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/styles.css), and [`desktop/tailwind.config.cjs`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/tailwind.config.cjs). Mira Cloud pins a full Desktop commit and consumes it through the local Foundation; it does not maintain a second palette.
 
-This `DESIGN.md` is **Mira Cloud's Web and Mobile-WebView design-consumption contract**, not a competing token authority. Refer to the [component library specification](docs/design/component-library.md) for the current React implementation contract and to the [workbench product brief](docs/product/workbench.md) for user journeys.
+This `DESIGN.md` is **Mira Cloud's Web and Mobile-WebView design-consumption contract**, not a competing token authority. Use the [MiraDesign component guide](docs/design/mira-design-components.md), [Web guidelines](docs/design/mira-design-guidelines.md), [final cutover matrix](docs/design/mira-design-cutover.md) and [component library specification](docs/design/component-library.md) for implementation detail; use the [workbench product brief](docs/product/workbench.md) for user journeys.
 
 ## 1. Visual identity
 
 Quiet, warm, capable and information-first. Use restrained coral for the primary action, neutral warm canvases, clear text hierarchy, fine borders and generous whitespace. Status colors communicate actual meaning, not decorative hierarchy. Dense admin dashboards and excessive shadows are not Mira's default expression.
 
-Mira Cloud should feel like Mira Desktop and Mira Mobile while respecting Web interaction: a shared product language, **not necessarily a shared component implementation**. Desktop remains a distinct local-first product; do not overwrite its native UX with a Web token package.
+Mira Cloud Web takes its visual/token and generic-component baseline from the pinned Mira Desktop shared design assets. Mira Mobile is not a visual authority for Cloud; it contributes interaction constraints for touch, narrow screens and WebView hosting. Desktop remains a distinct local-first product; Cloud owns its adapted Web source and does not create a runtime dependency on Desktop.
 
 ## 2. Sources, versioning and token distribution
 
@@ -89,7 +89,22 @@ theme-scoped CSS variables such as `--mira-color-surface-primary`,
 - Responsive workbench: single column and reachable actions on narrow devices; wider layouts may provide navigation rail and detail panes. Respect WebView safe areas, keyboard insets and dynamic viewport height; never assume WebView native identity automatically reaches a Cloud Web session.
 - Prefer system / platform font stacks unless a new brand font is explicitly approved; do not import proprietary font files into this repository.
 
-## 5. Interaction and component behavior
+## 5. Responsive and Mobile-WebView contract
+
+Mobile guidance changes **interaction and layout**, not the visual token authority:
+
+- Coarse-pointer / touch actions target at least **44×44 CSS px**; pointer/keyboard desktop controls may retain the denser Desktop workbench rhythm.
+- Respect `safe-area-inset-*` at viewport edges, especially top navigation and bottom content/actions.
+- Prefer dynamic viewport units (`dvh`, with a safe fallback) and layouts that remain usable when the software keyboard reduces the viewport. Do not anchor critical actions behind the keyboard.
+- Hover is enhancement only. Every action must remain discoverable and operable through tap, keyboard or an explicit visible state.
+- Narrow screens collapse to a single primary column; secondary detail moves behind progressive disclosure rather than squeezing desktop panes.
+- Primary actions remain reachable without precision pointing or horizontal hunting.
+- Mobile-network loading, offline, retry and recovery states must be understandable in text; reconnection must not silently imply that an operation succeeded.
+- Wide screens keep the Desktop-derived workbench density and information hierarchy. Do **not** globally enlarge every control or flatten desktop layouts merely because the same Web app can run in a Mobile WebView.
+
+The real Workspace shell implements this contract with `100svh`/`100dvh`, Safe Area-aware padding, a single-column narrow layout and coarse-pointer touch-target reinforcement. This is a responsive Web contract, not proof of native Mobile session or capability sharing.
+
+## 6. Interaction and component behavior
 
 The [component catalog](docs/design/component-library.md) defines both basic primitives and Cloud-specific task/run/artifact patterns. It is a **design contract**; components cannot claim real ability simply because prototype fixtures are interactive.
 
@@ -103,7 +118,7 @@ Every interactive component needs:
 - Destructive and paid/external effects need explicit human approval and state feedback, not merely an attractive confirmation dialog.
 - No implied shared token/session/Tool authority across WebView, Desktop, Cloud Pi and Cloud Auth.
 
-## 6. Design review checklist
+## 7. Design review checklist
 
 1. Does it match the pinned Mira Desktop semantic Token and preset/light/dark rules (pin a verified upstream SHA)?
 2. Does the chosen component already exist, or is it a genuine shared primitive? Avoid unnecessary component proliferation.
@@ -113,6 +128,6 @@ Every interactive component needs:
 6. Has contrast been checked on all selected theme/preset combinations?
 7. Is the design a specification, a static prototype, or an implemented screen? Label it accordingly.
 
-## 7. Status of existing prototype
+## 8. Status of existing prototype
 
 [`prototypes/workbench-v0.1/`](prototypes/workbench-v0.1/) predates this contract and uses mock data and localStorage. It does not prove Desktop theme/preset parity, Cloud OAuth, deployed UI, or reusable React components. Future work should reconcile the prototype against this document and the MiraDesign Foundation before converting it to production code.

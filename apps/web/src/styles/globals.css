@@ -318,6 +318,7 @@ button:disabled {
 }
 
 .app-shell {
+  min-height: 100svh;
   min-height: 100dvh;
   display: grid;
   grid-template-columns: 244px minmax(0, 1fr);
@@ -346,27 +347,6 @@ button:disabled {
   gap: 18px;
 }
 
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px;
-  border-radius: var(--mira-radius-ui-panel);
-  text-decoration: none;
-  color: rgb(var(--mira-color-text-primary));
-}
-
-.nav-link[aria-current="page"] {
-  background: rgb(var(--mira-color-surface-soft));
-  color: rgb(var(--mira-color-text-primary));
-  font-weight: 600;
-}
-
-.nav-link:hover {
-  background: rgb(var(--mira-color-surface-soft));
-}
-
 @media (max-width: 790px) {
   .app-shell {
     display: block;
@@ -387,14 +367,23 @@ button:disabled {
     display: flex;
     flex-wrap: nowrap;
   }
-  .nav-link {
-    white-space: nowrap;
+  .mira-workspace-nav-item {
     width: auto;
+    white-space: nowrap;
   }
   .page-content {
     padding-top: 24px;
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-left: max(16px, env(safe-area-inset-left));
   }
   .hero-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (pointer: coarse) {
+  .mira-touch-target {
+    min-width: 44px;
+    min-height: 44px;
   }
 }

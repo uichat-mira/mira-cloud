@@ -19,7 +19,7 @@ import {
   type ThemePresetId,
 } from "../theme/mira-design/index.ts";
 import { applyTheme, currentTheme } from "../theme/mira-design/theme-preference.ts";
-import { Button, Card, IconButton, TextInput } from "../components/mira-design/index.ts";
+import { Button, Card, IconButton, NavItem, TextInput } from "../components/mira-design/index.ts";
 import { ConnectionPanel } from "../features/connection/connection-panel";
 
 const nav = [
@@ -172,7 +172,11 @@ export function WorkspaceShell() {
   return (
     <div className="app-shell">
       <aside className="sidebar" aria-label="Mira Cloud 导航">
-        <NavLink to="/" className="flex shrink-0 items-center gap-3 no-underline text-text-primary">
+        <NavLink
+          to="/"
+          aria-label="Mira Cloud 首页"
+          className="mira-touch-target flex shrink-0 items-center gap-3 no-underline text-text-primary"
+        >
           <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-primary text-lg font-bold text-text-inverted">
             M
           </span>
@@ -180,10 +184,15 @@ export function WorkspaceShell() {
         </NavLink>
         <nav className="flex min-w-0 flex-1 flex-col gap-1" aria-label="主导航">
           {nav.map(({ to, label, icon: Icon, end }) => (
-            <NavLink to={to} end={end} key={to} className="nav-link">
-              <Icon aria-hidden="true" size={18} />
+            <NavItem
+              to={to}
+              end={end}
+              key={to}
+              icon={<Icon aria-hidden="true" size={18} />}
+              className="mira-workspace-nav-item mira-touch-target"
+            >
               {label}
-            </NavLink>
+            </NavItem>
           ))}
         </nav>
         <p className="mobile-hide mt-auto px-3 text-xs leading-6 text-text-secondary">
