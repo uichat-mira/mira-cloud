@@ -47,13 +47,15 @@ API clients, retries, and response normalization belong to the caller/service la
 
 ### Platform capabilities are explicit
 
-`ExternalLink` defaults to browser `window.open` and `navigator.clipboard`, while also
-accepting `openUrl` and `copyText` adapters. It has no Desktop host-kind switch,
-preload call, or implicit local-tool permission.
+`ExternalLink` leaves ordinary unconfirmed links on the browser-native anchor path. Copy-only,
+confirmed, or caller-adapted behavior is explicit through browser `navigator.clipboard`,
+`openUrl`, and `copyText` capabilities. It has no Desktop host-kind switch, preload call, or
+implicit local-tool permission.
 
 `Modal` preserves both Provider/hook and static call styles without a mutable module-global
 provider pointer. Static commands are delivered to a mounted provider using the namespaced
-`mira-design:modal` browser event.
+`mira-design:modal` browser event. The Web shell traps keyboard focus inside the active dialog,
+restores focus on close, and keeps Escape behavior explicit.
 
 ### Content is separated from the light entry
 
@@ -87,19 +89,23 @@ without those direct declarations.
 
 ## Bundle evidence
 
-A local production Vite build on this branch after dependency minimization produced:
+A local production Vite build on the final branch produced:
 
-- initial JS: about **326.17 kB raw / 105.79 kB gzip**;
+- initial JS: about **327.37 kB raw / 106.30 kB gzip**;
 - AGT-048 baseline initial JS: about **323.88 kB raw / 105.14 kB gzip**;
 - initial CSS: about **89.01 kB raw / 15.19 kB gzip**;
-- AGT-048 baseline CSS: about **71.16 kB raw / 12.71 kB gzip**;
-- heavy Markdown/content dynamic chunk: about **495.74 kB raw / 145.33 kB gzip**.
+- AGT-048 baseline CSS: about **71.16 kB raw / 12.71 kB gzip**.
 
-The HTML entry references only the initial JS/CSS and tiny runtime preload; the heavy content
-chunk is not module-preloaded. Vite emits KaTeX font assets for the Markdown capability, but
-the initial CSS contains no KaTeX rules or `@font-face` declarations.
+The standard Cloud application does not reference `mira-design/content.ts`, so the final
+production build emits **no Streamdown/Mermaid/Milkdown content chunk and no KaTeX font
+assets at all**. Heavy content source remains typechecked and exercised through explicit
+dynamic-loader tests. When a real feature begins consuming the content entry, that feature
+must re-measure the emitted lazy chunk instead of assuming the earlier intermediate size.
 
-These numbers are evidence for the tested build, not permanent performance budgets.
+The initial-JS increase over AGT-048 is about **3.49 kB raw / 1.16 kB gzip**. The CSS increase
+is about **17.85 kB raw / 2.48 kB gzip**, primarily from the additional Tailwind classes used
+by the Advanced component source. These numbers are evidence for the tested build, not
+permanent performance budgets.
 
 ## Explicit exclusions
 
