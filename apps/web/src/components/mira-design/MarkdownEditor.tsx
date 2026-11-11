@@ -68,7 +68,7 @@ function MarkdownEditor({
 }: MarkdownEditorProps) {
   return (
     <div
-      className={`role-markdown-editor flex min-h-0 flex-col rounded-ui-panel  bg-surface-primary ${className}`}
+      className={`mira-markdown-editor flex min-h-0 flex-col rounded-ui-panel  bg-surface-primary ${className}`}
     >
       <MilkdownProvider>
         <MarkdownEditorInner
