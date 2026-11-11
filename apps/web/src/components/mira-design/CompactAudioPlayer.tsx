@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Pause, Play, Volume1, Volume2, VolumeX } from "lucide-react";
 
-type CompactAudioPlayerProps = {
+export type CompactAudioPlayerProps = {
   src: string;
   title?: string;
   subtitle?: string;
