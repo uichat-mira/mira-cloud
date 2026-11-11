@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="zh-CN" data-mira-preset="default" data-mira-appearance="light">
+<html lang="zh-CN" data-mira-color-theme="warm-neutral" data-mira-theme-mode="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <meta name="theme-color" content="#f5f4ed" />
+    <meta name="theme-color" content="#f8f8f6" />
     <title>Mira Cloud · 工作台</title>
     <script>
       (() => {
-        const presets = ["default", "knowledge-blue", "archive-green", "slate-ocean"];
+        const presets = ["warm-neutral", "knowledge-blue", "archive-green", "slate-ocean"];
         try {
           const saved = JSON.parse(localStorage.getItem("mira-cloud-theme-v1") || "null");
           if (
@@ -15,10 +15,12 @@
             presets.includes(saved.preset) &&
             ["light", "dark"].includes(saved.appearance)
           ) {
-            document.documentElement.dataset.miraPreset = saved.preset;
-            document.documentElement.dataset.miraAppearance = saved.appearance;
+            document.documentElement.dataset.miraColorTheme = saved.preset;
+            document.documentElement.dataset.miraThemeMode = saved.appearance;
+            document.documentElement.classList.toggle("dark", saved.appearance === "dark");
           } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-            document.documentElement.dataset.miraAppearance = "dark";
+            document.documentElement.dataset.miraThemeMode = "dark";
+            document.documentElement.classList.add("dark");
           }
         } catch {
           // Invalid optional appearance preference must not block first paint.

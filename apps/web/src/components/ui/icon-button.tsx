@@ -8,7 +8,7 @@ type IconButtonProps = Omit<ButtonProps, "children" | "aria-label"> & {
 
 export function IconButton({ icon, label, className = "", ...rest }: IconButtonProps) {
   return (
-    <Button {...rest} aria-label={label} className={"mira-icon-button " + className}>
+    <Button {...rest} aria-label={label} className={"w-11 p-2.5 " + className}>
       {icon}
     </Button>
   );

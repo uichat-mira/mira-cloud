@@ -11,7 +11,7 @@ Mira Cloud 是独立产品；**未来新 Core/BFF 采用 Hono + Drizzle + Postgr
 
 | 区域 | 首选技术 | 定位 |
 | --- | --- | --- |
-| Web/手机 WebView | React 19、TypeScript strict、Vite、React Router、Tailwind 4 | 独立响应式工作台；设计 token 来自 Mira Mobile 的当前权威 |
+| Web/手机 WebView | React 19、TypeScript strict、Vite、React Router、Tailwind 4 | 独立响应式工作台；设计 token 来自 pinned Mira Desktop 的 MiraDesign Foundation |
 | 新的 Core API / BFF | **Hono、@hono/node-server、Node 24、TypeScript strict** | 单个模块化单体进程；无第二个身份中心 |
 | 输入/输出验证 | Zod；Hono 类型化路由；外部 API 合同明确版本 | 静态类型不能代替运行时验证 |
 | SQL 模型与迁移 | **Drizzle ORM + Drizzle Kit**；SQL 文件进入代码审查 | 只负责 SQL/迁移，不是运行调度器 |

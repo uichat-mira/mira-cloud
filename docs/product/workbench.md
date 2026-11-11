@@ -21,4 +21,4 @@ Web: full responsive workspace. Mobile: same page within a WebView with trusted 
 
 ## Prototype status
 
-`../../prototypes/workbench-v0.1/` is a pre-existing, standalone, mock-data HTML demonstration that informed earlier UX discussion. It is not a React app, backend integration, authenticated session or a reliable statement of current production behavior. It uses a former visual baseline and must be reconciled against current Mira Mobile design tokens before any implementation.
+`../../prototypes/workbench-v0.1/` is a pre-existing, standalone, mock-data HTML demonstration that informed earlier UX discussion. It is not a React app, backend integration, authenticated session or a reliable statement of current production behavior. It uses a former visual baseline and must be reconciled against the pinned Mira Desktop MiraDesign Foundation before any implementation.

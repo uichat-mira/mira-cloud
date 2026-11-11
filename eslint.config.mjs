@@ -4,7 +4,17 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["node_modules/**", "coverage/**", "dist/**", "**/dist/**", "**/src/theme/upstream/**", "prototypes/**"] },
+  {
+    ignores: [
+      "node_modules/**",
+      "coverage/**",
+      "dist/**",
+      "**/dist/**",
+      "**/src/theme/mira-design/upstream/**",
+      "**/src/theme/mira-design/themes.generated.ts",
+      "prototypes/**",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

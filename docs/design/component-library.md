@@ -1,6 +1,6 @@
 # Mira Cloud — React Component Library Contract
 
-**Status:** design contract; AGT-042 implements the first five local Web UI primitives, without publishing an independent component package. This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
+**Status:** design contract; AGT-042 implements the first five local Web UI primitives and AGT-047 establishes the MiraDesign Foundation, without publishing an independent component package. This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
 
 ## 1. Technology direction
 
@@ -18,7 +18,7 @@ When the independent React Web application is separately authorized:
 
 | Layer | Examples | Responsibility |
 | --- | --- | --- |
-| Foundations | Mira semantic tokens, type, spacing, radius, icon, focus ring | Implemented from pinned Mira Mobile sources; one source of truth |
+| Foundations | MiraDesign semantic tokens, type, spacing, radius, icon, focus ring | Implemented from pinned Mira Desktop sources; one Web token authority under `apps/web/src/theme/mira-design/` |
 | UI primitives | Button, IconButton, Input, Textarea, Select, Checkbox, Radio, Switch, Dialog, Tabs, Tooltip, Popover, Card, Badge, Separator, Skeleton | Generic interactions, accessibility, theming; no Cloud API or domain data |
 | Patterns | EmptyState, ErrorState, LoadingState, ConfirmAction, FormField, SearchFilterBar, ResponsiveSheet, SideNavigation | Consistent reusable UX composition |
 | Domain components | TaskCard, TriggerScheduleEditor, RunTimeline, RunStateIndicator, RuntimeBadge, ArtifactRow, CostBudgetSummary, CapabilityGrantPanel, HandoffPrompt | Typed cloud-specific concepts and real status semantics; owned by their feature modules |
@@ -63,11 +63,11 @@ A display label must preserve all factual distinctions owned by the backing doma
 - Story/example fixtures show loading, empty, error, success, disabled, offline, request pending, unknown outcome and permission denied. Fixtures are identified as demo data.
 - T1: rendering/state-specific logic; T2: accessibility semantics and contract-level status mapping; T3: working React/WebView behavior with real runtime/canonical theme mapping. Use browser tests only if an actual capable executor and real user-journey risk justify them.
 - No hardcoded backend URLs, Provider keys, Cloud Session, Github PAT or privilege-granting Tool action inside a component.
-- Shared design tokens must be generated from a **single verified pinned Mobile revision**. Future CI should fail on drift that changes a consumed semantic field; don't silently sync to a moving `dev` branch at build time.
+- Shared design tokens must be generated from a **single verified pinned Mira Desktop revision**. CI fails on drift that changes a consumed semantic field; don't silently sync to a moving `dev` branch at build time.
 
 ## 6. Decision log and explicit non-goals
 
-**Selected:** small locally owned library, Tailwind 4, Radix only as needed, Lucide, Mobile-derived semantic tokens.
+**Selected:** small locally owned library, Tailwind 4, Radix only as needed, Lucide, Desktop-derived MiraDesign semantic tokens.
 
 **Not selected now:** separate reusable npm package, Radix in every control, Chakra/MUI/Ant Design theme replacement, duplicate Native+Web component tree, full Storybook infrastructure before code exists.
 

@@ -29,7 +29,7 @@ The workspace now has real local-only Web/API packages. Design documents and `pr
 - **Clients:** browser, Mira Mobile (WebView), Mira Desktop (OAuth Cloud Client and separately a local-first Capability Host), and IM channels.
 - **Work:** temporary and scheduled tasks, run status, artifacts, memory, skills/MCP, GitHub collaboration, and explicit cross-runtime handoff.
 - **Permissions:** same-account sign-in is not tool authority. Desktop-owned runs and files stay local until explicitly shared.
-- **UI:** future Web UI aligns with canonical [Mira Mobile design tokens](https://github.com/uichat-mira/mira-mobile/blob/dev/src/theme/tokens.ts). AGT-042 provides a local-only static React workspace; AGT-043 provides a local-only Hono HTTP service. Neither is a deployed or authenticated product.
+- **UI:** Web UI consumes the AGT-047 MiraDesign Foundation generated from pinned [Mira Desktop theme sources](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts). AGT-042 provides a local-only static React workspace; AGT-043 provides a local-only Hono HTTP service. Neither is a deployed or authenticated product.
 
 ## Open-source license
 
@@ -108,7 +108,7 @@ No production secrets, Docker/Caddy/prod, Cloud Auth or Cloud Pi are configured;
 
 The `apps/web` package provides a responsive **React 19 / Vite / Tailwind CSS 4** static workbench. It does not connect to Cloud Auth, Cloud Pi or a database, and displays unavailable actions instead of fake runs.
 
-Visual tokens come from a byte-identical source snapshot of `uichat-mira/mira-mobile` pinned at full Git commit `31ee125953fe23e0af14f280a0b316637e46fa45`. Both Mobile source files are verified by Git blob SHA tests and mapped into semantic Web CSS via `pnpm --filter @mira-cloud/web tokens:generate`. CI verifies the generated CSS, all four Mobile presets in light/dark, and the accessible primary-action text contrast. No new manual color palette is maintained.
+AGT-047 establishes the MiraDesign Foundation in `apps/web/src/theme/mira-design/`. Its visual tokens come from byte-identical snapshots of `uichat-mira/mira-desktop` pinned at full Git commit `5036067d3a87ba95d798e01ededc7fbd678327de` (`colorThemes.ts`, `styles.css`, `tailwind.config.cjs`). The upstream files are verified by Git blob SHA tests and mapped into semantic Web CSS and Tailwind CSS 4 theme variables via `pnpm --filter @mira-cloud/web tokens:generate`. CI verifies the generated artifacts, all four Desktop presets in light/dark, text contrast and that the former Mobile-derived token authority is gone. No new manual color palette is maintained.
 
 ```bash
 pnpm install --frozen-lockfile

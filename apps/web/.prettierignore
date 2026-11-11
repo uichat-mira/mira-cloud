@@ -1,3 +1,4 @@
-# The pinned Mobile sources and derived Web stylesheet must remain byte-for-byte immutable.
-src/theme/upstream/
-src/styles/tokens.generated.css
+# Pinned Mira Desktop sources and generated Web token artifacts stay byte-for-byte immutable.
+src/theme/mira-design/upstream/
+src/theme/mira-design/themes.generated.ts
+src/styles/mira-design.generated.css

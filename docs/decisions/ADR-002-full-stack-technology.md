@@ -16,7 +16,7 @@
 | --- | --- | --- | --- |
 | 新代码语言、工作区 | **TypeScript strict；Node.js 24 LTS；pnpm 10**（锁定精确版本） | Cloud Auth 当前 Node >=24、pnpm 10；新业务与 Web 有共同类型和测试生态；仅作用于未来新 Mira Cloud 服务 | 将 Cloud Pi、Desktop、Mobile 强制统一到 Node 24 |
 | Web 工作台 | **React 19 + Vite 8 + React Router 7** | 与现有 Cloud Auth Web 生态接近，但产品必须独立 OAuth，不嵌入 Portal 作为长久归属 | Next.js SSR、React Native Web、微前端/Module Federation |
-| UI / 样式 | **Tailwind CSS 4 + 作用域 CSS Variables；必要时 Radix；Lucide** | Token 权威是 `mira-mobile@dev`，需记录源 SHA、校验 preset/light/dark 一致；不直接拷贝 Cloud Auth Console 皮肤 | 新造第二份 token 权威、巨型通用 UI Kit |
+| UI / 样式 | **Tailwind CSS 4 + 作用域 CSS Variables；必要时 Radix；Lucide** | MiraDesign Token 权威是 `mira-desktop@dev`，AGT-047 固定源 SHA、校验 preset/light/dark 一致；不直接拷贝 Cloud Auth Console 皮肤 | 新造第二份 token 权威、巨型通用 UI Kit |
 | Web 数据层 | **TanStack Query（服务端状态），Zustand 仅 UI 局部确需时** | 处理任务/运行可取消请求、缓存失效、SSE 重连；不复制后端状态 | 自建通用状态同步平台 |
 | Web 会话入口 | **Web OAuth Authorization Code + PKCE + 同源 BFF** | Auth V0 当前仅 native `mira-desktop` / `mira-mobile`；正式 Web Client 的 code/token/claims/refresh/consent 合同需要 Cloud Auth owner 单独批准 | 直接挪用 Portal cookie、原生 Cloud Session、密码模式 |
 | 新 API / Web BFF | **Node 24 + Fastify 5 + TypeScript + Zod 4** | Cloud Auth API 已采用 Fastify 5、TS；Mira Cloud 自己负责业务与资源级权限，Auth 只负责身份/授权 | GraphQL、NestJS、完整 API Gateway 平台 |
@@ -75,7 +75,7 @@ mira-cloud/
     api/                  # Fastify BFF + Core endpoints; explicit auth adapters
   packages/
     contracts/            # Zod 4 schemas / typed DTO / events
-    design-tokens/        # generated from pinned mira-mobile source; not source authority
+    design-tokens/        # generated from pinned mira-desktop source; not source authority
   docs/
     architecture/
     decisions/
@@ -113,7 +113,8 @@ mira-cloud/
 - [Cloud Auth API](https://github.com/uichat-mira/cloud-auth/blob/dev/apps/api/package.json)：Fastify 5 / TypeScript；[Web](https://github.com/uichat-mira/cloud-auth/blob/dev/apps/web/package.json)：React 19, React Router 7, Vite 8, Tailwind 4, Zod 4
 - [Cloud Auth native OAuth V0](https://github.com/uichat-mira/cloud-auth/blob/dev/docs/oauth-authorization-v0.md)：Desktop/Mobile registered clients only, device-bound Cloud Session; no general Web OAuth client issued.
 - [Cloud Pi package](https://github.com/uichat-mira/cloud-pi/blob/dev/package.json)：Node >=22.19, Pi SDK 1.4.0, Croner；[composition](https://github.com/uichat-mira/cloud-pi/blob/dev/src/app.mjs)；[Scheduler store](https://github.com/uichat-mira/cloud-pi/blob/dev/src/scheduler/store.mjs)：file-backed single-owner.
-- [Mira Mobile](https://github.com/uichat-mira/mira-mobile/blob/dev/package.json)：RN 0.86.2, WebView 13.x；[Mobile canonical tokens](https://github.com/uichat-mira/mira-mobile/blob/dev/src/theme/tokens.ts)。
+- [Mira Mobile](https://github.com/uichat-mira/mira-mobile/blob/dev/package.json)：RN 0.86.2, WebView 13.x。
+- [Mira Desktop canonical theme](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts)：AGT-047 pins commit `5036067d3a87ba95d798e01ededc7fbd678327de` for the Cloud MiraDesign Foundation.
 - [Mira Desktop Phase III](https://github.com/uichat-mira/mira-desktop/issues/315)：native cloud login/Host grant, local-first; Cloud → Host unsolicited tool grants are not silently implied.
 - [Organization Constitution](https://github.com/uichat-mira/.github/blob/main/AGENTS.md) 与 [Environment Model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md)。
 
