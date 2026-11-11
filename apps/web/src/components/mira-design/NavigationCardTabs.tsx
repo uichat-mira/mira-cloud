@@ -9,7 +9,7 @@ export interface NavigationCardTab<T extends string> {
   icon?: React.ReactNode;
 }
 
-interface NavigationCardTabsProps<T extends string> {
+export interface NavigationCardTabsProps<T extends string> {
   tabs: NavigationCardTab<T>[];
   value: T;
   onChange: (value: T) => void;
