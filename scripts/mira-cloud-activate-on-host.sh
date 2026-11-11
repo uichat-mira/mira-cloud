@@ -44,7 +44,8 @@ if test ! -f "$www/releases/$sha/index.html"; then
 fi
 test -f "$www/releases/$sha/index.html"
 chmod -R a+rX "$www/releases/$sha"
-docker load -i api-image.tar.gz >/dev/null
+# Image is built from the exact pinned prod commit on this host.
+docker image inspect "mira-cloud-api:$sha" >/dev/null
 
 install -d -m 0700 "$backup"
 cp -a "$caddy_file" "$backup/Caddyfile.before"
