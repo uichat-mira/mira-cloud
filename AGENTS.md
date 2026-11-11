@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository currently houses the Mira Cloud **product vision, interaction references, system architecture and a tooling-only Node/pnpm workspace**. Its product design baseline is `docs/architecture/v0.4.md`, and the current implementation technology design baseline is `docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`. There is no authorized frontend or backend application implementation yet.
+This repository currently houses the Mira Cloud **product vision, interaction references, system architecture, a Node/pnpm workspace and a local-only Hono HTTP API**. Its product design baseline is `docs/architecture/v0.4.md`, and the current implementation technology design baseline is `docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`. AGT-043 authorizes a minimal local-only Hono API; no user/business backend, OAuth, database or deployed frontend is implemented.
 
 Before engineering judgments or mutations involving the `uichat-mira` organization, read the current [organization AGENTS.md](https://github.com/uichat-mira/.github/blob/main/AGENTS.md), relevant instructions, actual target-repository code and applicable Issue/PR/task contracts. Never infer runtime facts from design diagrams.
 
@@ -26,7 +26,7 @@ Follow the current Organization [environment model](https://github.com/uichat-mi
 - `feat/* → dev → test → prod` is a source promotion path, not a command to provision servers.
 - `dev` is the working integration/default branch, and `test` is a source acceptance branch. **Neither has a configured server.** `prod` is only a future production source; no Mira Cloud runtime deployment has been authorized.
 - Retained `main` does not mean production, is not a deployment branch, and should not bypass `prod`.
-- Docs-only `Mira Gate` validates source integrity. Do not report T3/T4/T5, smoke, OAuth, Agent execution or service availability based on this CI.
+- Mira Gate runs Docs Contract, Node workspace checks and local real-HTTP API tests (T3 transport only). It does not prove T4/T5, OAuth, Agent execution, database readiness or any deployed service availability.
 - Do not introduce dev/test GitHub deployment Environments, hostnames, API keys, release secrets or deploy workflows absent a separately authorized runtime contract. Never point non-production to production as a workaround.
 - Keep GitHub engineering work items in the canonical Issue/Project fields; governance changes to the repository do not grant authority to create, accept, close or promote unrelated work items.
 
@@ -39,7 +39,7 @@ The [AGT-040 technology design contract](https://github.com/uichat-mira/mira-clo
 ## Implementation guidance for future authorized tasks
 
 - Read [initial technical design](docs/architecture/initial-technical-design.md) and [coding standard](docs/engineering/coding-standard.md) when working on API/contracts/schema/agent-facing code. The files are **repo-specific extension points** to the current Organization constitution; they do not copy or replace Organization governance.
-- Backend preference **Hono + TypeScript + Drizzle + PostgreSQL**; production packaging candidate **Docker Compose + Caddy**; no deployed implementation exists. Cloud Auth Fastify and existing Cloud Pi SDK remain independent owners.
+- Backend preference **Hono + TypeScript + Drizzle + PostgreSQL**; production packaging candidate **Docker Compose + Caddy**; no deployed implementation exists; the local-only Hono process is not a deployed Core. Cloud Auth Fastify and existing Cloud Pi SDK remain independent owners.
 - Never confuse a signed-in Cloud Client with a permitted local Host tool invocation; no unscoped credentials, long-running Agent work inside HTTP requests, or duplicate Scheduler/Run writers.
 - Explicitly isolate database queries, ORM migrations, auth adapters and external runtime boundaries. Design/PR text does not waive the need for T1/T2/T3 evidence once code exists.
 - **No dev/test servers, deployment environments, URLs or secrets.** Production design is not an authorization to deploy.
