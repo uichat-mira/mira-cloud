@@ -3,7 +3,7 @@
  * Design-only T1-style source validation, not a deployed service check.
  * No dependencies, network, credentials, infrastructure or production effects.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, extname, join, relative, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
@@ -36,8 +36,12 @@ function walk(folder) {
 
 // For this small design-only tree, validate relative Markdown link destinations.
 // External URLs and fragment-only links are intentionally out of scope.
-const markdown = [join(root, "README.md"), join(root, "AGENTS.md"), ...walk(join(root, "docs")), ...walk(join(root, "prototypes"))]
-  .filter(existsSync);
+const markdown = [
+  join(root, "README.md"),
+  join(root, "AGENTS.md"),
+  ...walk(join(root, "docs")),
+  ...walk(join(root, "prototypes")),
+].filter(existsSync);
 
 for (const file of markdown) {
   const source = readFileSync(file, "utf8");
@@ -48,8 +52,12 @@ for (const file of markdown) {
     if (!raw || raw.startsWith("#") || /^[a-z][a-z0-9+.-]*:/i.test(raw)) continue;
     const target = raw.split("#")[0].split("?")[0];
     let resolved;
-    try { resolved = resolve(dirname(file), decodeURIComponent(target)); }
-    catch { failures.push(`Invalid encoded link in ${relative(root, file)}: ${raw}`); continue; }
+    try {
+      resolved = resolve(dirname(file), decodeURIComponent(target));
+    } catch {
+      failures.push(`Invalid encoded link in ${relative(root, file)}: ${raw}`);
+      continue;
+    }
     if (!resolved.startsWith(root + "/") && resolved !== root) {
       failures.push(`Relative link escapes repository: ${relative(root, file)} -> ${raw}`);
     } else if (!existsSync(resolved)) {
@@ -70,5 +78,7 @@ if (failures.length > 0) {
   for (const item of failures) console.error("FAIL", item);
   process.exitCode = 1;
 } else {
-  console.log(`Docs Contract passed: ${markdown.length} Markdown files; no runtime or server checks attempted.`);
+  console.log(
+    `Docs Contract passed: ${markdown.length} Markdown files; no runtime or server checks attempted.`,
+  );
 }
