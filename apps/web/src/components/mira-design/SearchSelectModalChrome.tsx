@@ -4,7 +4,7 @@ import { IconButton } from "./Button";
 import { Modal } from "./Modal";
 import type { SearchSelectModalItem } from "./SearchSelectModal";
 
-type SearchSelectModalChromeProps = {
+export type SearchSelectModalChromeProps = {
   open: boolean;
   title: React.ReactNode;
   width?: number | string;
