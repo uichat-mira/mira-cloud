@@ -76,6 +76,18 @@ jobs:
           fi
           printf 'TX_LISTEN_PORTS='
           ss -ltnH | awk '{n=split($4,a,":");print a[n]}' | sort -nu | paste -sd ',' -
+          echo 'TX_CADDY_LOCAL_TLS_BEGIN'
+          if curl --resolve cloud.tomzlab.cn:443:127.0.0.1 -kfsS \
+              --connect-timeout 3 --max-time 8 https://cloud.tomzlab.cn/ \
+              | grep -Fq 'Mira Cloud'; then
+            echo 'TX_CADDY_LOCAL_TLS_WEB=PASS'
+          else
+            echo 'TX_CADDY_LOCAL_TLS_WEB=FAIL'
+          fi
+          echo 'TX_CADDY_CLOUD_LOG_BEGIN'
+          journalctl -u caddy --since '20 minutes ago' --no-pager 2>/dev/null \
+            | grep -F 'cloud.tomzlab.cn' | tail -80 || true
+          echo 'TX_CADDY_CLOUD_LOG_END'
           for port in 34170 5432; do
             if ss -ltnH | awk '{print $4}' | grep -Eq ":$port$"; then
               echo "TX_PORT_$port=occupied"
