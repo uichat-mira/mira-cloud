@@ -1,7 +1,7 @@
 name: mira-cloud
 services:
   postgres:
-    image: postgres:16.15-trixie
+    image: public.ecr.aws/docker/library/postgres:16.15-trixie@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
     restart: unless-stopped
     environment:
       POSTGRES_DB: mira_cloud

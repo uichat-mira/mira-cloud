@@ -42,8 +42,8 @@ ssh_args=(-o StrictHostKeyChecking=yes
   -o ServerAliveCountMax=3)
 remote="$TX_DEPLOY_USER@$TX_DEPLOY_HOST"
 
-# The only large objects downloaded are needed runtime base images and npm
-# dependencies. Both use Docker/pnpm cache on the VPS for later deploys.
+# Pull pinned Docker Official Images from ECR Public: Docker Hub times out on this VPS.
+# Only runtime base images and npm dependencies are downloaded; VPS caches them.
 sshpass -e ssh -p 22 "${ssh_args[@]}" "$remote" "bash -se -- '$sha'" <<'REMOTE'
 set -Eeuo pipefail
 umask 077
@@ -83,7 +83,7 @@ docker run --rm --memory=2300m --cpus=1.5 \
   -e COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
   -e NODE_OPTIONS=--max-old-space-size=1400 \
   -v "$repo:/workspace" -w /workspace \
-  node:24.19.0-bookworm-slim sh -c \
+  public.ecr.aws/docker/library/node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df sh -c \
     'corepack enable && pnpm install --frozen-lockfile --filter @mira-cloud/web... && pnpm --filter @mira-cloud/web build'
 test -f "$repo/apps/web/dist/index.html"
 echo 'TX_ON_HOST_WEB_BUILD=PASS'

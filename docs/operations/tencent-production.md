@@ -50,3 +50,14 @@ container, then invokes the same guarded activation, migration and Caddy flow.
 This approach moves *source code*, not heavyweight image archives. The first
 pull of Node/Postgres base images and package dependencies can still require
 network access and time; later deployments can reuse on-host Docker layers.
+
+### Docker image source (2026-11-11)
+
+The Tencent VPS reached GitHub source but timed out contacting Docker Hub
+(`registry-1.docker.io`). Direct probes on the VPS confirmed ECR Public can
+serve the exact Docker Official Images manifest for Node 24.19.0 bookworm-slim
+and PostgreSQL 16.15 trixie. Production Dockerfile, Compose and Web builder now
+refer to the Docker-verified ECR Public repositories with fixed OCI index
+digests. This changes image transport only, not Node/PostgreSQL versions, DB
+networking, volume ownership, or the release safety gates. A successful manifest
+probe is not evidence that layer downloads or deployment have finished.
