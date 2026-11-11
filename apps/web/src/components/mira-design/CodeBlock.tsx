@@ -1,7 +1,7 @@
 import React from "react";
 import Card from "./Card";
 
-interface CodeBlockProps {
+export interface CodeBlockProps {
   children: React.ReactNode;
   className?: string;
   tone?: "default" | "terminal";
