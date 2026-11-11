@@ -169,7 +169,7 @@ GitHub CI's required PostgreSQL Integration job now launches **actual Vite + com
 ## Tencent production delivery
 
 The chosen domain is **cloud.tomzlab.cn**. A production-only manual GitHub
-workflow builds and deploys the current React/Hono/PostgreSQL infrastructure
+workflow clones the pinned prod commit on Tencent, builds React/Hono there, and deploys the current React/Hono/PostgreSQL infrastructure
 foundation using the previously verified Tencent SSH host key and Organization
 password secrets. See [the production runbook](docs/operations/tencent-production.md).
 

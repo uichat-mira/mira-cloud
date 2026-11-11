@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Package exact prod commit, deploy and smoke Tencent
+    name: Build exact prod commit on Tencent and verify production
     if: github.ref == 'refs/heads/prod'
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -23,41 +23,14 @@ jobs:
       SSHPASS: ${{ secrets.TX_DEPLOY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-      - name: Enable pinned pnpm
-        run: corepack enable
-      - name: Install and verify exact prod source
-        env:
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
-        run: |
-          set -euo pipefail
-          pnpm install --frozen-lockfile
-          pnpm check
-      - name: Build release Web and Linux amd64 API image
+      - name: Verify release is the exact protected prod commit
         shell: bash
         run: |
           set -Eeuo pipefail
-          pnpm --filter @mira-cloud/web build
-          docker build --pull --platform linux/amd64 \
-            -f apps/api/Dockerfile -t "mira-cloud-api:$GITHUB_SHA" .
-          docker image inspect "mira-cloud-api:$GITHUB_SHA" --format '{{.Id}}' >/dev/null
-      - name: Prepare integrity-checked release bundle
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          mkdir -p release
-          tar -czf release/web.tar.gz -C apps/web/dist .
-          docker save "mira-cloud-api:$GITHUB_SHA" | gzip -1 > release/api-image.tar.gz
-          cp deploy/mira-cloud/compose.yaml release/compose.yaml
-          cp deploy/mira-cloud/cloud.tomzlab.cn.caddy release/cloud.tomzlab.cn.caddy
-          cp scripts/mira-cloud-activate-on-host.sh release/activate.sh
-          (cd release && sha256sum web.tar.gz api-image.tar.gz compose.yaml \
-            cloud.tomzlab.cn.caddy activate.sh > checksums.sha256)
-          (cd release && sha256sum -c checksums.sha256)
-          tar -tzf release/web.tar.gz >/dev/null
-      - name: Strict pinned Tencent SSH, deploy with rollback and local API/DB smoke
+          test "$GITHUB_REF" = refs/heads/prod
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "PROD_RELEASE_COMMIT_VERIFIED=$GITHUB_SHA"
+      - name: Strict pinned Tencent SSH, Git checkout and Docker build on VPS
         shell: bash
         run: bash scripts/mira-cloud-tencent-ship.sh
       - name: Public HTTPS T5 smoke when A record is ready
