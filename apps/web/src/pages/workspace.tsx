@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Moon,
   Plus,
-  ShieldCheck,
   Sun,
   WifiOff,
 } from "lucide-react";
@@ -21,6 +20,7 @@ import { Card } from "../components/ui/card";
 import { IconButton } from "../components/ui/icon-button";
 import { FormField } from "../components/ui/form-field";
 import { Input } from "../components/ui/input";
+import { ConnectionPanel } from "../features/connection/connection-panel";
 
 const nav = [
   { to: "/", label: "工作台", icon: LayoutDashboard, end: true },
@@ -113,24 +113,7 @@ function MainWorkbench() {
             等待 Cloud Auth 与 Cloud Pi 正式接入
           </p>
         </Card>
-        <Card className="p-6" aria-labelledby="link-status-title">
-          <div className="mb-4 flex items-center gap-3 text-mira-muted">
-            <WifiOff size={19} aria-hidden="true" />
-            <h2 id="link-status-title" className="font-semibold text-mira-ink">
-              云端连接
-            </h2>
-          </div>
-          <p className="mb-3 text-xl font-semibold text-mira-ink">尚未连接</p>
-          <p className="text-sm leading-7 text-mira-muted">
-            此页面没有模拟已登录状态，也不代表 Agent 正在运行。后续连接将经过明确的授权与状态验证。
-          </p>
-          <div className="mt-6 border-t border-mira-border pt-4 text-sm text-mira-muted">
-            <span className="inline-flex items-center gap-2">
-              <ShieldCheck size={16} aria-hidden="true" />
-              执行权限仍由实际运行端决定
-            </span>
-          </div>
-        </Card>
+        <ConnectionPanel />
       </div>
       <div className="mt-7 grid gap-5 md:grid-cols-2">
         <Card className="p-6" aria-labelledby="search-title">
@@ -150,7 +133,7 @@ function MainWorkbench() {
           <div className="mt-6 flex items-start gap-3 text-sm">
             <CircleHelp aria-hidden="true" size={18} className="mt-1 shrink-0 text-mira-primary" />
             <span className="leading-6">
-              Hono API 底座已独立建设，Web 授权和真实任务链路还未接入。
+              工作台现已真实检查 Hono API 和 PostgreSQL；用户授权及任务链路仍未接入。
             </span>
           </div>
         </Card>
