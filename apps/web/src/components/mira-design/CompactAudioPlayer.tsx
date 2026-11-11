@@ -228,11 +228,6 @@ export default function CompactAudioPlayer({
     <div
       className={`flex w-full items-center gap-3 rounded-ui-overlay border px-3.5 py-3 ${surfaceClassName} ${className}`}
     >
-      <style>{`
-        .${volumeSliderScopeClassName}::-webkit-slider-thumb {
-          margin-left: 0;
-        }
-      `}</style>
       <audio ref={audioRef} src={src} preload="metadata" />
 
       <button
