@@ -1,6 +1,6 @@
 # Mira Cloud Workspace — experience scope (design only)
 
-**Status:** interaction reference, not an implemented product. Design baseline: `../architecture/v0.4.md`.
+**Status:** interaction reference, not an implemented product. Product baseline: [v0.4](../architecture/v0.4.md). Visual/interaction language: [root DESIGN.md](../../DESIGN.md); planned UI components: [component library contract](../design/component-library.md).
 
 ## Promise
 
