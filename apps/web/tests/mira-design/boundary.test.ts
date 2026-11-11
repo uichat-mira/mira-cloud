@@ -63,6 +63,27 @@ describe("MiraDesign component ownership boundary", () => {
     }
   });
 
+
+  it("owns every non-Tailwind MiraDesign component CSS hook in Cloud styles", () => {
+    const globals = readFileSync(join(webRoot, "src/styles/globals.css"), "utf8");
+    expect(globals).toContain(".mira-range-slider {");
+    expect(globals).toContain(".mira-range-slider-compact::-webkit-slider-thumb");
+    expect(globals).toContain(".mira-stable-scrollbar {");
+
+    for (const file of sourceFiles) {
+      const contents = readFileSync(join(componentRoot, file), "utf8");
+      expect(contents, file).not.toContain("claude-range-slider");
+      expect(contents, file).not.toContain("stable-scrollbar");
+    }
+  });
+
+  it("does not reintroduce mutable module-global Message state", () => {
+    const messageSource = readFileSync(join(componentRoot, "Message.tsx"), "utf8");
+    expect(messageSource).not.toContain("globalMessageApi");
+    expect(messageSource).not.toMatch(/^let\\s+/m);
+    expect(messageSource).toContain("mira-design:message");
+  });
+
   it("records the pinned upstream revision and per-component source blobs", () => {
     const manifest = readFileSync(
       new URL("../../../../docs/design/mira-design-migration.md", import.meta.url),
