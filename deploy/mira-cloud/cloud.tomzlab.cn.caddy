@@ -1,5 +1,7 @@
 # Managed only by the Mira Cloud production deployment workflow.
 cloud.tomzlab.cn {
+    # Host Caddy globally disables Automatic HTTPS; force certificate automation only for Mira Cloud.
+    tls force_automate
     encode zstd gzip
 
     header {
