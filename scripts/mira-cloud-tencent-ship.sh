@@ -42,13 +42,27 @@ ssh_args=(-o StrictHostKeyChecking=yes
   -o ServerAliveCountMax=3)
 remote="$TX_DEPLOY_USER@$TX_DEPLOY_HOST"
 
+# GitHub.com TLS from Tencent is intermittent; ship only the verified Git tree,
+# never an assembled container image or untracked checkout files.
+archive="$RUNNER_TEMP/mira-cloud-source-$sha.tar.gz"
+git archive --format=tar "$sha" | gzip -1 > "$archive"
+test -s "$archive"
+archive_digest="$(sha256sum "$archive" | awk '{print $1}')"
+[[ "$archive_digest" =~ ^[a-f0-9]{64}$ ]] || exit 2
+sshpass -e ssh -p 22 "${ssh_args[@]}" "$remote" \
+  "install -d -m 0700 /opt/mira-cloud/staging/$sha"
+sshpass -e scp -P 22 "${ssh_args[@]}" "$archive" \
+  "$remote:/opt/mira-cloud/staging/$sha/source.tar.gz"
+echo 'TX_SMALL_SOURCE_ARCHIVE_TRANSFER=PASS'
+
 # Pull pinned Docker Official Images from ECR Public: Docker Hub times out on this VPS.
 # Only runtime base images and npm dependencies are downloaded; VPS caches them.
-sshpass -e ssh -p 22 "${ssh_args[@]}" "$remote" "bash -se -- '$sha'" <<'REMOTE'
+sshpass -e ssh -p 22 "${ssh_args[@]}" "$remote" "bash -se -- '$sha' '$archive_digest'" <<'REMOTE'
 set -Eeuo pipefail
 umask 077
 sha="$1"
-[[ "$sha" =~ ^[a-f0-9]{40}$ ]] || exit 2
+expected_source_digest="$2"
+[[ "$sha" =~ ^[a-f0-9]{40}$ && "$expected_source_digest" =~ ^[a-f0-9]{64}$ ]] || exit 2
 test "$(id -u)" -eq 0
 test "$(hostname)" = VM-0-17-ubuntu
 test "$(uname -m)" = x86_64
@@ -62,17 +76,26 @@ echo 'TX_ROOT_GIT_BUILD_PREFLIGHT=PASS'
 
 bundle="/opt/mira-cloud/staging/$sha"
 repo="$bundle/source"
+archive="$bundle/source.tar.gz"
 install -d -m 0700 "$bundle"
-if test ! -d "$repo/.git"; then
-  test ! -e "$repo" || { echo 'Staging path collision' >&2; exit 1; }
-  git clone --quiet --depth 1 --single-branch --branch prod \
-    https://github.com/uichat-mira/mira-cloud.git "$repo"
+test -s "$archive"
+printf '%s  %s\n' "$expected_source_digest" "$archive" | sha256sum -c - >/dev/null
+echo 'TX_SOURCE_ARCHIVE_SHA256=PASS'
+# Source is a git archive of the exact protected prod commit verified on Actions.
+# Do not reuse incomplete / stale clones left by earlier failed GitHub TLS requests.
+if test -d "$repo"; then
+  test "$(cat "$bundle/source-verified.sha" 2>/dev/null || true)" = "$sha" || {
+    rm -rf -- "$repo"
+  }
 fi
-test "$(git -C "$repo" rev-parse HEAD)" = "$sha" || {
-  echo 'Prod advanced after workflow start; refusing mismatched source' >&2
-  exit 1
-}
-echo "TX_GIT_EXACT_PROD_SHA=$sha"
+if test ! -d "$repo"; then
+  install -d -m 0700 "$repo"
+  tar -xzf "$archive" --no-same-owner --no-same-permissions -C "$repo"
+  test -f "$repo/apps/api/Dockerfile"
+  test -f "$repo/pnpm-lock.yaml"
+  printf '%s\n' "$sha" > "$bundle/source-verified.sha"
+fi
+echo "TX_EXACT_PROD_ARCHIVE_SHA=$sha"
 
 # Prefer cached layers. Sequential builds avoid memory contention on 2c/4GiB.
 docker build --platform linux/amd64 -f "$repo/apps/api/Dockerfile" \
