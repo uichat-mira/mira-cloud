@@ -60,8 +60,8 @@ provider pointer. Static commands are delivered to a mounted provider using the 
 `MarkdownText` and `MarkdownEditor` are intentionally **not** statically re-exported from
 the normal `mira-design/index.ts` entry. Consumers can use:
 
-- dynamic `loadMarkdownText()` / `loadMarkdownEditor()`; or
-- the explicit heavy `mira-design/content.ts` entry when eager loading is intentional.
+- import the explicit heavy `mira-design/content.ts` entry only from a feature that needs content UI, then call `loadMarkdownText()` or `loadMarkdownEditor()`.
+- the main `mira-design/index.ts` barrel intentionally does not reference Streamdown, Milkdown or KaTeX, so Core/Advanced consumers do not pull heavy content assets into the first-load graph.
 
 This prevents a Core/Advanced-only import from pulling Streamdown/Milkdown into the initial
 application JavaScript.
