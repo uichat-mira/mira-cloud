@@ -52,3 +52,7 @@ This protection is GitHub-enforced for `prod`, not for `dev` or `test` (not requ
 ## Gate for future implementation
 
 Before adding application code, real secrets, OAuth callbacks, a server or deploy workflow, approve the corresponding ownership and Issue contract; specify target runtime and environment, protected credentials, minimal T1/T2/T3 validation and real T4/T5 expectations. The absence of dev/test servers must not be silently "fixed" by pointing them at production.
+
+## 2026-11-11 production authorization update
+
+The maintainer has authorized a manual, prod-only Tencent runtime deployment of the local Web/Hono/PostgreSQL foundation at cloud.tomzlab.cn. This supersedes earlier statements that no production deployment was authorized; the previous text remains as a historical bootstrap description. The actual deployment status requires successful host execution and T5 smoke; dev and test still have no servers. See docs/operations/tencent-production.md.

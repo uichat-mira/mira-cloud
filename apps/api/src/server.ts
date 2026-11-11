@@ -9,11 +9,16 @@ const port = z.coerce
   .min(1)
   .max(65535)
   .parse(process.env["PORT"] ?? "3000");
-// Local-only until a production reverse-proxy and deployment contract are approved.
+// Container-only wildcard binding is permitted when Docker publishes exclusively
+// to the host loopback; bare-host development keeps the safe 127.0.0.1 default.
+const host = process.env["HOST"] ?? "127.0.0.1";
+if (host !== "127.0.0.1" && host !== "0.0.0.0") {
+  throw new Error("Unsupported API bind host");
+}
 const dbContext = createDbContext();
 const app = createApp(dbContext ? { databaseReady: () => databaseReady(dbContext) } : {});
-const server = serve({ fetch: app.fetch, hostname: "127.0.0.1", port });
-console.info(JSON.stringify({ event: "api_started", host: "127.0.0.1", port }));
+const server = serve({ fetch: app.fetch, hostname: host, port });
+console.info(JSON.stringify({ event: "api_started", host, port }));
 
 let shuttingDown = false;
 function shutdown(signal: string): void {

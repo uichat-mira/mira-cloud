@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/dist
+**/.vite
+**/.env
+**/.env.*
+**/coverage
+**/tests
+prototypes
+docs

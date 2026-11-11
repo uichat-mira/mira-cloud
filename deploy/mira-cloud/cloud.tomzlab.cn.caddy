@@ -1,0 +1,21 @@
+# Managed only by the Mira Cloud production deployment workflow.
+cloud.tomzlab.cn {
+    encode zstd gzip
+
+    header {
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        X-Robots-Tag "noindex, nofollow"
+    }
+
+    @api path /api /api/*
+    handle @api {
+        reverse_proxy 127.0.0.1:34170
+    }
+
+    handle {
+        root * /srv/www/cloud.tomzlab.cn/current
+        try_files {path} /index.html
+        file_server
+    }
+}
