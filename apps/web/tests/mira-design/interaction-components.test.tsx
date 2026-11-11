@@ -225,6 +225,25 @@ describe("Message", () => {
     vi.useRealTimers();
   });
 
+
+  it("supports the static message API without module-global provider state", async () => {
+    render(
+      <MessageProvider>
+        <span>App</span>
+      </MessageProvider>,
+    );
+
+    act(() => {
+      message.success("Saved", 0);
+    });
+    expect(await screen.findByText("Saved")).toBeInTheDocument();
+
+    act(() => {
+      message.destroy();
+    });
+    expect(screen.queryByText("Saved")).not.toBeInTheDocument();
+  });
+
   it("opens, auto-dismisses and destroys messages", async () => {
     render(
       <MessageProvider>
