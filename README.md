@@ -8,7 +8,7 @@ Mira Cloud is the future independent, continuously available agent workspace, gr
 
 ## Engineering base (implemented)
 
-This repository now has a reproducible **Node 24 / pnpm 10 / TypeScript strict** workspace scaffold. It contains tooling only: there is still **no React page, Hono route, PostgreSQL schema, Drizzle migration, OAuth flow, Cloud Pi connection, Docker/Caddy deployment or runtime service**.
+This repository now has a reproducible **Node 24 / pnpm 10 / TypeScript strict** workspace scaffold. It contains tooling only: there is still **no React page, PostgreSQL schema, Drizzle migration, OAuth flow, Cloud Pi connection, Docker/Caddy deployment or runtime service**.
 
 Prerequisites: Node.js 24 and Corepack. pnpm is pinned by `packageManager` in `package.json`.
 
@@ -88,3 +88,18 @@ The [AGT-040 initial technology design work item](https://github.com/uichat-mira
 - [Cloud Auth OAuth V0 contract](https://github.com/uichat-mira/cloud-auth/blob/dev/docs/oauth-authorization-v0.md)
 
 Design docs are proposals; actual repository code and deployed runtime remain authoritative for implementation state.
+## Local Hono HTTP transport (AGT-043)
+
+The `apps/api` package is a **minimal local-only HTTP process**, not a cloud deployment or a connected Agent backend. It uses Node 24, Hono, Zod and a bounded request-ID/error contract.
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --filter @mira-cloud/api dev
+# On another local shell: curl -i http://127.0.0.1:3000/api/v1/health
+pnpm check
+pnpm --filter @mira-cloud/api build
+```
+
+`GET /api/v1/health` returns this process's own liveness/version; it makes **no** statement about Cloud Auth, Cloud Pi or PostgreSQL availability. `?detail=basic` is the only optional diagnostic query parameter. Unexpected/duplicate parameters return `INVALID_QUERY` (400), unsupported methods `METHOD_NOT_ALLOWED` (405), missing routes `NOT_FOUND` (404), and internal exceptions a scrubbed `INTERNAL_ERROR` (500). Errors carry a request ID. All HTTP integration tests use an actual ephemeral TCP listener and disable machine-wide proxy routing for loopback requests.
+
+No secrets, Docker/Caddy/prod, Cloud Auth, Cloud Pi or database configuration is created by this package.

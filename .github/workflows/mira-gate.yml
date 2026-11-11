@@ -91,4 +91,4 @@ jobs:
             echo "::error::prod promotion source policy failed or was skipped." >&2
             exit 1
           fi
-          echo "Mira Gate: docs and engineering source checks passed; prod promotion PR source checked when applicable; no runtime or deployment checks were run."
+          echo "Mira Gate: docs and engineering source checks passed; prod promotion PR source checked when applicable; application source and local HTTP integration were checked; no deployed environment or T4/T5 checks were run."
