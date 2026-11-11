@@ -1,0 +1,33 @@
+{
+  "name": "mira-cloud",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Mira Cloud engineering base. No business application is implemented yet.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "pnpm": ">=10.0.0 <11"
+  },
+  "scripts": {
+    "check": "node scripts/check-workspace.ts && pnpm run check:root && pnpm -r --workspace-concurrency=1 run check",
+    "check:root": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test:unit",
+    "format:check": "prettier --check \"scripts/**/*.{js,mjs,ts}\" \"tests/**/*.ts\" \"*.{json,yaml,yml}\" \"*.ts\"",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test:unit": "vitest run"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.2",
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.14.0",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.2",
+    "vite": "8.3.7",
+    "vitest": "5.1.0"
+  }
+}
