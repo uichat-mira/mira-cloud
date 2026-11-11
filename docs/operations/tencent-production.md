@@ -16,7 +16,7 @@ cloud.tomzlab.cn → existing host Caddy TLS → React dist directory and /api r
 
 - PostgreSQL has no host/public port, a persistent Docker volume, and a root-owned secret file under /opt/mira-cloud/secrets. The API image runs non-root with a dedicated supplementary group for secret access.
 - Web static releases are immutable directories under /srv/www/cloud.tomzlab.cn/releases, with an atomic current symlink.
-- The **VPS clones the public prod branch and verifies its exact Git SHA** against the dispatched workflow commit. Docker builds the API image on VPS, and a short-lived Node container builds the React assets. Docker and pnpm caches are reused across releases. No Docker image archive crosses SSH/SCP. The small on-host release bundle is SHA-256 checked before activation.
+- Actions verifies the exact protected `prod` commit and produces a **small tracked-source `git archive`** without `.git`, `node_modules` or credentials. It transfers the archive over pinned-host-key SSH/SCP to the VPS, which verifies its SHA-256 before extracting and building. Docker builds the API image on VPS, and a short-lived Node container builds React assets. Docker and pnpm caches are reused across releases. **No Docker image archive crosses SSH/SCP.** The small on-host release bundle is SHA-256 checked before activation.
 - Caddy changes are isolated to one managed site import, after backing up the existing configuration and validating it before reload.
 - Docker resources and logs are bounded. No Cloud Auth sessions or Cloud Pi tasks are implemented by this deployment.
 
@@ -24,7 +24,7 @@ cloud.tomzlab.cn → existing host Caddy TLS → React dist directory and /api r
 
 1. Promote feat → dev → test → prod with Docs Contract, Engineering Checks, real PostgreSQL Integration, Production Package and Mira Gate success.
 2. Manually run Deploy Mira Cloud to Tencent VPS on prod. No automatic SSH deployment on ordinary pushes.
-3. Strictly verify the previously trusted SSH identity and root target. Clone the public GitHub repo on the VPS, check out the current prod commit, **fail closed if it does not match the workflow's immutable SHA**, then build API Docker image and Web in a Node container locally. Before upgrades, require a logical pg_dump of the existing DB into the private backup folder.
+3. Strictly verify the previously trusted SSH identity and root target. Actions checks the immutable `prod` SHA, archives **tracked Git files only** and sends the content-addressed source tarball to the VPS. Verify the tarball's SHA-256 on VPS before extracting and building the API Docker image and Web inside a Node container. Before upgrades, require a logical pg_dump of the existing DB into the private backup folder.
 4. Check the on-host release bundle's SHA-256 hashes, start PostgreSQL, apply versioned migrations through a fixed one-off container, start the API, then verify actual HTTP 200 for both /api/v1/health and /api/v1/ready on loopback.
 5. Only after API readiness, activate versioned Web and validate/reload host Caddy.
 6. Prove HTTPS and public API readiness for the exact deployed SHA. Until the domain resolves to Tencent and inbound 80/443 work, report public T5 as pending, not passed.
@@ -43,11 +43,13 @@ on GitHub Actions, then transferred it with SCP to Tencent. The transfer did not
 complete before cancellation. That approach has been retired in favor of
 **`git clone` + on-host Docker build**, as selected by the maintainer.
 
-GitHub Actions only verifies the branch/SHA and enters the VPS over pinned SSH.
-The VPS itself runs `git clone --depth 1 --branch prod`, checks the checkout
-SHA, builds the API Dockerfile, builds Web assets inside a short-lived Node
-container, then invokes the same guarded activation, migration and Caddy flow.
-This approach moves *source code*, not heavyweight image archives. The first
+GitHub Actions verifies branch/SHA and enters the VPS over pinned SSH. The
+initial implementation cloned `prod` on VPS, but a subsequent run failed at
+`git clone` due intermittent `github.com` TLS errors from Tencent. The corrected
+implementation sends only a checksum-verified `git archive` of the checked-out,
+immutable `prod` commit (not the runner `.git` directory or any image archive),
+then builds API and Web on the VPS before the same guarded activation, migration
+and Caddy flow. This still moves only *source code*, not heavyweight images. The first
 pull of Node/Postgres base images and package dependencies can still require
 network access and time; later deployments can reuse on-host Docker layers.
 
