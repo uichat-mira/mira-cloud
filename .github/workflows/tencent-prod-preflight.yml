@@ -1,0 +1,88 @@
+name: Mira Cloud Tencent production preflight
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: mira-cloud-tencent-production-inspection
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Strict pinned SSH root read-only audit
+    if: github.ref == 'refs/heads/prod'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: production
+    env:
+      TX_DEPLOY_HOST: ${{ secrets.TX_DEPLOY_HOST }}
+      TX_DEPLOY_USER: ${{ secrets.TX_DEPLOY_USER }}
+      SSHPASS: ${{ secrets.TX_DEPLOY_PASSWORD }}
+      TX_ED25519_PIN: SHA256:dts8drN74WDQjcE4OsKJ5zozv1oTQ7aLOSeeXLI16HE
+    steps:
+      - name: Verify Tencent host identity then inspect without changing host
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          test -n "$TX_DEPLOY_HOST" && test -n "$SSHPASS" || {
+            echo "::error::Tencent Organization secrets not available to this repo"; exit 1;
+          }
+          test "$TX_DEPLOY_USER" = root || {
+            echo "::error::Expected explicitly authorized root principal"; exit 1;
+          }
+          sudo apt-get update -qq >/dev/null
+          sudo apt-get install -y -qq sshpass >/dev/null
+          known="$RUNNER_TEMP/mira-tx-known-hosts"
+          ssh-keyscan -T 12 -p 22 -t ed25519 "$TX_DEPLOY_HOST" 2>/dev/null > "$known"
+          test -s "$known"
+          test "$(wc -l < "$known" | tr -d ' ')" -eq 1
+          fingerprint="$(ssh-keygen -lf "$known" -E sha256 | awk '{print $2}')"
+          test "$fingerprint" = "$TX_ED25519_PIN" || {
+            echo "::error::Tencent host-key fingerprint mismatch (fail closed)"; exit 1;
+          }
+          chmod 600 "$known"
+          echo 'TX_ED25519_HOST_IDENTITY=VERIFIED'
+          sshpass -e ssh -p 22 -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$known" \
+            -o GlobalKnownHostsFile=/dev/null -o HostKeyAlgorithms=ssh-ed25519 \
+            -o PubkeyAuthentication=no -o PreferredAuthentications=password \
+            -o NumberOfPasswordPrompts=1 -o ConnectTimeout=15 \
+            "$TX_DEPLOY_USER@$TX_DEPLOY_HOST" 'bash -se' <<'REMOTE'
+          set -eu
+          test "$(id -u)" -eq 0
+          test "$(hostname)" = VM-0-17-ubuntu
+          . /etc/os-release
+          echo "TX_TARGET_ID=VM-0-17-ubuntu"
+          echo "TX_OS=$ID/$VERSION_CODENAME"
+          echo "TX_ARCH=$(uname -m)"
+          echo "TX_MEMORY_MB=$(free -m | awk '/^Mem:/ {print $2}')"
+          echo "TX_DISK_FREE_MB=$(df -Pm / | awk 'NR==2 {print $4}')"
+          echo "TX_DOCKER=$(command -v docker >/dev/null && echo installed || echo missing)"
+          if command -v docker >/dev/null; then
+            docker --version
+            docker compose version 2>/dev/null || true
+            echo "TX_RUNNING_CONTAINERS=$(docker ps -q | wc -l | tr -d ' ')"
+          fi
+          echo "TX_CADDY=$(command -v caddy >/dev/null && echo installed || echo missing)"
+          echo "TX_CADDY_SYSTEMD=$(systemctl is-active caddy 2>/dev/null || true)"
+          if test -r /etc/caddy/Caddyfile; then
+            echo "TX_CADDY_CONFIG=present"
+            echo "TX_CADDY_CONFIG_HASH=$(sha256sum /etc/caddy/Caddyfile | awk '{print $1}')"
+            echo "TX_CADDY_CLOUD_SITE=$(grep -Fq cloud.tomzlab.cn /etc/caddy/Caddyfile && echo present || echo absent)"
+            grep -E '^[[:space:]]*import[[:space:]]+' /etc/caddy/Caddyfile | head -12 || true
+          else
+            echo "TX_CADDY_CONFIG=missing"
+          fi
+          printf 'TX_LISTEN_PORTS='
+          ss -ltnH | awk '{n=split($4,a,":");print a[n]}' | sort -nu | paste -sd ',' -
+          for port in 34170 5432; do
+            if ss -ltnH | awk '{print $4}' | grep -Eq ":$port$"; then
+              echo "TX_PORT_$port=occupied"
+            else
+              echo "TX_PORT_$port=free"
+            fi
+          done
+          echo "TX_CLOUD_DEPLOY_DIR=$(test -e /opt/mira-cloud && echo present || echo absent)"
+          echo 'TX_ROOT_READONLY_PREFLIGHT=PASS'
+          REMOTE
