@@ -1,7 +1,7 @@
 # Mira Cloud — Engineering & Agent Coding Standard (v0.1)
 
-**状态：适用于已授权的 AGT-041–044 本地工程实现；OAuth、Agent 集成及生产部署仍未实现。**
-**权威层级：** 当前 [组织宪法](https://github.com/uichat-mira/.github/blob/main/AGENTS.md) → 当前 Issue/PR 合同 → 根目录 [AGENTS.md](../../AGENTS.md) → 本仓库特定技术规范 → 真实代码/测试。组织治理、Issue/Project 权威、通用测试与分支模型由组织拥有，**这里不复制一套新组织制度**。
+**状态：适用于当前 Mira Cloud React Web、Hono API、PostgreSQL/Drizzle、MiraDesign 与 prod-only 腾讯部署实现；OAuth、Cloud Pi 集成、Cloud-owned Task 编排等能力仅在实际代码与运行证据存在时成立。**
+**指令优先级：** 当前维护者明确指令 → 当前 Issue/PR/任务合同 → 根目录 [AGENTS.md](../../AGENTS.md) → 当前组织政策/Skill → 本文件中的通用实现细则。**事实判断另看实际代码、配置、workflow、测试与 runtime，文档优先级不能把未验证事实变成真的。** 组织治理、Issue/Project 权威、通用测试与分支模型由组织拥有，这里不复制一套新组织制度。
 
 - [技术裁决](../decisions/ADR-003-hono-drizzle-postgres-deployment.md)
 - [初始技术设计](../architecture/initial-technical-design.md)
@@ -15,7 +15,7 @@
 4. 自动化代理只能做自己具备工具能力的验证；无浏览器/真机能力的 Harness 不能凭“我点击过”给浏览器验收证明。必要时由具备该能力的执行者验收。
 5. 无权修改 GitHub Issue outcome、Project Status、PR merge、部署、生产凭证时不可猜测权限。已获本次任务明确授权的动作应直接执行，不人为插入冗余确认流程。
 
-## 2. TypeScript 与模块化边界（未来）
+## 2. TypeScript 与模块化边界
 
 - Node.js 24 + TypeScript strict；开启严格空值检查；禁止无理由 any、随意 type assertion、全局 mutable singleton；第三方不可信结构以 unknown + Zod 校验后进入领域层。
 - Hono 仅做 HTTP 路由、middleware、鉴权、限流、请求验证与响应映射；领域决策封装在 service；Drizzle 和驱动在 repository/db；外部服务封装在 adapter。**不要在 handler 里执行模型长任务或 SQL 连接的长期锁**。
@@ -63,13 +63,26 @@
 - 合同 T2：HTTP、Cloud Auth Audience、Cloud Pi Adapter、外部重试/错误响应、跨端 Handoff、迁移接口。
 - 集成 T3：真实 Hono Node + PostgreSQL 临时实例 + Drizzle migrations；失败注入/事务/租约；不得 mock 掉待测试的数据库或执行 Owner 边界。
 - T4：真实非生产环境/版本 E2E（**当前 dev/test 无服务器，没有此证据**）。
-- T5：真实生产部署健康/smoke（当前无 Mira Cloud production runtime）。
-- 未来有应用代码时，按组织测试标准提供 check、test:unit、test:contract、test:integration 等适用命令，并将必要结果纳入 Mira Gate。现有 Docs Contract 只能证明文档路径结构，不证明任何功能。
+- T5：真实生产部署健康/smoke。当前 prod-only 腾讯 runtime 已有部署路径；只有针对确切部署版本执行并通过的生产 smoke 才算 T5，不能由源码 Gate 代替。
+- 当前应用代码按组织测试标准提供适用的 check / test:unit / test:integration 等命令，并将必要结果纳入 Mira Gate。Docs Contract 只证明文档/路径合同；Engineering、PostgreSQL Integration 与 Production Package 各自只证明其实际执行层，不能互相冒充。
 - 不靠禁用测试、扩大 mock、吞掉异常、无故提高超时将红灯变绿。PR 必须明确 commit SHA、测试层、实际运行命令与结果，且测试代码与变更对应。
 
 ## 8. 部署和文档责任
 
 - 源码晋级 feat/* → dev → test → prod；但目前 dev/test 只承担 CI/source review，**不存在 dev/test 服务器**。main 不等于 prod。
-- 若未来批准部署：Docker Compose 跑新 API 和 PostgreSQL；优先复用已存在的宿主 Caddy；仅 prod 有权触发生产部署；必须有真实密钥、备份恢复、版本锚点、rollback 和安全 smoke。
+- 当前已批准 prod-only 腾讯部署：Docker Compose 运行 API 和 PostgreSQL，复用宿主 Caddy；仅明确的 prod 发布流程可触发生产部署，并要求真实密钥、版本锚点、备份/恢复、rollback 与生产 smoke。具体执行以 `docs/operations/tencent-production.md` 和实际 workflow/runtime 为准。
 - 永远不要为了“规范”在 dev/test 配置虚假的域名、server、Secrets、GitHub Deployment Environments；Cloud Pi 和 Cloud Auth 的现有部署归其仓库管理。
 - 单一事实来源：变更协议在实际 Owner 仓库/Issue，通用治理在组织仓库，Mira Cloud 的当前技术方向在 ADR-003，实施细则在本文件，部署真实状态取自 workflow/runtime。
+
+## 9. 编码卫生（强制）
+
+- **不留临时永久化。** debug 分支、临时开关、一次性兼容层、测试旁路和迁移过渡代码完成使命后必须删除；确需保留时写清真实 consumer、风险与删除条件。
+- **不复制事实源。** MiraDesign token、DTO、状态机、错误码、环境配置、API base URL、权限语义只从当前 owner 消费；feature 目录不得重新抄一份“差不多”的版本。
+- **不靠类型逃逸推进。** 禁止用无理由 `any`、双重 assertion、`@ts-ignore`、非空断言链隐藏不确定性。外部输入使用 `unknown` + 显式校验；内部类型缺口应修合同而不是绕过。
+- **不吞错误。** `catch` 必须恢复、转换或继续抛出；不得用空 catch、默认 success、无限 retry 或 silent fallback 隐藏失败。未知结果保留 unknown/pending，不伪装终态。
+- **不手改生成物。** generated CSS、token snapshot、migration snapshot 等由其 source/generator 产生；修 generator/source 后重新生成并保留 drift check。
+- **不造无主抽象。** 避免 giant utils、万能 service、虚构未来 consumer 的 base class/DI 层。出现真实重复或明确扩展点后再抽象。
+- **替换就收尸。** 新实现成为唯一 owner 后，同 PR 清理已确认无 consumer 的旧实现、旧 import、旧配置、旧测试和旧文档；不长期维护双路径。
+- **依赖最小化。** 新依赖必须由当前实现需要证明；重依赖、平台依赖、浏览器首屏依赖需说明边界与成本，能放 devDependency、adapter 或 lazy path 就不要污染 runtime。
+- **近邻证据同步。** 行为、合同、schema、状态语义或设计 token 变化时，同步更新最近的测试与事实文档；不要留“代码新、注释旧、AGENTS 更旧”的三套现实。
+- **检查不作假。** 不删除/放宽断言、不扩大 mock、不提高超时、不跳过安全/类型/格式检查来换绿色。检查确实过时时，明确修或退役它。
