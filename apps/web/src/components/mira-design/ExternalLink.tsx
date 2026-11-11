@@ -48,11 +48,7 @@ async function defaultCopyText(text: string): Promise<boolean> {
 }
 
 function defaultOpenUrl(url: string) {
-  const opened = window.open(url, "_blank", "noopener,noreferrer");
-  if (!opened) {
-    throw new Error("Browser blocked external window");
-  }
-  opened.opener = null;
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 export default function ExternalLink({
@@ -60,7 +56,7 @@ export default function ExternalLink({
   children,
   copyOnly = false,
   confirmBeforeOpen = false,
-  openUrl = defaultOpenUrl,
+  openUrl,
   copyText = defaultCopyText,
   messages,
   onClick,
@@ -89,7 +85,7 @@ export default function ExternalLink({
     }
 
     try {
-      await openUrl(url);
+      await (openUrl ?? defaultOpenUrl)(url);
     } catch {
       await copyFallback(url, false);
     }
@@ -98,6 +94,11 @@ export default function ExternalLink({
   const handleClick = async (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
     if (event.defaultPrevented) return;
+    const canUseNativeAnchor = !copyOnly && !confirmBeforeOpen && !openUrl;
+    if (canUseNativeAnchor) {
+      return;
+    }
+
     event.preventDefault();
 
     if (!confirmBeforeOpen) {

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import React from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -11,6 +12,7 @@ import {
   MinimalTable,
   Modal,
   ModalProvider,
+  ModalShell,
   NavigationCardTabs,
   SearchSelectModal,
   StatusIndicator,
@@ -72,6 +74,51 @@ describe("AGT-049 advanced MiraDesign components", () => {
       Modal.destroy();
     });
     await waitFor(() => expect(screen.queryByText("Body")).not.toBeInTheDocument());
+  });
+
+  it("traps focus inside a direct modal and restores the trigger", async () => {
+    function Harness() {
+      const [open, setOpen] = React.useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open modal
+          </button>
+          <ModalShell open={open} title="Focus test" onClose={() => setOpen(false)} footer={null}>
+            <button type="button">First action</button>
+            <button type="button">Last action</button>
+          </ModalShell>
+        </>
+      );
+    }
+
+    render(<Harness />);
+    const trigger = screen.getByRole("button", { name: "Open modal" });
+    await userEvent.click(trigger);
+
+    const dialog = await screen.findByRole("dialog", { name: "Focus test" });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+
+    const closeButton = screen.getByRole("button", { name: "关闭弹窗" });
+    expect(closeButton).toHaveFocus();
+
+    await userEvent.tab({ shift: true });
+    expect(screen.getByRole("button", { name: "Last action" })).toHaveFocus();
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Focus test" })).not.toBeInTheDocument(),
+    );
+    expect(trigger).toHaveFocus();
+  });
+
+  it("keeps the default unconfirmed ExternalLink on the native anchor path", async () => {
+    const openSpy = vi.spyOn(window, "open");
+    render(<ExternalLink href="https://example.com">Native docs</ExternalLink>);
+
+    await userEvent.click(screen.getByRole("link", { name: "Native docs" }));
+    expect(openSpy).not.toHaveBeenCalled();
+    openSpy.mockRestore();
   });
 
   it("fails visibly when the static modal API has no mounted provider", () => {

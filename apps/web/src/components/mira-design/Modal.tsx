@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -27,6 +28,7 @@ export interface ModalShowOptions {
   enableEscapeClose?: boolean;
   closeLabel?: string;
   closeText?: string;
+  ariaLabel?: string;
   onClose?: () => void;
 }
 
@@ -67,6 +69,7 @@ export interface ModalShellProps {
   enableEscapeClose?: boolean;
   closeLabel?: string;
   closeText?: string;
+  ariaLabel?: string;
   footer?: ReactNode | null;
   children: ReactNode;
   onClose: () => void;
@@ -175,25 +178,74 @@ export function ModalShell({
   enableEscapeClose = true,
   closeLabel = "关闭弹窗",
   closeText = "关闭",
+  ariaLabel,
   footer,
   children,
   onClose,
 }: ModalShellProps) {
   const showTitle = Boolean(title) || showCloseButton;
+  const titleId = useId();
+  const dialogRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (!open || !closable || !enableEscapeClose) {
+    if (!open) {
       return;
     }
 
+    const dialog = dialogRef.current;
+    if (!dialog) {
+      return;
+    }
+
+    const previousFocus =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusableSelector =
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    const focusable = () =>
+      Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+        (element) => !element.hasAttribute("hidden"),
+      );
+
+    const initialFocus = focusable()[0] ?? dialog;
+    initialFocus.focus();
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && closable && enableEscapeClose) {
+        event.preventDefault();
         onClose();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const items = focusable();
+      if (items.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = items[0];
+      const last = items.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (previousFocus?.isConnected) {
+        previousFocus.focus();
+      }
+    };
   }, [closable, enableEscapeClose, onClose, open]);
 
   if (!open) {
@@ -202,20 +254,22 @@ export function ModalShell({
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <button
-        type="button"
-        aria-label={closeLabel}
+      <div
+        aria-hidden="true"
         className="absolute inset-0 bg-text-primary/45 backdrop-blur-sm"
-        onClick={() => {
+        onMouseDown={() => {
           if (maskClosable && closable) {
             onClose();
           }
         }}
       />
       <section
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label={typeof title === "string" ? title : undefined}
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={!title ? ariaLabel : undefined}
         className="relative z-[101] flex w-full flex-col overflow-hidden rounded-ui-panel border border-border bg-surface-elevated shadow-shadow-xl"
         style={{
           maxWidth: resolveWidthStyle(width),
@@ -227,7 +281,9 @@ export function ModalShell({
           <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-2.5">
             <div className="min-w-0 flex-1">
               {title ? (
-                <div className="text-[15px] leading-8 font-semibold text-text-primary">{title}</div>
+                <div id={titleId} className="text-[15px] leading-8 font-semibold text-text-primary">
+                  {title}
+                </div>
               ) : null}
             </div>
             {showCloseButton && closable ? (
@@ -301,6 +357,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         {
           key,
           title: undefined,
+          ariaLabel: options.title,
           width: options.width ?? 440,
           maskClosable: false,
           showCloseButton: false,
@@ -391,6 +448,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
           enableEscapeClose={false}
           {...(modal.closeLabel !== undefined ? { closeLabel: modal.closeLabel } : {})}
           {...(modal.closeText !== undefined ? { closeText: modal.closeText } : {})}
+          {...(modal.ariaLabel !== undefined ? { ariaLabel: modal.ariaLabel } : {})}
           {...(modal.footer !== undefined ? { footer: modal.footer } : {})}
           onClose={() => close(modal.key)}
         >
