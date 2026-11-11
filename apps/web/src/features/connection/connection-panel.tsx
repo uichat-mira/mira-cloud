@@ -74,7 +74,7 @@ export function ConnectionPanel({ fetcher }: ConnectionPanelProps) {
   const checking = view.kind === "checking";
   return (
     <Card className="p-6" aria-labelledby="link-status-title">
-      <div className="mb-4 flex items-center gap-3 text-mira-muted">
+      <div className="mb-4 flex items-center gap-3 text-text-secondary">
         {checking ? (
           <LoaderCircle aria-hidden="true" size={19} />
         ) : view.kind === "ready" ? (
@@ -84,19 +84,19 @@ export function ConnectionPanel({ fetcher }: ConnectionPanelProps) {
         ) : (
           <Database aria-hidden="true" size={19} />
         )}
-        <h2 id="link-status-title" className="font-semibold text-mira-ink">
+        <h2 id="link-status-title" className="font-semibold text-text-primary">
           基础服务连接
         </h2>
       </div>
       <div aria-live="polite" aria-atomic="true" aria-busy={checking}>
-        <p className="mb-3 text-xl font-semibold text-mira-ink">{content.title}</p>
-        <p className="text-sm leading-7 text-mira-muted">{content.explanation}</p>
+        <p className="mb-3 text-xl font-semibold text-text-primary">{content.title}</p>
+        <p className="text-sm leading-7 text-text-secondary">{content.explanation}</p>
       </div>
       {"apiVersion" in view && (
-        <p className="mt-3 text-xs text-mira-muted">API 版本：{view.apiVersion}</p>
+        <p className="mt-3 text-xs text-text-secondary">API 版本：{view.apiVersion}</p>
       )}
       {"requestId" in view && view.requestId && (
-        <p className="mt-2 break-all text-xs text-mira-muted">请求编号：{view.requestId}</p>
+        <p className="mt-2 break-all text-xs text-text-secondary">请求编号：{view.requestId}</p>
       )}
       <Button
         className="mt-5"
@@ -107,7 +107,7 @@ export function ConnectionPanel({ fetcher }: ConnectionPanelProps) {
         <RefreshCw aria-hidden="true" size={16} />
         重新检查
       </Button>
-      <div className="mt-6 border-t border-mira-border pt-4 text-sm text-mira-muted">
+      <div className="mt-6 border-t border-border pt-4 text-sm text-text-secondary">
         <span className="inline-flex items-center gap-2">
           <Cloud size={16} aria-hidden="true" />
           仅检查基础设施，不代表 Cloud Auth 登录或 Cloud Pi 在线

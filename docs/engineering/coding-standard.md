@@ -53,8 +53,8 @@
 
 ## 6. UI / WebView
 
-- 统一响应式 React/Vite 代码服务 Web + Mobile WebView；设计 token 由当前 Mira Mobile 权威版本生成并锁定上游 SHA，不手工维护一份近似色表。
-- 样式变量作用域隔离，遵守 Mobile 的 light/dark、preset、触控尺寸、安全区域。Desktop 云功能通过现有本地 UI 与 typed Cloud API Adapter，避免强迫桌面整体 WebView 化。
+- 统一响应式 React/Vite 代码服务 Web + Mobile WebView；设计 token 由 pinned Mira Desktop 权威版本生成并锁定上游 SHA，不手工维护一份近似色表。
+- 样式变量作用域隔离，遵守 MiraDesign 的 light/dark、preset、触控尺寸、安全区域。Desktop 云功能通过现有本地 UI 与 typed Cloud API Adapter，避免强迫桌面整体 WebView 化。
 - 请求错误、权限拒绝、断线、等待确认、运行中、终态、交接待接收与空态必须显示准确；不能把 Mock fixture 的成功提示当成真实服务状态。
 
 ## 7. 质量、测试和 CI

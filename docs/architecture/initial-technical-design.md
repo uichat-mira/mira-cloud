@@ -78,7 +78,7 @@ apps/
     db/                   # Drizzle schema/repository/migrations
 packages/
   contracts/              # versioned runtime-validated DTOs
-  design-tokens/          # generated from pinned Mira Mobile source
+  design-tokens/          # generated from pinned Mira Desktop source
 ~~~
 
 根工作区已具备 Node 24、pinned pnpm、TypeScript strict、格式/静态检查和 Vitest T1 工具底座，且已初始化本地 React Web、Hono API 及单表 PostgreSQL/Drizzle；其他领域模块、OAuth、Agent 能力仍未实现。应用依赖版本由未来 implementation PR 按锁文件精确锁定并验证；本文档不创造业务实现。

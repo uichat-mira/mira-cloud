@@ -22,7 +22,7 @@ export function FormField({ id, label, description, error, children }: FormField
 
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <label className="text-sm font-medium text-mira-ink" htmlFor={id}>
+      <label className="text-sm font-medium text-text-primary" htmlFor={id}>
         {label}
       </label>
       {cloneElement(children, {
@@ -31,17 +31,12 @@ export function FormField({ id, label, description, error, children }: FormField
         ...(error ? { "aria-invalid": true } : {}),
       })}
       {description && (
-        <p id={id + "-help"} className="text-xs text-mira-muted">
+        <p id={id + "-help"} className="text-xs text-text-secondary">
           {description}
         </p>
       )}
       {error && (
-        <p
-          id={id + "-error"}
-          role="alert"
-          className="text-sm font-medium"
-          style={{ color: "var(--mira-color-error)" }}
-        >
+        <p id={id + "-error"} role="alert" className="text-sm font-medium text-danger-text">
           {error}
         </p>
       )}

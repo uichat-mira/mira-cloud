@@ -1,5 +1,10 @@
 import type { ComponentPropsWithoutRef } from "react";
 
 export function Card({ className = "", ...props }: ComponentPropsWithoutRef<"section">) {
-  return <section className={"mira-card min-w-0 " + className} {...props} />;
+  return (
+    <section
+      className={"min-w-0 rounded-ui-overlay border border-border bg-surface-primary " + className}
+      {...props}
+    />
+  );
 }

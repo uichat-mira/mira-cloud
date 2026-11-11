@@ -1,67 +1,176 @@
 @import "tailwindcss";
-@import "./tokens.generated.css";
+@import "./mira-design.generated.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --color-mira-canvas: var(--mira-color-canvas);
-  --color-mira-card: var(--mira-color-card);
-  --color-mira-soft: var(--mira-color-soft);
-  --color-mira-ink: var(--mira-color-ink);
-  --color-mira-text: var(--mira-color-text);
-  --color-mira-muted: var(--mira-color-muted);
-  --color-mira-border: var(--mira-color-border);
-  --color-mira-primary: var(--mira-color-primary);
-  --color-mira-action: var(--mira-color-action);
-  --color-mira-on-primary: var(--mira-color-on-primary);
+  --color-primary: rgb(var(--mira-color-primary));
+  --color-primary-hover: rgb(var(--mira-color-primary-hover));
+  --color-primary-1: rgb(var(--mira-color-primary-1));
+  --color-primary-2: rgb(var(--mira-color-primary-2));
+  --color-primary-3: rgb(var(--mira-color-primary-3));
+  --color-primary-4: rgb(var(--mira-color-primary-4));
+  --color-primary-5: rgb(var(--mira-color-primary-5));
+  --color-primary-6: rgb(var(--mira-color-primary-6));
+  --color-primary-7: rgb(var(--mira-color-primary-7));
+  --color-primary-8: rgb(var(--mira-color-primary-8));
+  --color-primary-9: rgb(var(--mira-color-primary-9));
+  --color-cloudy: rgb(var(--mira-color-cloudy));
+  --color-cloudy-1: rgb(var(--mira-color-cloudy-1));
+  --color-cloudy-2: rgb(var(--mira-color-cloudy-2));
+  --color-cloudy-3: rgb(var(--mira-color-cloudy-3));
+  --color-cloudy-4: rgb(var(--mira-color-cloudy-4));
+  --color-cloudy-5: rgb(var(--mira-color-cloudy-5));
+  --color-cloudy-6: rgb(var(--mira-color-cloudy-6));
+  --color-cloudy-7: rgb(var(--mira-color-cloudy-7));
+  --color-cloudy-8: rgb(var(--mira-color-cloudy-8));
+  --color-cloudy-9: rgb(var(--mira-color-cloudy-9));
+  --color-pampas: rgb(var(--mira-color-pampas));
+  --color-pampas-1: rgb(var(--mira-color-pampas-1));
+  --color-pampas-2: rgb(var(--mira-color-pampas-2));
+  --color-pampas-3: rgb(var(--mira-color-pampas-3));
+  --color-pampas-4: rgb(var(--mira-color-pampas-4));
+  --color-pampas-5: rgb(var(--mira-color-pampas-5));
+  --color-pampas-6: rgb(var(--mira-color-pampas-6));
+  --color-pampas-7: rgb(var(--mira-color-pampas-7));
+  --color-pampas-8: rgb(var(--mira-color-pampas-8));
+  --color-pampas-9: rgb(var(--mira-color-pampas-9));
+  --color-secondary: rgb(var(--mira-color-secondary));
+  --color-surface-primary: rgb(var(--mira-color-surface-primary));
+  --color-surface-auth: rgb(var(--mira-color-surface-auth));
+  --color-surface-soft: rgb(var(--mira-color-surface-soft));
+  --color-surface-secondary: rgb(var(--mira-color-surface-secondary));
+  --color-surface-tertiary: rgb(var(--mira-color-surface-tertiary));
+  --color-surface-elevated: rgb(var(--mira-color-surface-elevated));
+  --color-border: rgb(var(--mira-color-border));
+  --color-text-primary: rgb(var(--mira-color-text-primary));
+  --color-text-secondary: rgb(var(--mira-color-text-secondary));
+  --color-text-tertiary: rgb(var(--mira-color-text-tertiary));
+  --color-text-inverted: rgb(var(--mira-color-text-inverted));
+  --color-icon-primary: rgb(var(--mira-color-icon-primary));
+  --color-icon-secondary: rgb(var(--mira-color-icon-secondary));
+  --color-icon-tertiary: rgb(var(--mira-color-icon-tertiary));
+  --color-icon-inverted: rgb(var(--mira-color-icon-inverted));
+  --color-success: rgb(var(--mira-color-success));
+  --color-success-soft: rgb(var(--mira-color-success-soft));
+  --color-success-border: rgb(var(--mira-color-success-border));
+  --color-success-text: rgb(var(--mira-color-success-text));
+  --color-warning: rgb(var(--mira-color-warning));
+  --color-warning-soft: rgb(var(--mira-color-warning-soft));
+  --color-warning-border: rgb(var(--mira-color-warning-border));
+  --color-warning-text: rgb(var(--mira-color-warning-text));
+  --color-danger: rgb(var(--mira-color-danger));
+  --color-danger-soft: rgb(var(--mira-color-danger-soft));
+  --color-danger-border: rgb(var(--mira-color-danger-border));
+  --color-danger-text: rgb(var(--mira-color-danger-text));
+  --color-info: rgb(var(--mira-color-info));
+  --color-info-soft: rgb(var(--mira-color-info-soft));
+  --color-info-border: rgb(var(--mira-color-info-border));
+  --color-info-text: rgb(var(--mira-color-info-text));
+
+  --spacing-space-1: var(--mira-space-1);
+  --spacing-space-2: var(--mira-space-2);
+  --spacing-space-3: var(--mira-space-3);
+  --spacing-space-4: var(--mira-space-4);
+  --spacing-space-5: var(--mira-space-5);
+  --spacing-space-6: var(--mira-space-6);
+  --spacing-space-8: var(--mira-space-8);
+  --spacing-space-10: var(--mira-space-10);
+
+  --radius-ui-control: var(--mira-radius-ui-control);
+  --radius-ui-surface: var(--mira-radius-ui-surface);
+  --radius-ui-panel: var(--mira-radius-ui-panel);
+  --radius-ui-overlay: var(--mira-radius-ui-overlay);
+  --radius-ui-hero: var(--mira-radius-ui-hero);
+  --radius-radius-sm: var(--mira-radius-sm);
+  --radius-radius-md: var(--mira-radius-md);
+  --radius-radius-lg: var(--mira-radius-lg);
+  --radius-radius-xl: var(--mira-radius-xl);
+  --radius-pill: var(--mira-radius-pill);
+
+  --shadow-shadow-sm: var(--mira-shadow-sm);
+  --shadow-shadow-md: var(--mira-shadow-md);
+  --shadow-shadow-lg: var(--mira-shadow-lg);
+  --shadow-shadow-xl: var(--mira-shadow-xl);
+
+  --font-sans: var(--mira-font-sans);
+  --font-serif: var(--mira-font-serif);
+  --font-mono: var(--mira-font-mono);
+
+  --text-display: var(--mira-type-display-size);
+  --text-display--font-weight: var(--mira-type-display-weight);
+  --text-display--line-height: var(--mira-type-display-line-height);
+  --text-heading-1: var(--mira-type-heading-1-size);
+  --text-heading-1--font-weight: var(--mira-type-heading-1-weight);
+  --text-heading-1--line-height: var(--mira-type-heading-1-line-height);
+  --text-heading-2: var(--mira-type-heading-2-size);
+  --text-heading-2--font-weight: var(--mira-type-heading-2-weight);
+  --text-heading-2--line-height: var(--mira-type-heading-2-line-height);
+  --text-body: var(--mira-type-body-size);
+  --text-body--font-weight: var(--mira-type-body-weight);
+  --text-body--line-height: var(--mira-type-body-line-height);
+  --text-body-small: var(--mira-type-body-small-size);
+  --text-body-small--font-weight: var(--mira-type-body-small-weight);
+  --text-body-small--line-height: var(--mira-type-body-small-line-height);
+  --text-caption: var(--mira-type-caption-size);
+  --text-caption--font-weight: var(--mira-type-caption-weight);
+  --text-caption--line-height: var(--mira-type-caption-line-height);
 }
+
 :root {
   color-scheme: light;
 }
-:root[data-mira-appearance="dark"] {
+
+:root[data-mira-theme-mode="dark"] {
   color-scheme: dark;
 }
+
 * {
   box-sizing: border-box;
 }
+
 body {
   margin: 0;
   min-width: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  background: var(--mira-color-canvas);
-  color: var(--mira-color-text);
+  font-family: var(--mira-font-sans);
+  background: rgb(var(--mira-color-surface-secondary));
+  color: rgb(var(--mira-color-text-primary));
 }
+
 button,
 input,
 select {
   font: inherit;
 }
+
 button {
   cursor: pointer;
 }
+
 button:disabled {
   cursor: not-allowed;
 }
+
 :focus-visible {
-  outline: 2px solid var(--mira-color-action);
+  outline: 2px solid rgb(var(--mira-color-primary));
   outline-offset: 3px;
 }
+
 .app-shell {
   min-height: 100dvh;
   display: grid;
   grid-template-columns: 244px minmax(0, 1fr);
 }
+
 .sidebar {
   display: flex;
   flex-direction: column;
   gap: 24px;
   padding: 28px 16px;
-  background: var(--mira-color-card);
-  border-right: 1px solid var(--mira-color-border);
+  background: rgb(var(--mira-color-surface-secondary));
+  border-right: 1px solid rgb(var(--mira-color-border));
 }
+
 .page-content {
   min-width: 0;
   max-width: 1220px;
@@ -69,82 +178,34 @@ button:disabled {
   margin: 0 auto;
   padding: 36px clamp(16px, 4vw, 64px) max(32px, env(safe-area-inset-bottom));
 }
+
 .hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: 18px;
 }
+
 .nav-link {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--mira-radius-ui-panel);
   text-decoration: none;
-  color: var(--mira-color-text);
+  color: rgb(var(--mira-color-text-primary));
 }
+
 .nav-link[aria-current="page"] {
-  background: var(--mira-color-soft);
-  color: var(--mira-color-ink);
+  background: rgb(var(--mira-color-surface-soft));
+  color: rgb(var(--mira-color-text-primary));
   font-weight: 600;
 }
+
 .nav-link:hover {
-  background: var(--mira-color-soft);
+  background: rgb(var(--mira-color-surface-soft));
 }
-.mira-card {
-  background: var(--mira-color-card);
-  border: 1px solid var(--mira-color-border);
-  border-radius: var(--mira-radius-card);
-}
-.mira-input {
-  background: var(--mira-color-input);
-  border: 1px solid var(--mira-color-border);
-  color: var(--mira-color-ink);
-  border-radius: var(--mira-radius-control);
-  min-height: 44px;
-  width: 100%;
-  padding: 10px 12px;
-}
-.mira-input[aria-invalid="true"] {
-  border-color: var(--mira-color-error);
-}
-.mira-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  border-radius: var(--mira-radius-control);
-  padding: 10px 16px;
-  font-weight: 600;
-  transition: opacity 150ms ease;
-}
-.mira-button-primary {
-  background: var(--mira-color-action);
-  color: var(--mira-color-on-primary);
-  border: 1px solid transparent;
-}
-.mira-button-secondary {
-  background: var(--mira-color-card);
-  color: var(--mira-color-ink);
-  border: 1px solid var(--mira-color-border);
-}
-.mira-button-ghost {
-  background: transparent;
-  color: var(--mira-color-ink);
-  border: 1px solid transparent;
-}
-.mira-button:hover:not(:disabled) {
-  opacity: 0.88;
-}
-.mira-button:disabled {
-  opacity: 0.55;
-}
-.mira-icon-button {
-  width: 44px;
-  padding: 10px;
-}
+
 @media (max-width: 790px) {
   .app-shell {
     display: block;
@@ -156,7 +217,7 @@ button:disabled {
     padding: max(12px, env(safe-area-inset-top)) 16px 12px;
     gap: 12px;
     border-right: 0;
-    border-bottom: 1px solid var(--mira-color-border);
+    border-bottom: 1px solid rgb(var(--mira-color-border));
   }
   .sidebar .mobile-hide {
     display: none;

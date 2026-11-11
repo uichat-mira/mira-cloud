@@ -17,5 +17,6 @@
     "tests/**/*.ts",
     "tests/**/*.tsx",
     "vite.config.ts"
-  ]
+  ],
+  "exclude": ["src/theme/mira-design/upstream/**"]
 }

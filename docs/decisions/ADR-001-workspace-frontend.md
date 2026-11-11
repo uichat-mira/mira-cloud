@@ -37,7 +37,7 @@ mira-cloud-workspace/
 │       │   ├── skills/              # 先做展示/可发现性
 │       │   └── github/              # GitHub 工程任务视图
 │       ├── src/adapters/            # 仅声明接口和真实/Mock Adapter
-│       ├── src/theme/               # Mobile token 消费端（生成文件）
+│       ├── src/theme/               # MiraDesign Desktop token 消费端（生成文件）
 │       └── src/components/          # 私有工作台组件
 └── docs/
     ├── ADR-001.md
@@ -47,26 +47,25 @@ mira-cloud-workspace/
 
 ## 2. Token 权威和风格
 
-当前单一权威：`uichat-mira/mira-mobile@dev` 的 `src/theme/tokens.ts`、`src/theme/palette.ts`、`DESIGN.md`。**不手工维护第二份相似色板**；工作台使用从精确源 SHA 导出的生成结果。生成器与生成文件同时记录上游 SHA，并在 CI 运行 parity check。升级 Mobile 主题时显式升级源 SHA；后续有真实复用需求再抽成独立可版本化 package，令两端都消费它。
+当前单一权威：`uichat-mira/mira-desktop@dev` 的 `desktop/src/shared/theme/colorThemes.ts`、`desktop/src/styles.css`、`desktop/tailwind.config.cjs`（AGT-047 固定 commit `5036067d3a87ba95d798e01ededc7fbd678327de`）。**不手工维护第二份相似色板**；工作台使用从精确源 SHA 导出的生成结果，源码位于 `apps/web/src/theme/mira-design/`。生成器与生成文件同时记录上游 SHA，并在 CI 运行 parity check。升级 Desktop 主题时显式升级源 SHA；后续有真实复用需求再抽成独立可版本化 package，令相关端都消费它。
 
-默认主题：
+默认主题（`warm-neutral` / light）：
 
 | Token | 值 |
 | --- | --- |
-| `colors.primary` | `#c96442` |
-| `colors.primaryActive` | `#a95034` |
-| `colors.bg.canvas` | `#f5f4ed` |
-| `colors.bg.card` | `#faf9f5` |
-| `colors.bg.soft` | `#e8e6dc` |
-| `colors.text.ink` | `#141413` |
-| `colors.text.base` | `#3d3d3a` |
-| `colors.border.default` | `#e8e6dc` |
-| radius | 8 / 12 / 16 / 20 / full |
-| spacing | 4 / 8 / 12 / 16 / 24 / 32 |
+| `--color-primary` | `193 95 60` |
+| `--color-primary-hover` | `156 67 40` |
+| `--color-surface-secondary` | `248 248 246` |
+| `--color-surface-primary` | `252 251 249` |
+| `--color-surface-soft` | `245 240 232` |
+| `--color-text-primary` | `31 27 24` |
+| `--color-text-secondary` | `87 81 73` |
+| radius | 8 / 10 / 12 / 14 / 16 / 18 / 20 / full |
+| spacing | 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 |
 | touch target | ≥ 44px |
-| body | 16px / 1.6 line-height |
+| body | 14px / 1.6 line-height |
 
-全部支持 Mobile 中四组 preset：`default`、`knowledge-blue`、`archive-green`、`slate-ocean`，各自 light/dark。生产 WebView 只同步 `preset` 与 `mode` 等**非敏感**视觉信息。工作台使用独立命名空间（例如 `data-mira-workspace` + `--mw-*`），不得覆盖 Cloud Auth 的 `--mc-*` 全局变量。遵守 Mobile 视觉原则：暖色画布、珊瑚色克制使用、细边框+背景层级、少阴影、系统字体、Lucide、44px 点击目标。
+全部支持 Desktop 四组 preset：`warm-neutral`、`knowledge-blue`、`archive-green`、`slate-ocean`，各自 light/dark。生产 WebView 只同步 `preset` 与 `mode` 等**非敏感**视觉信息。工作台使用独立命名空间（`--mira-*` + `data-mira-*`），不得覆盖 Cloud Auth 的 `--mc-*` 全局变量。遵守 MiraDesign 视觉原则：暖色表面、珊瑚色克制使用、细边框+背景层级、少阴影、系统/Desktop 字体栈、Lucide、44px 点击目标。
 
 ## 3. 真实集成边界
 
@@ -94,7 +93,7 @@ mira-cloud-workspace/
 
 ## 6. 交付顺序和验收
 
-**A / 代码项目基础**：独立 repo + package/preview + Mobile token parity（含所有 preset light/dark）+ 响应式 UI；测试 build、类型、主题快照、无全局 CSS 污染、WebView 模拟宽度。
+**A / 代码项目基础**：独立 repo + package/preview + MiraDesign Desktop token parity（含所有 preset light/dark）+ 响应式 UI；测试 build、类型、主题快照、无全局 CSS 污染、WebView 模拟宽度。
 
 **B / 真数据只读**：通过 Cloud Auth 现有 auth+gateway 读取 Agent status、schedules、runs、report。无真实数据时展示真实空态/不可达，不用 demo 替代。
 
@@ -104,21 +103,21 @@ mira-cloud-workspace/
 
 **E / 能力扩展**：Skills/GitHub 的只读发现先行，真正写操作和运行时权限单独验收。
 
-通过条件：同一 workspace 组件编译产物在 playground 和 Cloud Auth 工作；视觉 token 与 pinned Mobile 源一致；Chrome/Android WebView/iOS WebView 最低验证布局与核心交互；前端没有密钥；生产授权/任务写操作由真实 API 确认；不改变 Desktop / Mobile Local Provider 独立路径。
+通过条件：同一 workspace 组件编译产物在 playground 和 Cloud Auth 工作；视觉 token 与 pinned Mira Desktop 源一致；Chrome/Android WebView/iOS WebView 最低验证布局与核心交互；前端没有密钥；生产授权/任务写操作由真实 API 确认；不改变 Desktop / Mobile Local Provider 独立路径。
 
 ## 7. 当前阻塞与未实施项
 
 1. 已连接 GitHub 工具可以读取/修改**已存在**仓库，但没有新建 GitHub Repository 或 GitHub Project 的动作。因此本次评估没有声称已在 GitHub 建库；候选 repo 名需要通过具有管理权限的创建路径实现。
 2. `mira-cloud-workspace` 尚未产生源码、PR 或上线。现有单文件 HTML 原型只能用作信息架构/交互参考，不作为最终代码基底。
-3. Cloud Auth 现有 `--mc-*` 控制台风格不等于 Mobile token，需要隔离与渐进迁移。
-4. 当前 Mobile 中 `tokens.ts` 是 canonical；未来如果正式抽离共享包，要同步调整 `mira-mobile` 的引用和 `DESIGN.md`，不能让两份 runtime token 分叉。
+3. Cloud Auth 现有 `--mc-*` 控制台风格不等于 MiraDesign token，需要隔离与渐进迁移。
+4. 当前 `mira-desktop` 的 `colorThemes.ts` 是 canonical；AGT-047 在 Cloud 内固定上游并生成 Foundation，不能让两份 runtime token 分叉。
 
 ## 8. 当前来源（代码事实）
 
 - Organization: https://github.com/uichat-mira/.github/blob/main/AGENTS.md  SHA `50d7ce672b6b479ab1fc1947f4c63659abae6a3a`
-- Mobile token: https://github.com/uichat-mira/mira-mobile/blob/dev/src/theme/tokens.ts
-- Mobile palette: https://github.com/uichat-mira/mira-mobile/blob/dev/src/theme/palette.ts
-- Mobile style rules: https://github.com/uichat-mira/mira-mobile/blob/dev/DESIGN.md
+- Desktop theme source: https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts
+- Desktop base styles: https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/styles.css
+- Desktop Tailwind semantics: https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/tailwind.config.cjs
 - Mobile WebView dependency: https://github.com/uichat-mira/mira-mobile/blob/dev/package.json
 - Cloud Auth web: https://github.com/uichat-mira/cloud-auth/blob/dev/apps/web/package.json
 - Cloud Auth console global CSS: https://github.com/uichat-mira/cloud-auth/blob/dev/apps/web/src/styles/globals.css
