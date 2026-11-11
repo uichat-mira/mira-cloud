@@ -65,12 +65,14 @@ than left as a second implementation.
 - Slider thumb/track/focus and stable scrollbar hooks are Cloud-owned `mira-*` CSS in `globals.css`; no Desktop-only global class is required.
 - `Message` preserves the static API through a namespaced browser event bridge instead of Desktop's module-level mutable provider reference.
 
-## Deferred components
+## Advanced / Content continuation
 
-Table, Markdown/Editor, SearchSelect, NavigationCardTabs and other components with heavy
-or Desktop-specific dependencies remain out of this migration and belong to AGT-049.
-Desktop business UI and Access Point/Coverage/MicroFrontend surfaces are not part of the
-MiraDesign base layer.
+AGT-049 now owns the formerly deferred generic Advanced / Content layer. Its pinned source
+matrix, coupling decisions, Web adapters, dependency choices, lazy-content boundary and
+bundle evidence live in [MiraDesign Advanced & Content Migration Record](./mira-design-advanced-migration.md).
+
+Desktop business UI and Access Point/Coverage/MicroFrontend surfaces remain excluded from
+MiraDesign.
 
 ## Evidence
 

@@ -1,6 +1,6 @@
 # Mira Cloud — React Component Library Contract
 
-**Status:** design contract; AGT-047 establishes the MiraDesign Foundation and AGT-048 migrates the reusable Desktop Core UI components into the Cloud-owned MiraDesign layer, without publishing an independent component package. The per-component source record is [MiraDesign Core UI Migration Record](./mira-design-migration.md). This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
+**Status:** design contract; AGT-047 establishes the MiraDesign Foundation, AGT-048 migrates Core UI, and AGT-049 adds the Web-decoupled Advanced / Content layer without publishing an independent component package. Source records: [Core UI](./mira-design-migration.md) and [Advanced / Content](./mira-design-advanced-migration.md). This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
 
 ## 1. Technology direction
 
@@ -27,12 +27,13 @@ UI primitives must not import Cloud Pi/GitHub/OAuth adapters. Domain components 
 
 ### Implemented batches
 
-The first two batches are already implemented as Cloud-owned MiraDesign source:
+The current Cloud-owned MiraDesign source contains:
 
-1. Alert / Badge / Button / IconButton / Card / SectionCard / Divider / Input / TextArea / NumberInput / Skeleton / Switch / Slider / Tag / TagInput / Tooltip / NavItem / SegmentedTabs / TabCard / CollapsiblePanel / ExpandableSection / Drawer / DropdownMenu / ConfirmDialog / Message / Result / FullPageStatus / FileIcon / ImagePreviewOverlay / StepIndicator / TerminalPanel / WelcomePanel.
-2. TaskCard / RunStateIndicator / RuntimeBadge / ArtifactRow remain the first domain-component journey and are not implied by the base layer.
+1. **Foundation / Core:** Alert / Badge / Button / IconButton / Card / SectionCard / Divider / Input / TextArea / NumberInput / Skeleton / Switch / Slider / Tag / TagInput / Tooltip / NavItem / SegmentedTabs / TabCard / CollapsiblePanel / ExpandableSection / Drawer / DropdownMenu / ConfirmDialog / Message / Result / FullPageStatus / FileIcon / ImagePreviewOverlay / StepIndicator / TerminalPanel / WelcomePanel.
+2. **Advanced / Content:** Table, NavigationCardTabs, Select, Modal, SearchSelectModal / Chrome, CodeBlock, StreamingTextRenderer, CompactAudioPlayer, AvatarPicker, FileListItem, FileUploadDropzone, ErrorBoundary, ExternalLink and StatusIndicator. MarkdownText / MarkdownEditor are Cloud-owned but stay behind an explicit heavy-content entry / dynamic loader so ordinary MiraDesign imports do not eagerly pull their runtime.
+3. **Domain journey remains separate:** TaskCard / RunStateIndicator / RuntimeBadge / ArtifactRow remain the first Cloud-domain component journey and are not implied by MiraDesign.
 
-Table, Markdown/Editor, SearchSelect and NavigationCardTabs are deferred to AGT-049. Additional components such as DatePicker, charts, resource tree, command palette or data grid are **not** P0 just because a UI toolkit offers them.
+Additional components such as DatePicker, charts, resource tree, command palette or a richer data grid are **not** P0 merely because a toolkit offers them.
 
 ## 3. State semantics matter more than decoration
 

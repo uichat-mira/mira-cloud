@@ -31,11 +31,7 @@ const MarkdownText = memo(function MarkdownText({
   return (
     <Streamdown
       plugins={features === "basic" ? basicPlugins : fullPlugins}
-      className={
-        className
-          ? `${defaultMarkdownClassName} ${className}`
-          : defaultMarkdownClassName
-      }
+      className={className ? `${defaultMarkdownClassName} ${className}` : defaultMarkdownClassName}
       {...rest}
     >
       {children}

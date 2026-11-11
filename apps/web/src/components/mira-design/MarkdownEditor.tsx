@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 
 export type MarkdownEditorProps = {
   initialValue?: string;
-  onChange?: (value: string) => void;
-  placeholder?: string;
+  onChange?: ((value: string) => void) | undefined;
+  placeholder?: string | undefined;
   disabled?: boolean;
   className?: string;
 };

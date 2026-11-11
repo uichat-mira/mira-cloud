@@ -113,7 +113,11 @@ export function resolveNavigationCardTabsWindow({
     return { start: 0, end: 1, hasOverflow: false };
   }
 
-  for (let visibleCount = Math.min(cappedVisibleCount, count - 1); visibleCount >= 1; visibleCount -= 1) {
+  for (
+    let visibleCount = Math.min(cappedVisibleCount, count - 1);
+    visibleCount >= 1;
+    visibleCount -= 1
+  ) {
     const start =
       safeSelectedIndex < visibleCount
         ? 0
@@ -158,11 +162,7 @@ function getTabStateClassName(
   ].join(" ");
 }
 
-function NavigationCardTabContent({
-  tab,
-}: {
-  tab: NavigationCardTab<string>;
-}) {
+function NavigationCardTabContent({ tab }: { tab: NavigationCardTab<string> }) {
   return (
     <>
       {tab.icon ? (
@@ -240,9 +240,7 @@ export default function NavigationCardTabs<T extends string>({
   });
 
   const visibleTabs = tabs.slice(tabWindow.start, tabWindow.end);
-  const hiddenTabs = tabs.filter(
-    (_, index) => index < tabWindow.start || index >= tabWindow.end,
-  );
+  const hiddenTabs = tabs.filter((_, index) => index < tabWindow.start || index >= tabWindow.end);
   const tabSurfaceClassName = getTabSurfaceClassName();
   const tabStateClassName = getTabStateClassName(activeTabStyle);
 
@@ -263,11 +261,7 @@ export default function NavigationCardTabs<T extends string>({
             key={tab.value}
             value={tab.value}
             aria-label={typeof tab.label === "string" ? tab.label : undefined}
-            className={[
-              tabSurfaceClassName,
-              tabStateClassName,
-              "min-w-0 shrink",
-            ].join(" ")}
+            className={[tabSurfaceClassName, tabStateClassName, "min-w-0 shrink"].join(" ")}
           >
             <NavigationCardTabContent tab={tab} />
           </Tabs.Trigger>

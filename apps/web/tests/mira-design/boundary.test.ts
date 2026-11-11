@@ -40,8 +40,13 @@ describe("MiraDesign component ownership boundary", () => {
       "/desktop/src/",
       "react-i18next",
       "i18next",
+      "react-router-dom",
+      "desktopRuntime",
+      "@/shared/",
+      "/desktop/src/",
       "features/",
-      "shared/",
+      "shared/lib/request",
+      "shared/lib/clipboard",
       "fetch(",
       "XMLHttpRequest",
       "zustand",
@@ -68,11 +73,74 @@ describe("MiraDesign component ownership boundary", () => {
     expect(globals).toContain(".mira-range-slider {");
     expect(globals).toContain(".mira-range-slider-compact::-webkit-slider-thumb");
     expect(globals).toContain(".mira-stable-scrollbar {");
+    expect(globals).toContain(".mira-hide-scrollbar {");
+    expect(globals).toContain(".mira-range-slider-vertical {");
+    expect(globals).toContain(".mira-markdown-editor {");
 
     for (const file of sourceFiles) {
       const contents = readFileSync(join(componentRoot, file), "utf8");
       expect(contents, file).not.toContain("claude-range-slider");
       expect(contents, file).not.toMatch(/(?:^|[\\s"'])stable-scrollbar(?:[\\s"']|$)/);
+    }
+  });
+
+  it("keeps AGT-049 platform/data boundaries explicit", () => {
+    const modal = readFileSync(join(componentRoot, "Modal.tsx"), "utf8");
+    const searchSelect = readFileSync(join(componentRoot, "SearchSelectModal.tsx"), "utf8");
+    const externalLink = readFileSync(join(componentRoot, "ExternalLink.tsx"), "utf8");
+    const streaming = readFileSync(join(componentRoot, "StreamingTextRenderer.tsx"), "utf8");
+
+    expect(modal).not.toContain("globalModalApi");
+    expect(modal).toContain("mira-design:modal");
+    expect(searchSelect).toContain("loadItems:");
+    expect(searchSelect).toContain("AbortSignal");
+    expect(searchSelect).not.toContain("url:");
+    expect(externalLink).toContain("openUrl?:");
+    expect(externalLink).toContain("copyText?:");
+    expect(externalLink).not.toContain("DesktopHostKind");
+    expect(streaming).not.toMatch(/^let\s+/m);
+  });
+
+  it("keeps heavy content behind an explicit dynamic entry", () => {
+    const contentEntry = readFileSync(join(componentRoot, "content.ts"), "utf8");
+    expect(entry).not.toMatch(/export\s+\{[^}]*MarkdownText/);
+    expect(entry).not.toMatch(/export\s+\{[^}]*MarkdownEditor/);
+    expect(entry).toContain('import("./MarkdownText.tsx")');
+    expect(entry).toContain('import("./MarkdownEditor.tsx")');
+    expect(contentEntry).toContain('from "./MarkdownText.tsx"');
+    expect(contentEntry).toContain('from "./MarkdownEditor.tsx"');
+  });
+
+  it("keeps explicit non-goal Desktop surfaces out of MiraDesign", () => {
+    for (const excluded of [
+      "AccessPointPreviewDrawer.tsx",
+      "CoverageReportPanel.tsx",
+      "MicroFrontend.tsx",
+    ]) {
+      expect(existsSync(join(componentRoot, excluded)), excluded).toBe(false);
+    }
+  });
+
+  it("only declares heavy direct dependencies that source actually consumes", () => {
+    const packageJson = JSON.parse(readFileSync(join(webRoot, "package.json"), "utf8")) as {
+      dependencies: Record<string, string>;
+    };
+    expect(packageJson.dependencies).not.toHaveProperty("mermaid");
+    expect(packageJson.dependencies).not.toHaveProperty("@mermaid-js/parser");
+    expect(packageJson.dependencies).not.toHaveProperty("@milkdown/kit");
+    for (const required of [
+      "@milkdown/crepe",
+      "@milkdown/react",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tabs",
+      "@streamdown/code",
+      "@streamdown/math",
+      "@streamdown/mermaid",
+      "@tanstack/react-table",
+      "katex",
+      "streamdown",
+    ]) {
+      expect(packageJson.dependencies, required).toHaveProperty(required);
     }
   });
 

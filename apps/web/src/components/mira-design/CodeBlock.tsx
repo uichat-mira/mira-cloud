@@ -12,11 +12,7 @@ const toneClassNames = {
   terminal: "border-border bg-surface-secondary/55 text-text-primary",
 } as const;
 
-export default function CodeBlock({
-  children,
-  className = "",
-  tone = "default",
-}: CodeBlockProps) {
+export default function CodeBlock({ children, className = "", tone = "default" }: CodeBlockProps) {
   return (
     <Card
       className={`overflow-hidden px-3.5 py-3 font-mono text-xs leading-6 ${toneClassNames[tone]} ${className}`}

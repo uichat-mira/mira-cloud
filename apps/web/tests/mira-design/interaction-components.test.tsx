@@ -225,6 +225,10 @@ describe("Message", () => {
     vi.useRealTimers();
   });
 
+  it("fails visibly when the static message API has no mounted provider", () => {
+    expect(() => message.info("Orphan", 0)).toThrow("MessageProvider is not mounted");
+  });
+
   it("supports the static message API without module-global provider state", async () => {
     render(
       <MessageProvider>

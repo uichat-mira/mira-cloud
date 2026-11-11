@@ -82,6 +82,11 @@ type ModalCommand =
   | { kind: "close"; key?: string }
   | { kind: "destroy" };
 
+type ModalCommandEnvelope = {
+  command: ModalCommand;
+  handled: boolean;
+};
+
 const ModalContext = createContext<ModalContextValue | undefined>(undefined);
 const modalEventName = "mira-design:modal";
 
@@ -96,7 +101,12 @@ function dispatchModalCommand(command: ModalCommand) {
   if (typeof window === "undefined") {
     throw new Error("Modal static API requires a browser environment");
   }
-  window.dispatchEvent(new CustomEvent<ModalCommand>(modalEventName, { detail: command }));
+
+  const envelope: ModalCommandEnvelope = { command, handled: false };
+  window.dispatchEvent(new CustomEvent<ModalCommandEnvelope>(modalEventName, { detail: envelope }));
+  if (!envelope.handled) {
+    throw new Error("ModalProvider is not mounted");
+  }
 }
 
 const resolveWidthStyle = (width?: number | string) =>
@@ -124,11 +134,11 @@ function ConfirmModalContent({
     <ConfirmDialog
       title={title}
       description={description}
-      confirmText={confirmText}
-      cancelText={cancelText}
-      loadingText={loadingText}
-      errorMessage={errorMessage}
-      tone={tone}
+      {...(confirmText !== undefined ? { confirmText } : {})}
+      {...(cancelText !== undefined ? { cancelText } : {})}
+      {...(loadingText !== undefined ? { loadingText } : {})}
+      {...(errorMessage !== undefined ? { errorMessage } : {})}
+      {...(tone !== undefined ? { tone } : {})}
       loading={loading}
       onCancel={() => {
         onCancel?.();
@@ -141,7 +151,9 @@ function ConfirmModalContent({
           await onConfirm();
           onClose();
         } catch (error) {
-          setErrorMessage(error instanceof Error && error.message.trim() ? error.message : errorText);
+          setErrorMessage(
+            error instanceof Error && error.message.trim() ? error.message : errorText,
+          );
         } finally {
           setLoading(false);
         }
@@ -301,9 +313,10 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     [close],
   );
 
-  const show = useCallback((options: ModalShowOptions) => showWithKey(createModalKey(), options), [
-    showWithKey,
-  ]);
+  const show = useCallback(
+    (options: ModalShowOptions) => showWithKey(createModalKey(), options),
+    [showWithKey],
+  );
   const confirm = useCallback(
     (options: ModalConfirmOptions) => confirmWithKey(createModalKey(), options),
     [confirmWithKey],
@@ -311,8 +324,10 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleCommand = (event: Event) => {
-      const command = (event as CustomEvent<ModalCommand>).detail;
-      if (!command) return;
+      const envelope = (event as CustomEvent<ModalCommandEnvelope>).detail;
+      if (!envelope) return;
+      envelope.handled = true;
+      const { command } = envelope;
       if (command.kind === "show") {
         showWithKey(command.key, command.options);
       } else if (command.kind === "confirm") {
@@ -363,18 +378,20 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         <ModalShell
           key={modal.key}
           open
-          title={modal.title}
-          width={modal.width}
-          height={modal.height}
-          maxHeight={modal.maxHeight}
-          bodyClassName={modal.bodyClassName}
-          closable={modal.closable}
-          maskClosable={modal.maskClosable}
-          showCloseButton={modal.showCloseButton}
+          {...(modal.title !== undefined ? { title: modal.title } : {})}
+          {...(modal.width !== undefined ? { width: modal.width } : {})}
+          {...(modal.height !== undefined ? { height: modal.height } : {})}
+          {...(modal.maxHeight !== undefined ? { maxHeight: modal.maxHeight } : {})}
+          {...(modal.bodyClassName !== undefined ? { bodyClassName: modal.bodyClassName } : {})}
+          {...(modal.closable !== undefined ? { closable: modal.closable } : {})}
+          {...(modal.maskClosable !== undefined ? { maskClosable: modal.maskClosable } : {})}
+          {...(modal.showCloseButton !== undefined
+            ? { showCloseButton: modal.showCloseButton }
+            : {})}
           enableEscapeClose={false}
-          closeLabel={modal.closeLabel}
-          closeText={modal.closeText}
-          footer={modal.footer}
+          {...(modal.closeLabel !== undefined ? { closeLabel: modal.closeLabel } : {})}
+          {...(modal.closeText !== undefined ? { closeText: modal.closeText } : {})}
+          {...(modal.footer !== undefined ? { footer: modal.footer } : {})}
           onClose={() => close(modal.key)}
         >
           {modal.content}
@@ -403,7 +420,8 @@ const modalStaticApi: ModalContextValue = {
     dispatchModalCommand({ kind: "confirm", key, options });
     return key;
   },
-  close: (key) => dispatchModalCommand({ kind: "close", key }),
+  close: (key) =>
+    dispatchModalCommand(key === undefined ? { kind: "close" } : { kind: "close", key }),
   destroy: () => dispatchModalCommand({ kind: "destroy" }),
 };
 

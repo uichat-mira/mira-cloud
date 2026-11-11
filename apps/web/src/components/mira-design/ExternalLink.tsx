@@ -18,8 +18,10 @@ export interface ExternalLinkMessages {
   copyFailed: string;
 }
 
-export interface ExternalLinkProps
-  extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "children"> {
+export interface ExternalLinkProps extends Omit<
+  AnchorHTMLAttributes<HTMLAnchorElement>,
+  "href" | "children"
+> {
   href: string;
   children: ReactNode;
   copyOnly?: boolean;

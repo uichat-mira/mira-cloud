@@ -78,7 +78,10 @@ export type { WelcomePanelProps } from "./WelcomePanel.tsx";
 
 export { default as Table, MinimalTable } from "./Table.tsx";
 export type { ColumnAlign, ColumnMeta, TableProps } from "./Table.tsx";
-export { default as NavigationCardTabs, resolveNavigationCardTabsWindow } from "./NavigationCardTabs.tsx";
+export {
+  default as NavigationCardTabs,
+  resolveNavigationCardTabsWindow,
+} from "./NavigationCardTabs.tsx";
 export type {
   NavigationCardTab,
   NavigationCardTabsProps,
@@ -94,10 +97,7 @@ export type {
   ModalShowOptions,
 } from "./Modal.tsx";
 export { default as SearchSelectModal } from "./SearchSelectModal.tsx";
-export type {
-  SearchSelectModalItem,
-  SearchSelectModalProps,
-} from "./SearchSelectModal.tsx";
+export type { SearchSelectModalItem, SearchSelectModalProps } from "./SearchSelectModal.tsx";
 export { default as SearchSelectModalChrome } from "./SearchSelectModalChrome.tsx";
 export type { SearchSelectModalChromeProps } from "./SearchSelectModalChrome.tsx";
 export { default as CodeBlock } from "./CodeBlock.tsx";
@@ -107,20 +107,16 @@ export type { StreamingTextRendererProps } from "./StreamingTextRenderer.tsx";
 export { default as CompactAudioPlayer } from "./CompactAudioPlayer.tsx";
 export type { CompactAudioPlayerProps } from "./CompactAudioPlayer.tsx";
 export { default as AvatarPicker } from "./AvatarPicker.tsx";
-export type {
-  AvatarPickerLabels,
-  AvatarPickerOption,
-  AvatarPickerProps,
-} from "./AvatarPicker.tsx";
-export { default as FileListItem, FileListItem as FileListItemComponent, formatFileSize } from "./FileListItem.tsx";
+export type { AvatarPickerLabels, AvatarPickerOption, AvatarPickerProps } from "./AvatarPicker.tsx";
+export {
+  default as FileListItem,
+  FileListItem as FileListItemComponent,
+  formatFileSize,
+} from "./FileListItem.tsx";
 export type { FileListItemProps } from "./FileListItem.tsx";
 export { default as FileUploadDropzone } from "./FileUploadDropzone.tsx";
 export type { FileUploadDropzoneProps } from "./FileUploadDropzone.tsx";
-export {
-  ErrorBoundary,
-  ErrorFallback,
-  RouteErrorBoundary,
-} from "./ErrorBoundary.tsx";
+export { ErrorBoundary, ErrorFallback, RouteErrorBoundary } from "./ErrorBoundary.tsx";
 export type { ErrorBoundaryLabels } from "./ErrorBoundary.tsx";
 export { default as ExternalLink } from "./ExternalLink.tsx";
 export type {

@@ -24,7 +24,7 @@ export interface ColumnMeta<TData extends object, TValue = unknown> {
 
 export type TableProps<T> = {
   data: T[];
-  columns: ColumnDef<T, any>[];
+  columns: ColumnDef<T, unknown>[];
   className?: string;
   stickyHeader?: boolean;
   stickyFirstColumn?: boolean;
@@ -149,7 +149,7 @@ export function MinimalTable<T extends object>({
     }, {});
   }, [rowSelection]);
 
-  const selectionColumn = useMemo<ColumnDef<T, any> | null>(() => {
+  const selectionColumn = useMemo<ColumnDef<T, unknown> | null>(() => {
     if (!rowSelection) {
       return null;
     }
@@ -210,8 +210,7 @@ export function MinimalTable<T extends object>({
         return;
       }
 
-      const nextState =
-        typeof updater === "function" ? updater(rowSelectionState) : updater;
+      const nextState = typeof updater === "function" ? updater(rowSelectionState) : updater;
       rowSelection.onSelectedRowIdsChange(
         Object.entries(nextState)
           .filter(([, selected]) => selected)
@@ -219,7 +218,7 @@ export function MinimalTable<T extends object>({
       );
     },
     enableRowSelection: Boolean(rowSelection),
-    getRowId: rowSelection?.getRowId,
+    ...(rowSelection ? { getRowId: rowSelection.getRowId } : {}),
   });
 
   useEffect(() => {
@@ -258,7 +257,7 @@ export function MinimalTable<T extends object>({
       <div ref={scrollRef} className="h-full overflow-auto">
         <table className="w-max min-w-full border-collapse text-left text-xs">
           <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
+            {table.getHeaderGroups().map((headerGroup) =>
               (() => {
                 let stickyLeftOffset = 0;
 
@@ -268,8 +267,7 @@ export function MinimalTable<T extends object>({
                       const meta = resolveColumnMeta(header.column.columnDef);
                       const stickyLeft =
                         meta.sticky === "left" ||
-                        (stickyFirstColumn &&
-                          columnIndex === (rowSelection ? 1 : 0));
+                        (stickyFirstColumn && columnIndex === (rowSelection ? 1 : 0));
                       const left = stickyLeftOffset;
 
                       if (stickyLeft) {
@@ -284,9 +282,7 @@ export function MinimalTable<T extends object>({
                           key={header.id}
                           className={`${resolveAlignClassName(meta.align)} border-b border-border text-xs font-medium text-text-secondary ${
                             compact ? "px-2.5 py-1.5" : "px-3 py-2"
-                          } ${
-                            stickyHeader ? "sticky top-0 z-20 bg-surface-secondary" : ""
-                          } ${
+                          } ${stickyHeader ? "sticky top-0 z-20 bg-surface-secondary" : ""} ${
                             stickyLeft
                               ? "sticky z-30 bg-surface-secondary shadow-[1px_0_0_0_rgb(var(--mira-color-border)),8px_0_16px_-12px_rgb(var(--mira-color-text-primary) / 0.18)]"
                               : ""
@@ -298,17 +294,14 @@ export function MinimalTable<T extends object>({
                             ...(stickyLeft ? { left: `${left}px` } : {}),
                           }}
                         >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          {flexRender(header.column.columnDef.header, header.getContext())}
                         </th>
                       );
                     })}
                   </tr>
                 );
-              })()
-            ))}
+              })(),
+            )}
           </thead>
 
           <tbody>
@@ -322,7 +315,7 @@ export function MinimalTable<T extends object>({
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row, index) => {
+              table.getRowModel().rows.map((row) => {
                 const rowProps = getRowProps?.(row);
                 let stickyLeftOffset = 0;
 
@@ -338,8 +331,7 @@ export function MinimalTable<T extends object>({
                       const meta = resolveColumnMeta(cell.column.columnDef);
                       const stickyLeft =
                         meta.sticky === "left" ||
-                        (stickyFirstColumn &&
-                          columnIndex === (rowSelection ? 1 : 0));
+                        (stickyFirstColumn && columnIndex === (rowSelection ? 1 : 0));
                       const left = stickyLeftOffset;
 
                       if (stickyLeft) {
@@ -349,10 +341,7 @@ export function MinimalTable<T extends object>({
                         );
                       }
 
-                      const rendered = flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      );
+                      const rendered = flexRender(cell.column.columnDef.cell, cell.getContext());
                       const tooltipText = String(cell.getValue() ?? "");
 
                       return (

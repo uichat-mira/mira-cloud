@@ -38,14 +38,25 @@ const MessageContext = createContext<MessageContextType | undefined>(undefined);
 type MessageOpenConfig = Parameters<MessageContextType["open"]>[0];
 type MessageCommand = { kind: "open"; config: MessageOpenConfig } | { kind: "destroy" };
 
+type MessageCommandEnvelope = {
+  command: MessageCommand;
+  handled: boolean;
+};
+
 const messageEventName = "mira-design:message";
 
 function dispatchMessageCommand(command: MessageCommand) {
   if (typeof window === "undefined") {
-    return;
+    throw new Error("Message static API requires a browser environment");
   }
 
-  window.dispatchEvent(new CustomEvent<MessageCommand>(messageEventName, { detail: command }));
+  const envelope: MessageCommandEnvelope = { command, handled: false };
+  window.dispatchEvent(
+    new CustomEvent<MessageCommandEnvelope>(messageEventName, { detail: envelope }),
+  );
+  if (!envelope.handled) {
+    throw new Error("MessageProvider is not mounted");
+  }
 }
 
 export function MessageProvider({ children }: { children: ReactNode }) {
@@ -98,10 +109,12 @@ export function MessageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleCommand = (event: Event) => {
-      const command = (event as CustomEvent<MessageCommand>).detail;
-      if (!command) {
+      const envelope = (event as CustomEvent<MessageCommandEnvelope>).detail;
+      if (!envelope) {
         return;
       }
+      envelope.handled = true;
+      const { command } = envelope;
 
       if (command.kind === "destroy") {
         destroy();

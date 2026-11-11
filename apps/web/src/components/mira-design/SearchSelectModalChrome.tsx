@@ -45,8 +45,8 @@ export default function SearchSelectModalChrome({
     <Modal
       open={open}
       title={null}
-      width={width}
-      height={height}
+      {...(width !== undefined ? { width } : {})}
+      {...(height !== undefined ? { height } : {})}
       footer={null}
       showCloseButton={false}
       bodyClassName="!px-0 !py-0 !p-0 bg-transparent"
@@ -113,8 +113,8 @@ export default function SearchSelectModalChrome({
                       item.disabled
                         ? "cursor-not-allowed border-border bg-surface-primary opacity-50"
                         : isSelected
-                        ? "border-primary/25 bg-primary/5"
-                        : "border-transparent bg-transparent hover:border-border hover:bg-surface-secondary/70"
+                          ? "border-primary/25 bg-primary/5"
+                          : "border-transparent bg-transparent hover:border-border hover:bg-surface-secondary/70"
                     }`}
                   >
                     <span

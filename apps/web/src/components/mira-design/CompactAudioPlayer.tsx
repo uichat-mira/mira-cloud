@@ -163,8 +163,7 @@ export default function CompactAudioPlayer({
     return Math.max(0, Math.min(100, (currentTime / duration) * 100));
   }, [currentTime, duration]);
 
-  const volumeIcon =
-    volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
+  const volumeIcon = volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
 
   const togglePlayback = async () => {
     const audio = audioRef.current;
@@ -214,13 +213,21 @@ export default function CompactAudioPlayer({
 
   const VolumeIcon = volumeIcon;
   const isDark = tone === "dark";
-  const surfaceClassName = isDark\n    ? "border-border bg-text-primary"\n    : "border-border bg-surface-secondary";
+  const surfaceClassName = isDark
+    ? "border-border bg-text-primary"
+    : "border-border bg-surface-secondary";
   const titleClassName = isDark ? "text-text-inverted" : "text-text-primary";
   const subtitleClassName = isDark ? "text-text-inverted/75" : "text-text-secondary";
   const timeClassName = isDark ? "text-text-inverted/70" : "text-text-tertiary";
-  const sliderTrackColor = isDark\n    ? "rgb(var(--mira-color-text-tertiary))"\n    : "rgb(var(--mira-color-border))";
-  const volumeButtonClassName = isDark\n    ? "text-text-inverted/75 hover:bg-text-inverted/10"\n    : "text-text-secondary hover:bg-surface-tertiary";
-  const volumePopoverClassName = isDark\n    ? "border-border bg-text-primary"\n    : "border-border bg-surface-elevated";
+  const sliderTrackColor = isDark
+    ? "rgb(var(--mira-color-text-tertiary))"
+    : "rgb(var(--mira-color-border))";
+  const volumeButtonClassName = isDark
+    ? "text-text-inverted/75 hover:bg-text-inverted/10"
+    : "text-text-secondary hover:bg-surface-tertiary";
+  const volumePopoverClassName = isDark
+    ? "border-border bg-text-primary"
+    : "border-border bg-surface-elevated";
   const volumeSliderScopeClassName = "mira-audio-volume-slider";
   const controlsDisabled = disabled || !src;
 
@@ -237,7 +244,8 @@ export default function CompactAudioPlayer({
         disabled={controlsDisabled}
         className={`flex h-10 w-10 flex-none items-center justify-center rounded-full text-text-inverted transition-transform duration-150 ${
           controlsDisabled
-            ? "cursor-not-allowed bg-surface-tertiary opacity-70"\n            : "bg-primary active:scale-95"
+            ? "cursor-not-allowed bg-surface-tertiary opacity-70"
+            : "bg-primary active:scale-95"
         }`}
       >
         {playing ? (
@@ -249,7 +257,10 @@ export default function CompactAudioPlayer({
 
       <div className="min-w-0 flex-1">
         <div className="mb-0 flex items-center justify-between gap-3">
-          <p className={`truncate text-[13px] font-semibold leading-none ${titleClassName}`} title={title}>
+          <p
+            className={`truncate text-[13px] font-semibold leading-none ${titleClassName}`}
+            title={title}
+          >
             {title}
           </p>
           <span className={`flex-none font-mono text-[10px] leading-none ${timeClassName}`}>
@@ -270,14 +281,14 @@ export default function CompactAudioPlayer({
             background: `linear-gradient(to right, rgb(var(--mira-color-primary)) 0%, rgb(var(--mira-color-primary)) ${progressPercent}%, ${sliderTrackColor} ${progressPercent}%, ${sliderTrackColor} 100%)`,
           }}
           className={`mira-range-slider mira-range-slider-compact ${
-            controlsDisabled || duration <= 0
-              ? "cursor-not-allowed opacity-60"
-              : "cursor-pointer"
+            controlsDisabled || duration <= 0 ? "cursor-not-allowed opacity-60" : "cursor-pointer"
           }`}
         />
 
         {subtitle ? (
-          <p className={`mt-1 truncate text-[11px] leading-none ${subtitleClassName}`}>{subtitle}</p>
+          <p className={`mt-1 truncate text-[11px] leading-none ${subtitleClassName}`}>
+            {subtitle}
+          </p>
         ) : null}
         {statusMessage ? (
           <p className={`mt-1 text-[11px] leading-5 ${subtitleClassName}`}>{statusMessage}</p>

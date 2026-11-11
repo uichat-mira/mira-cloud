@@ -1,9 +1,4 @@
-import React, {
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Check, Image as ImageIcon, Search } from "lucide-react";
 import Badge from "./Badge";
 import { Button } from "./Button";
@@ -20,8 +15,10 @@ export interface AvatarPickerOption {
   disabled?: boolean;
 }
 
-export interface AvatarPickerProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange" | "title"> {
+export interface AvatarPickerProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  "onChange" | "title"
+> {
   value?: string | null;
   options: AvatarPickerOption[];
   onChange: (option: AvatarPickerOption) => void;
@@ -75,11 +72,7 @@ const matchesSearch = (option: AvatarPickerOption, query: string) => {
     return true;
   }
 
-  const haystack = [
-    option.label,
-    option.description ?? "",
-    ...(option.tags ?? []),
-  ]
+  const haystack = [option.label, option.description ?? "", ...(option.tags ?? [])]
     .join("\n")
     .toLowerCase();
 
@@ -171,16 +164,8 @@ export default function AvatarPicker({
   return (
     <>
       <div {...divProps} className={className}>
-        {label ? (
-          <div className="mb-2 text-sm font-medium text-text-primary">
-            {label}
-          </div>
-        ) : null}
-        {hint ? (
-          <div className="mb-2 text-xs leading-5 text-text-secondary">
-            {hint}
-          </div>
-        ) : null}
+        {label ? <div className="mb-2 text-sm font-medium text-text-primary">{label}</div> : null}
+        {hint ? <div className="mb-2 text-xs leading-5 text-text-secondary">{hint}</div> : null}
 
         <button
           type="button"
@@ -194,14 +179,11 @@ export default function AvatarPicker({
               {selectedOption?.label ?? pickerPlaceholder}
             </div>
             <div className="mt-0.5 text-xs leading-5 text-text-secondary">
-              {selectedOption?.description ??
-                copy.triggerHint}
+              {selectedOption?.description ?? copy.triggerHint}
             </div>
           </div>
           <span className="shrink-0 text-sm text-primary">
-            {selectedOption
-              ? copy.changeAction
-              : copy.selectAction}
+            {selectedOption ? copy.changeAction : copy.selectAction}
           </span>
         </button>
       </div>
@@ -265,8 +247,7 @@ export default function AvatarPicker({
                     {draftOption?.label ?? copy.unselected}
                   </div>
                   <div className="mt-1 text-xs leading-5 text-text-secondary">
-                    {draftOption?.description ??
-                      copy.previewHint}
+                    {draftOption?.description ?? copy.previewHint}
                   </div>
                 </div>
                 {draftOption?.tags?.length ? (
@@ -317,8 +298,8 @@ export default function AvatarPicker({
                           option.disabled
                             ? "cursor-not-allowed border-border bg-surface-primary opacity-50"
                             : isActive
-                            ? "border-primary/35 bg-primary/5"
-                            : "border-border bg-surface-primary hover:bg-surface-secondary"
+                              ? "border-primary/35 bg-primary/5"
+                              : "border-border bg-surface-primary hover:bg-surface-secondary"
                         }`}
                       >
                         <div className="relative">

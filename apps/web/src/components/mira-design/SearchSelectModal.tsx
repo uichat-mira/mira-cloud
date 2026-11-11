@@ -26,13 +26,7 @@ export interface SearchSelectModalProps {
 }
 
 const matchesSearch = (item: SearchSelectModalItem, query: string) =>
-  [
-    item.label,
-    item.description ?? "",
-    item.meta ?? "",
-    item.title ?? "",
-    ...(item.keywords ?? []),
-  ]
+  [item.label, item.description ?? "", item.meta ?? "", item.title ?? "", ...(item.keywords ?? [])]
     .join("\n")
     .toLowerCase()
     .includes(query);
@@ -77,7 +71,9 @@ export default function SearchSelectModal({
       } catch (error) {
         if (!controller.signal.aborted) {
           setItems([]);
-          setErrorText(error instanceof Error && error.message.trim() ? error.message : loadErrorText);
+          setErrorText(
+            error instanceof Error && error.message.trim() ? error.message : loadErrorText,
+          );
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -117,7 +113,7 @@ export default function SearchSelectModal({
       loadingText={loadingText}
       errorText={errorText}
       emptyText={emptyText}
-      selectedId={selectedId}
+      {...(selectedId !== undefined ? { selectedId } : {})}
       submittingId={submittingId}
       items={visibleItems}
       onSearchTextChange={setSearchText}

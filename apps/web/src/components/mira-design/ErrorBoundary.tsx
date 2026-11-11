@@ -95,7 +95,9 @@ export function ErrorFallback({
 
         {detail ? (
           <details className="mt-6 rounded-ui-panel border border-border bg-surface-secondary px-4 py-3 text-sm text-text-secondary">
-            <summary className="cursor-pointer font-medium text-text-primary">{detailsLabel}</summary>
+            <summary className="cursor-pointer font-medium text-text-primary">
+              {detailsLabel}
+            </summary>
             <pre className="mt-3 whitespace-pre-wrap break-words font-mono text-xs leading-6">
               {detail}
             </pre>
@@ -107,13 +109,13 @@ export function ErrorFallback({
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { error: null, resetKey: 0 };
+  override state: ErrorBoundaryState = { error: null, resetKey: 0 };
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.props.onError?.(error, errorInfo);
     if (!this.props.onError) {
       console.error("Unhandled MiraDesign error boundary error", error, errorInfo);
@@ -124,7 +126,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.setState((current) => ({ error: null, resetKey: current.resetKey + 1 }));
   };
 
-  render() {
+  override render() {
     const { children, labels } = this.props;
     const { error, resetKey } = this.state;
     const copy = resolveLabels(labels);
@@ -159,7 +161,8 @@ export function RouteErrorBoundary({ labels }: { labels?: Partial<ErrorBoundaryL
       typeof routeError.data === "string" && routeError.data.trim()
         ? routeError.data
         : `${routeError.status} ${routeError.statusText || "Route Error"}`;
-    detail = `${routeError.status} ${routeError.statusText}\n${String(routeError.data ?? "")}`.trim();
+    detail =
+      `${routeError.status} ${routeError.statusText}\n${String(routeError.data ?? "")}`.trim();
   } else if (routeError instanceof Error) {
     message = getErrorMessage(routeError, copy);
     detail = routeError.stack || routeError.message;
