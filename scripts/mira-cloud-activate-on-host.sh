@@ -20,6 +20,9 @@ sha256sum -c checksums.sha256 >/dev/null
 echo 'TX_RELEASE_ARTIFACT_CHECKSUMS=PASS'
 install -d -m 0700 "$root/secrets" "$root/backups" "$root/staging"
 install -d -m 0755 "$www" "$www/releases" /etc/caddy/sites
+# Caddy runs unprivileged and must traverse the root-owned /srv/www parent.
+# 0711 permits traversal by known path without exposing directory listings.
+chmod 0711 /srv/www
 test "$(stat -c '%a' "$root/secrets")" = 700
 if getent group 45045 >/dev/null; then
   echo 'Host group 45045 unexpectedly exists; refusing shared-secret access' >&2
