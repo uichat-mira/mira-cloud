@@ -5,7 +5,7 @@ import { mermaid } from "@streamdown/mermaid";
 import { memo, type ComponentProps } from "react";
 import "katex/dist/katex.min.css";
 
-type MarkdownTextProps = Omit<ComponentProps<typeof Streamdown>, "children"> & {
+export type MarkdownTextProps = Omit<ComponentProps<typeof Streamdown>, "children"> & {
   children?: string;
   features?: "full" | "basic";
 };
