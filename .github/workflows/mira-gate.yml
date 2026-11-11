@@ -92,6 +92,68 @@ jobs:
           pnpm --filter @mira-cloud/api build
           node scripts/verify-workspace-connection.mjs
 
+  production_package:
+    name: Production Package
+    runs-on: ubuntu-latest
+    env:
+      MIRA_CLOUD_SHA: ci-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Build and validate production image, Compose and Caddy source
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash -n scripts/mira-cloud-activate-on-host.sh scripts/mira-cloud-tencent-ship.sh
+          pnpm install --frozen-lockfile
+          docker build --platform linux/amd64 -f apps/api/Dockerfile             -t mira-cloud-api:ci-smoke .
+          sudo install -d -m 0700 /opt/mira-cloud/secrets
+          printf '%s\n' '0123456789abcdef0123456789abcdef' |             sudo tee /opt/mira-cloud/secrets/db_password >/dev/null
+          sudo chown 0:45045 /opt/mira-cloud/secrets/db_password
+          sudo chmod 0640 /opt/mira-cloud/secrets/db_password
+          docker compose -p mira-cloud -f deploy/mira-cloud/compose.yaml             config --format json > /tmp/mira-cloud-compose.json
+          jq -e '.services.postgres.ports == null and
+            (.services.api.ports | length) == 1 and
+            .services.api.ports[0].host_ip == "127.0.0.1" and
+            .services.api.ports[0].published == "34170" and
+            (.services.postgres.networks | keys) == ["internal"] and
+            (.services.api.networks | keys) == ["ingress", "internal"] and
+            .networks.internal.internal == true and
+            .networks.ingress.internal != true' /tmp/mira-cloud-compose.json
+          docker run --rm -v "$PWD/deploy/mira-cloud/cloud.tomzlab.cn.caddy:/etc/caddy/Caddyfile:ro"             caddy:2.10 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Real production Compose database, migration and HTTP smoke
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker compose -p mira-cloud -f deploy/mira-cloud/compose.yaml up -d postgres
+          docker compose -p mira-cloud -f deploy/mira-cloud/compose.yaml             --profile migration run --rm migrate
+          docker compose -p mira-cloud -f deploy/mira-cloud/compose.yaml up -d --no-deps api
+          for i in $(seq 1 25); do
+            if curl --noproxy '*' -fsS --max-time 3 http://127.0.0.1:34170/api/v1/ready               | grep -Fq '"status":"ready"'; then break; fi
+            sleep 2
+          done
+          curl --noproxy '*' -fsS http://127.0.0.1:34170/api/v1/health             | grep -Fq '"status":"alive"'
+          curl --noproxy '*' -fsS http://127.0.0.1:34170/api/v1/ready             | grep -Fq '"status":"ready"'
+          echo 'PRODUCTION_DOCKER_COMPOSE_MIGRATION_HTTP_T3=PASS'
+      - name: Collect bounded diagnostic evidence when production Compose smoke fails
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          echo 'PRODUCTION_PACKAGE_FAILURE_DIAG'
+          docker compose -p mira-cloud -f deploy/mira-cloud/compose.yaml ps --all
+          docker compose -p mira-cloud -f deploy/mira-cloud/compose.yaml             logs --no-color --tail=35 api postgres 2>&1             | sed -E 's@postgresql://[^[:space:]]+@postgresql://REDACTED@g'
+          echo 'DIAGNOSTIC_COMPLETE'
+      - name: Destroy disposable CI containers and volumes
+        if: always()
+        shell: bash
+        run: |
+          docker compose -p mira-cloud -f deploy/mira-cloud/compose.yaml             --profile migration down -v --remove-orphans || true
+
   prod_promotion:
     name: Prod Promotion Route
     if: github.event_name == 'pull_request' && github.base_ref == 'prod'
@@ -115,6 +177,7 @@ jobs:
       - docs_contract
       - engineering
       - db_integration
+      - production_package
       - prod_promotion
     runs-on: ubuntu-latest
     steps:
@@ -123,6 +186,7 @@ jobs:
           DOCS_RESULT: ${{ needs.docs_contract.result }}
           ENGINEERING_RESULT: ${{ needs.engineering.result }}
           DATABASE_RESULT: ${{ needs.db_integration.result }}
+          PACKAGE_RESULT: ${{ needs.production_package.result }}
           PROD_PROMOTION_RESULT: ${{ needs.prod_promotion.result }}
           IS_PROD_PR: ${{ github.event_name == 'pull_request' && github.base_ref == 'prod' }}
         run: |
@@ -138,8 +202,12 @@ jobs:
             echo "::error::Real PostgreSQL T3 checks are required but finished: $DATABASE_RESULT" >&2
             exit 1
           fi
+          if [ "$PACKAGE_RESULT" != "success" ]; then
+            echo "::error::Production package CI must pass but finished: $PACKAGE_RESULT" >&2
+            exit 1
+          fi
           if [ "$IS_PROD_PR" = "true" ] && [ "$PROD_PROMOTION_RESULT" != "success" ]; then
             echo "::error::prod promotion source policy failed or was skipped." >&2
             exit 1
           fi
-          echo "Mira Gate: docs, engineering and real PostgreSQL checks passed; prod promotion PR source checked when applicable; application source and local HTTP integration were checked; no deployed environment or T4/T5 checks were run."
+          echo "Mira Gate: docs, engineering, real PostgreSQL and production Docker package checks passed; prod promotion PR source checked when applicable; application source and local HTTP integration were checked; no deployed environment or T4/T5 checks were run."

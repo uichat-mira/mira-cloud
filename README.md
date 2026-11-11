@@ -165,3 +165,14 @@ Without `DATABASE_URL`, the Hono API still starts and reports **database not con
 The Vite proxy is **only for local dev/preview**. A future hosted deployment must implement an explicitly reviewed same-origin `/api` reverse proxy; no permissive CORS, production host, OAuth session, Agent Runtime or database instance is provisioned here.
 
 GitHub CI's required PostgreSQL Integration job now launches **actual Vite + compiled Hono + ephemeral PostgreSQL** and tests ready → API offline → DB unconfigured → DB unreachable → ready again through real proxied HTTP requests. The Web's contract and retry/race behavior are covered by component tests. This is local/CI T1–T3 only, **not** browser device T4, live prod, or an authenticated Cloud Pi connection.
+
+## Tencent production delivery
+
+The chosen domain is **cloud.tomzlab.cn**. A production-only manual GitHub
+workflow builds and deploys the current React/Hono/PostgreSQL infrastructure
+foundation using the previously verified Tencent SSH host key and Organization
+password secrets. See [the production runbook](docs/operations/tencent-production.md).
+
+This is not Cloud Auth Web OAuth, Cloud Pi integration, or an authenticated
+Task/Run product. A source merge does not mean a live public deployment;
+actual HTTPS and database health are verified separately.
