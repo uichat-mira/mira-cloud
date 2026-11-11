@@ -71,6 +71,18 @@ if test -n "$old_release"; then
   echo 'TX_PREUPGRADE_LOGICAL_DB_BACKUP=PASS'
 fi
 
+apply_caddy_config() {
+  caddy validate --config "$caddy_file" --adapter caddyfile >/dev/null
+  if caddy reload --config "$caddy_file" --adapter caddyfile >/dev/null 2>&1; then
+    echo 'TX_CADDY_APPLY_MODE=admin-reload'
+    return 0
+  fi
+  echo 'TX_CADDY_ADMIN_RELOAD_UNAVAILABLE; using validated systemd restart'
+  systemctl restart caddy
+  test "$(systemctl is-active caddy)" = active
+  echo 'TX_CADDY_APPLY_MODE=systemd-restart'
+}
+
 rollback() {
   rc=$?
   trap - ERR
@@ -93,8 +105,11 @@ rollback() {
   else
     docker compose -p mira-cloud -f "$compose" stop api >/dev/null 2>&1 || true
   fi
-  caddy validate --config "$caddy_file" --adapter caddyfile >/dev/null 2>&1 && \
-    caddy reload --config "$caddy_file" --adapter caddyfile >/dev/null 2>&1 || true
+  if caddy validate --config "$caddy_file" --adapter caddyfile >/dev/null 2>&1; then
+    if ! caddy reload --config "$caddy_file" --adapter caddyfile >/dev/null 2>&1; then
+      systemctl restart caddy >/dev/null 2>&1 || true
+    fi
+  fi
   echo 'TX_DEPLOY_FAILED_ROLLBACK_ATTEMPTED; database migration is never automatically reversed' >&2
   exit "$rc"
 }
@@ -126,7 +141,7 @@ fi
 caddy validate --config "$caddy_file" --adapter caddyfile >/dev/null
 ln -sfn "$www/releases/$sha" "$www/current.next"
 mv -Tf "$www/current.next" "$www/current"
-caddy reload --config "$caddy_file" --adapter caddyfile >/dev/null
+apply_caddy_config
 
 printf '%s\n' "$sha" > "$root/current-release"
 chmod 0600 "$root/current-release"
