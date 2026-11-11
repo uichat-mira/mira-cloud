@@ -78,7 +78,7 @@ export default function Slider({
         disabled={disabled}
         style={trackProgressStyle(value, min, max)}
         aria-label={ariaLabel ?? label ?? "slider"}
-        className={`claude-range-slider ${compact ? "claude-range-slider-compact" : ""} ${
+        className={`mira-range-slider ${compact ? "mira-range-slider-compact" : ""} ${
           disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
         }`}
       />
