@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository currently houses the Mira Cloud **product vision, interaction references, system architecture, a Node/pnpm workspace, a local-only Hono HTTP API and a responsive static React Web shell**. Its product design baseline is `docs/architecture/v0.4.md`, and the current implementation technology design baseline is `docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`. AGT-043 authorizes a minimal local-only Hono API; no user/business backend, OAuth, database or deployed frontend is implemented; AGT-042 adds only the Web UI foundation.
+This repository currently houses the Mira Cloud **product vision, interaction references, system architecture, a Node/pnpm workspace, a local-only Hono HTTP API and a responsive static React Web shell**. Its product design baseline is `docs/architecture/v0.4.md`, and the current implementation technology design baseline is `docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`. AGT-043 authorizes a minimal local-only Hono API; no authenticated business API, OAuth, Cloud Pi or hosted frontend exists; AGT-044 adds a local PostgreSQL metadata schema and migrations; AGT-042 adds only the Web UI foundation.
 
 Before engineering judgments or mutations involving the `uichat-mira` organization, read the current [organization AGENTS.md](https://github.com/uichat-mira/.github/blob/main/AGENTS.md), relevant instructions, actual target-repository code and applicable Issue/PR/task contracts. Never infer runtime facts from design diagrams.
 
@@ -26,7 +26,7 @@ Follow the current Organization [environment model](https://github.com/uichat-mi
 - `feat/* → dev → test → prod` is a source promotion path, not a command to provision servers.
 - `dev` is the working integration/default branch, and `test` is a source acceptance branch. **Neither has a configured server.** `prod` is only a future production source; no Mira Cloud runtime deployment has been authorized.
 - Retained `main` does not mean production, is not a deployment branch, and should not bypass `prod`.
-- Mira Gate runs Docs Contract, Node workspace checks and local real-HTTP API tests (T3 transport only). It does not prove T4/T5, OAuth, Agent execution, database readiness or any deployed service availability.
+- Mira Gate runs Docs Contract, workspace checks, true HTTP tests and a mandatory ephemeral PostgreSQL 16 T3 integration job. It does not prove T4/T5, OAuth, Agent execution, production database readiness or deployed service availability.
 - Do not introduce dev/test GitHub deployment Environments, hostnames, API keys, release secrets or deploy workflows absent a separately authorized runtime contract. Never point non-production to production as a workaround.
 - Keep GitHub engineering work items in the canonical Issue/Project fields; governance changes to the repository do not grant authority to create, accept, close or promote unrelated work items.
 

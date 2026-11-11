@@ -1,6 +1,6 @@
 # Mira Cloud
 
-> **Status: Engineering base only. No business UI, HTTP API or database implementation has started.**
+> **Status: Local Web/API/DB code under active development; no hosted or production service.**
 > Design baseline: **product architecture v0.4** and **technology ADR-003** (2026-11-11).  
 > Principle: **One Account, Multiple Runtimes, Shared Work.**
 
@@ -8,7 +8,7 @@ Mira Cloud is the future independent, continuously available agent workspace, gr
 
 ## Engineering base (implemented)
 
-This repository now has a reproducible **Node 24 / pnpm 10 / TypeScript strict** workspace scaffold. It contains a local-only Hono API and a responsive React Web shell; there is still **no PostgreSQL schema, Drizzle migration, OAuth flow, Cloud Pi connection, Docker/Caddy deployment or production service**.
+This repository now has a reproducible **Node 24 / pnpm 10 / TypeScript strict** workspace scaffold. It contains a local-only Hono API and a responsive React Web shell; there is now one Drizzle/PostgreSQL metadata table and migration, but **no OAuth flow, Cloud Pi connection, Docker/Caddy deployment or production service**.
 
 Prerequisites: Node.js 24 and Corepack. pnpm is pinned by `packageManager` in `package.json`.
 
@@ -18,7 +18,7 @@ pnpm install --frozen-lockfile
 pnpm check
 ```
 
-`pnpm check` runs Prettier, ESLint, TypeScript strict checking and Vitest T1 unit tests. Before recursing, it also verifies that every `apps/*` / `packages/*` workspace package declares a runnable `check` script, so a later Web/API package cannot be silently skipped. This is T1/source tooling evidence only; it does not prove T2–T5, OAuth, Agent execution or deployment.
+`pnpm check` runs Prettier, ESLint, TypeScript strict checking and Vitest T1 unit tests. Before recursing, it also verifies that every `apps/*` / `packages/*` workspace package declares a runnable `check` script, so a later Web/API package cannot be silently skipped. This covers local unit/source/HTTP testing; the separate required PostgreSQL Integration job establishes real DB T3, never OAuth, Agent execution, hosted T4/T5 or deployment.
 
 The workspace is intentionally empty until an authorized application Issue adds real packages. Design documents and `prototypes/` are not executable applications.
 
@@ -37,9 +37,9 @@ Mira Cloud is **publicly available under the [MIT License](LICENSE)**. Contribut
 
 ## Repository governance and environment reality
 
-The working source branch is **`dev`**; ordinary design changes flow through `feat/*` PRs and deliberate `dev → test → prod` source promotions. `main` is a retained bootstrap/history branch and **never means production**. The repository is still **design-only**, so no Mira Cloud runtime is deployed from any branch. In particular, **`dev` and `test` have no configured servers**; do not add fake deployment URLs or claim T4/T5 evidence.
+The working source branch is **`dev`**; ordinary design changes flow through `feat/*` PRs and deliberate `dev → test → prod` source promotions. `main` is a retained bootstrap/history branch and **never means production**. The repository has local source implementations, but no Mira Cloud runtime is deployed from any branch. In particular, **`dev` and `test` have no configured servers**; do not add fake deployment URLs or claim T4/T5 evidence.
 
-Source validation has two layers: `node scripts/check-docs.mjs` (the `Docs Contract` job) and `pnpm check` (the Node 24 workspace tooling and T1 `Engineering Checks` job). Both are aggregated by the `Mira Gate` status. They validate documentation, source configuration and unit-level tooling only, not Agent functionality or deployment. See [environment and promotion contract](docs/engineering/environment.md) and the [organization environment model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md).
+Source validation has three layers: `node scripts/check-docs.mjs` (the `Docs Contract` job) and `pnpm check` (the Node 24 workspace tooling and T1 `Engineering Checks` job). Both are aggregated by the `Mira Gate` status. They validate documentation, source configuration and unit-level tooling only, not Agent functionality or deployment. See [environment and promotion contract](docs/engineering/environment.md) and the [organization environment model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md).
 
 **Public, MIT-licensed:** see [LICENSE](LICENSE). GitHub default branch is `dev`. GitHub-native **`prod` branch protection is active**: PR required, at least one approving review, successful `Mira Gate` required with up-to-date branch, stale reviews dismissed, conversations resolved, administrator enforcement, no force pushes or deletion. This does not imply production deployment.
 
@@ -53,13 +53,13 @@ No other agent, review provider, server, environment or deployment automation is
 
 ## Design system and component plan
 
-- [`DESIGN.md`](DESIGN.md) is the **Mira Cloud Web design-consumption specification**. It inherits the current Mira Mobile Token/palette and `DESIGN.md` owners, including four light/dark presets. This is not an independent token database or an implemented CSS package.
+- [`DESIGN.md`](DESIGN.md) is the **Mira Cloud Web design-consumption specification**. It inherits the current Mira Mobile Token/palette and `DESIGN.md` owners, including four light/dark presets. This is not an independent token database; Web uses a pinned snapshot and generated semantic CSS.
 - [Component library contract](docs/design/component-library.md): Tailwind 4, Radix only where appropriate, Lucide, locally owned typed React components. The first Button, IconButton, Input, FormField and Card sources live in the local Web app; no independently published npm component library.
 - The existing [workbench prototype](prototypes/workbench-v0.1/) is mock HTML and predates this specification; it has not been migrated or validated for all themes.
 
 ## Technology stack initiative
 
-The [AGT-040 initial technology design work item](https://github.com/uichat-mira/mira-cloud/issues/4) is governed by **[ADR-003 · Hono + Drizzle + PostgreSQL + Docker Compose/Caddy](docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md)** and the [initial technical design](docs/architecture/initial-technical-design.md). **ADR-002 is historical and superseded for Core/database/deployment choices.** Future Web remains React/Vite; existing Cloud Pi owns the Pi SDK runtime; Cloud Auth retains independent Fastify identity services. The [agent/contributor coding standard](docs/engineering/coding-standard.md) describes scoped implementation requirements. These documents are design decisions, **not implemented services**.
+The [AGT-040 initial technology design work item](https://github.com/uichat-mira/mira-cloud/issues/4) is governed by **[ADR-003 · Hono + Drizzle + PostgreSQL + Docker Compose/Caddy](docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md)** and the [initial technical design](docs/architecture/initial-technical-design.md). **ADR-002 is historical and superseded for Core/database/deployment choices.** Future Web remains React/Vite; existing Cloud Pi owns the Pi SDK runtime; Cloud Auth retains independent Fastify identity services. The [agent/contributor coding standard](docs/engineering/coding-standard.md) describes scoped implementation requirements. These are design decisions; local Web/API and one metadata repository are partially implemented, not deployed.
 
 ## Contents
 
@@ -76,7 +76,7 @@ The [AGT-040 initial technology design work item](https://github.com/uichat-mira
 
 ## What is explicitly **not** authorized by this repository
 
-- No business application implementation, migration, production deployment or release machinery. `Mira Gate` runs the Docs Contract and T1 workspace checks only; it is not a T2–T5 runtime test or deploy workflow.
+- No authenticated business API, Cloud Pi scheduler migration, production database, production deployment or release machinery. `Mira Gate` requires Docs Contract, local app checks and actual ephemeral PostgreSQL T3; it is not a T4/T5 or deploy workflow.
 - No GitHub Issues / engineering cards or automatic changes to existing projects merely because they are mentioned in a design.
 - No assumption that future API endpoints, OAuth scopes or cross-device capabilities already exist.
 
@@ -102,7 +102,7 @@ pnpm --filter @mira-cloud/api build
 
 `GET /api/v1/health` returns this process's own liveness/version; it makes **no** statement about Cloud Auth, Cloud Pi or PostgreSQL availability. `?detail=basic` is the only optional diagnostic query parameter. Unexpected/duplicate parameters return `INVALID_QUERY` (400), unsupported methods `METHOD_NOT_ALLOWED` (405), missing routes `NOT_FOUND` (404), and internal exceptions a scrubbed `INTERNAL_ERROR` (500). Errors carry a request ID. All HTTP integration tests use an actual ephemeral TCP listener and disable machine-wide proxy routing for loopback requests.
 
-No secrets, Docker/Caddy/prod, Cloud Auth, Cloud Pi or database configuration is created by this package.
+No production secrets, Docker/Caddy/prod, Cloud Auth or Cloud Pi are configured; AGT-044 adds optional database connection configuration.
 
 ## Local React Web workspace (AGT-042)
 
@@ -118,3 +118,24 @@ pnpm check
 ```
 
 The only persisted Web preference is local appearance. No credentials, user data or Cloud session are saved by this UI shell.
+
+## PostgreSQL / Drizzle metadata foundation (AGT-044)
+
+AGT-044 adds exactly one **Mira Cloud-owned** table: `task_metadata` (UUID, external Cloud Auth owner reference, idempotency key, SHA-256 definition hash, positive spec revision, description and creation time). This is not an independent Cloud Pi Task/Run or scheduler.
+
+- A bounded `pg` Pool (default max **4**, maximum **5**) is only created when `DATABASE_URL` is configured; credentials are never committed.
+- The typed repository always filters by owner. A unique (owner, idempotency key) index prevents duplicate records. A conflicting payload fails instead of silently reusing a key. There is **no public create-task HTTP endpoint**; future callers must derive owner identity from verified Cloud Auth claims.
+- `GET /api/v1/health` reports only Hono process liveness. `GET /api/v1/ready` reports database readiness, returning a safe 503 for missing/unreachable/unauthorized connections without secrets.
+- Drizzle Kit generates reviewable SQL under `apps/api/drizzle/`. Never run an unreviewed schema push against production.
+- GitHub Actions runs an **ephemeral PostgreSQL 16.8-alpine** service, applies versioned migrations twice and tests concurrent idempotency, owner filtering, schema constraints, rollback, rejected credentials and bounded connections. This is required by Mira Gate.
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --filter @mira-cloud/api db:check
+pnpm check
+# Only with an isolated local PostgreSQL and a test DATABASE_URL:
+pnpm --filter @mira-cloud/api db:migrate
+pnpm --filter @mira-cloud/api test:integration
+```
+
+CI test credentials are ephemeral only. No hosted dev/test database, production database, open 5432 port, production volume, deploy workflow or promotion is configured by this card.

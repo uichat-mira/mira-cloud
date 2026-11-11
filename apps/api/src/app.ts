@@ -19,7 +19,11 @@ function parseQuery(url: string): Record<string, string> {
   return result;
 }
 
-export function createApp(): Hono<Env> {
+export interface AppDependencies {
+  databaseReady?: () => Promise<boolean>;
+}
+
+export function createApp(deps: AppDependencies = {}): Hono<Env> {
   const app = new Hono<Env>();
 
   app.use("*", async (c, next) => {
@@ -55,6 +59,32 @@ export function createApp(): Hono<Env> {
       );
     }
     return c.json({ service: "mira-cloud-api", status: "alive", version });
+  });
+
+  // Process liveness is separate from database readiness.
+  // No SQL, connection string, username or authentication failure detail is exposed.
+  app.get("/api/v1/ready", async (c) => {
+    if (!deps.databaseReady) {
+      return c.json(
+        {
+          status: "unavailable",
+          error: { code: "DATABASE_NOT_CONFIGURED", requestId: c.get("requestId") },
+        },
+        503,
+      );
+    }
+    try {
+      if (await deps.databaseReady()) return c.json({ status: "ready" as const });
+    } catch {
+      // Invalid credentials and network errors are intentionally indistinguishable.
+    }
+    return c.json(
+      {
+        status: "unavailable",
+        error: { code: "DATABASE_UNAVAILABLE", requestId: c.get("requestId") },
+      },
+      503,
+    );
   });
 
   app.all("/api/v1/health", (c) => {

@@ -1,6 +1,6 @@
 # Mira Cloud — 初始技术设计 v0.1
 
-**设计状态：Design baseline / no implementation.** 日期 2026-11-11。
+**设计状态：Design baseline；AGT-041–044 已逐步建立本地 Web/API/DB 工程代码，但没有运行时部署。** 日期 2026-11-11。
 权威参照：[产品架构 v0.4](v0.4.md)、[ADR-003](../decisions/ADR-003-hono-drizzle-postgres-deployment.md)、[AGT-040](https://github.com/uichat-mira/mira-cloud/issues/4)。
 
 ## 1. 目标、MVP 与边界
@@ -45,7 +45,7 @@ Desktop native Cloud Client --> protected API / existing local Backend
 - 写操作提供 Idempotency-Key、稳定错误码、requestId、受限重试和审计。返回“请求已提交”不能代表 Run 已完成；取消请求也不等于取消成功。
 - SSE 事件要求单调事件序号、Last-Event-ID 或等效游标补拉、断线重连、服务重启一致性，不借此创建另一份 Run 权威。
 
-## 4. PostgreSQL 目标数据模型（候选，当前不存在）
+## 4. PostgreSQL 目标数据模型（整体仍为候选；AGT-044 只实现 task_metadata 表）
 
 | 表簇 | 关键字段/约束 |
 | --- | --- |
@@ -81,7 +81,7 @@ packages/
   design-tokens/          # generated from pinned Mira Mobile source
 ~~~
 
-根工作区已具备 Node 24、pinned pnpm、TypeScript strict、格式/静态检查和 Vitest T1 工具底座，但上述应用目录仍为空。应用依赖版本由未来 implementation PR 按锁文件精确锁定并验证；本文档不创造业务实现。
+根工作区已具备 Node 24、pinned pnpm、TypeScript strict、格式/静态检查和 Vitest T1 工具底座，且已初始化本地 React Web、Hono API 及单表 PostgreSQL/Drizzle；其他领域模块、OAuth、Agent 能力仍未实现。应用依赖版本由未来 implementation PR 按锁文件精确锁定并验证；本文档不创造业务实现。
 
 ## 6. 实时、Skills、MCP、记忆和成本
 
