@@ -1,6 +1,6 @@
 # Mira Cloud — Design System
 
-**Status:** Web design contract with an AGT-042 P0 static React implementation and an AGT-047 MiraDesign Foundation; no independently published Web component library or deployed Cloud application.
+**Status:** Web design contract with an AGT-047 MiraDesign Foundation and a real React Web implementation. A prod-only Tencent path exists for the current Web/Hono/PostgreSQL foundation; this does not imply an authenticated Cloud business application, Cloud Pi integration, or an independently published Web component library.
 **Owner of canonical Mira visual tokens:** [Mira Desktop `desktop/src/shared/theme/colorThemes.ts`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts), [`desktop/src/styles.css`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/styles.css), and [`desktop/tailwind.config.cjs`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/tailwind.config.cjs). Mira Cloud pins a full Desktop commit and consumes it through the local Foundation; it does not maintain a second palette.
 
 This `DESIGN.md` is **Mira Cloud's Web and Mobile-WebView design-consumption contract**, not a competing token authority. Refer to [component library specification](docs/design/component-library.md) for the future React implementation plan and to [workbench product brief](docs/product/workbench.md) for user journeys.
