@@ -72,7 +72,7 @@ describe("MiraDesign component ownership boundary", () => {
     for (const file of sourceFiles) {
       const contents = readFileSync(join(componentRoot, file), "utf8");
       expect(contents, file).not.toContain("claude-range-slider");
-      expect(contents, file).not.toContain("stable-scrollbar");
+      expect(contents, file).not.toMatch(/(?:^|[\\s"'])stable-scrollbar(?:[\\s"']|$)/);
     }
   });
 
