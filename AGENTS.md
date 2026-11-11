@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository currently houses the Mira Cloud **product vision, interaction references, system architecture, a Node/pnpm workspace and a local-only Hono HTTP API**. Its product design baseline is `docs/architecture/v0.4.md`, and the current implementation technology design baseline is `docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`. AGT-043 authorizes a minimal local-only Hono API; no user/business backend, OAuth, database or deployed frontend is implemented.
+This repository currently houses the Mira Cloud **product vision, interaction references, system architecture, a Node/pnpm workspace, a local-only Hono HTTP API and a responsive static React Web shell**. Its product design baseline is `docs/architecture/v0.4.md`, and the current implementation technology design baseline is `docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`. AGT-043 authorizes a minimal local-only Hono API; no user/business backend, OAuth, database or deployed frontend is implemented; AGT-042 adds only the Web UI foundation.
 
 Before engineering judgments or mutations involving the `uichat-mira` organization, read the current [organization AGENTS.md](https://github.com/uichat-mira/.github/blob/main/AGENTS.md), relevant instructions, actual target-repository code and applicable Issue/PR/task contracts. Never infer runtime facts from design diagrams.
 

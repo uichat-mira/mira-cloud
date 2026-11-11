@@ -1,6 +1,6 @@
 # Mira Cloud — React Component Library Contract
 
-**Status:** design/catalog only, **no component package is implemented yet**. This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
+**Status:** design contract; AGT-042 implements the first five local Web UI primitives, without publishing an independent component package. This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
 
 ## 1. Technology direction
 
@@ -12,7 +12,7 @@ When the independent React Web application is separately authorized:
 - **Locally owned typed React components** (shadcn-style composition may be used as implementation inspiration; do not require a runtime `shadcn/ui` package). Components are source-controlled and tested in this repository.
 - Avoid an all-in-one dashboard design kit, global CSS overrides that conflict with tokens, duplicating Mira Mobile React Native implementations, or creating a separately published npm component library at P0.
 
-**Library location:** begin as `apps/web/src/components/ui/` for reusable primitives and `apps/web/src/features/<domain>/components/` for product-domain components. Extract to `packages/ui` only if a **second actual compatible Web consumer** appears and cross-package maintenance costs are justified. None of these folders exist today.
+**Library location:** begin as `apps/web/src/components/ui/` for reusable primitives and `apps/web/src/features/<domain>/components/` for product-domain components. Extract to `packages/ui` only if a **second actual compatible Web consumer** appears and cross-package maintenance costs are justified. The first local UI primitives now live under apps/web/src/components/ui; domain components and independent shared packages are not yet implemented.
 
 ## 2. Component contract and naming
 
@@ -75,4 +75,4 @@ A display label must preserve all factual distinctions owned by the backing doma
 
 ## 7. Current state and approval boundary
 
-Current repository contains only design docs, a mock HTML prototype and docs CI. This catalog does **not** implement React UI, install packages, require a Figma project, configure servers, or expand existing OpenCode Worker scopes. Production Web component work needs a separately authorized Issue and implementation/testing contract. `dev` and `test` have **no servers**.
+The repository now contains a local static React Web shell and base UI primitives as well as Hono transport, plus the older HTML mock prototype. This catalog does not imply real Agent tasks, OAuth or deployed product state. Production Web component work needs a separately authorized Issue and implementation/testing contract. `dev` and `test` have **no servers**.
