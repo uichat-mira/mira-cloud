@@ -19,11 +19,16 @@ const configSchema = z.object({
 export function createDbContext(env: NodeJS.ProcessEnv = process.env): DbContext | undefined {
   const url = env["DATABASE_URL"];
   if (!url) return undefined;
-  const config = configSchema.parse({
+  const parsed = configSchema.safeParse({
     url,
     max: env["DB_POOL_MAX"] ?? "4",
     connectionTimeoutMs: env["DB_CONNECT_TIMEOUT_MS"] ?? "2000",
   });
+  // A malformed DATABASE_URL can contain credentials; never print Zod's input.
+  if (!parsed.success || !["postgres:", "postgresql:"].includes(new URL(url).protocol)) {
+    throw new Error("Invalid database configuration");
+  }
+  const config = parsed.data;
   // Pool is private; no connection string, SQL, credentials or row data are logged.
   const pool = new pg.Pool({
     connectionString: config.url,

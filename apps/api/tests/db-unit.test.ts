@@ -16,7 +16,9 @@ describe("database configuration and truthful readiness", () => {
     expect(() =>
       createDbContext({ DATABASE_URL: "postgresql://localhost/db", DB_POOL_MAX: "19" }),
     ).toThrow();
-    expect(() => createDbContext({ DATABASE_URL: "not-a-url" })).toThrow();
+    expect(() => createDbContext({ DATABASE_URL: "not-a-url" })).toThrow(
+      "Invalid database configuration",
+    );
   });
 
   it("reports unreachable DB without returning credentials or internal exception", async () => {
