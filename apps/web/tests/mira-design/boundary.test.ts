@@ -8,6 +8,8 @@ const sourceFiles = readdirSync(componentRoot)
   .filter((entry) => entry.endsWith(".tsx"))
   .sort();
 const entry = readFileSync(join(componentRoot, "index.ts"), "utf8");
+const contentEntry = readFileSync(join(componentRoot, "content.ts"), "utf8");
+const heavyContentFiles = new Set(["MarkdownText.tsx", "MarkdownEditor.tsx"]);
 
 function workspaceSourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -18,9 +20,9 @@ function workspaceSourceFiles(directory: string): string[] {
 }
 
 describe("MiraDesign component ownership boundary", () => {
-  it("exports every Cloud-owned component from the single MiraDesign entry", () => {
+  it("exports every light Cloud-owned component from the main MiraDesign entry", () => {
     expect(sourceFiles.length).toBeGreaterThanOrEqual(29);
-    for (const file of sourceFiles) {
+    for (const file of sourceFiles.filter((file) => !heavyContentFiles.has(file))) {
       expect(entry, `${file} is not exported`).toContain(`"./${file}"`);
     }
   });
@@ -101,14 +103,18 @@ describe("MiraDesign component ownership boundary", () => {
     expect(streaming).not.toMatch(/^let\s+/m);
   });
 
-  it("keeps heavy content behind an explicit dynamic entry", () => {
-    const contentEntry = readFileSync(join(componentRoot, "content.ts"), "utf8");
-    expect(entry).not.toMatch(/export\s+\{[^}]*MarkdownText/);
-    expect(entry).not.toMatch(/export\s+\{[^}]*MarkdownEditor/);
-    expect(entry).toContain('import("./MarkdownText.tsx")');
-    expect(entry).toContain('import("./MarkdownEditor.tsx")');
-    expect(contentEntry).toContain('from "./MarkdownText.tsx"');
-    expect(contentEntry).toContain('from "./MarkdownEditor.tsx"');
+  it("keeps heavy content behind an isolated dynamic entry", () => {
+    expect(entry).not.toContain("MarkdownText");
+    expect(entry).not.toContain("MarkdownEditor");
+    expect(entry).not.toContain("katex");
+    expect(entry).not.toContain("streamdown");
+    expect(entry).not.toContain("milkdown");
+
+    expect(contentEntry).toContain('import("katex/dist/katex.min.css")');
+    expect(contentEntry).toContain('import("./MarkdownText.tsx")');
+    expect(contentEntry).toContain('import("./MarkdownEditor.tsx")');
+    expect(contentEntry).not.toContain('from "./MarkdownText.tsx"');
+    expect(contentEntry).not.toContain('from "./MarkdownEditor.tsx"');
   });
 
   it("keeps explicit non-goal Desktop surfaces out of MiraDesign", () => {
