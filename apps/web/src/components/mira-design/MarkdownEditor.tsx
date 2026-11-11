@@ -2,7 +2,7 @@ import { Crepe, CrepeFeature } from "@milkdown/crepe";
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
 import { useEffect, useRef } from "react";
 
-type MarkdownEditorProps = {
+export type MarkdownEditorProps = {
   initialValue?: string;
   onChange?: (value: string) => void;
   placeholder?: string;
