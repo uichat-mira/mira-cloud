@@ -1,10 +1,26 @@
 # Mira Cloud
 
-> **Status: Design / Research only. No implementation has been started.**  
+> **Status: Engineering base only. No business UI, HTTP API or database implementation has started.**
 > Design baseline: **product architecture v0.4** and **technology ADR-003** (2026-11-11).  
 > Principle: **One Account, Multiple Runtimes, Shared Work.**
 
 Mira Cloud is the future independent, continuously available agent workspace, growing out of the existing [Cloud Pi](https://github.com/uichat-mira/cloud-pi) runtime. It is **not** a cloud copy of Mira Desktop, an extension of Cloud Auth's database, or a new replacement for established GitHub engineering records.
+
+## Engineering base (implemented)
+
+This repository now has a reproducible **Node 24 / pnpm 10 / TypeScript strict** workspace scaffold. It contains tooling only: there is still **no React page, Hono route, PostgreSQL schema, Drizzle migration, OAuth flow, Cloud Pi connection, Docker/Caddy deployment or runtime service**.
+
+Prerequisites: Node.js 24 and Corepack. pnpm is pinned by `packageManager` in `package.json`.
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm check
+```
+
+`pnpm check` runs Prettier, ESLint, TypeScript strict checking and Vitest T1 unit tests. Before recursing, it also verifies that every `apps/*` / `packages/*` workspace package declares a runnable `check` script, so a later Web/API package cannot be silently skipped. This is T1/source tooling evidence only; it does not prove T2–T5, OAuth, Agent execution or deployment.
+
+The workspace is intentionally empty until an authorized application Issue adds real packages. Design documents and `prototypes/` are not executable applications.
 
 ## Current decisions
 
@@ -23,7 +39,7 @@ Mira Cloud is **publicly available under the [MIT License](LICENSE)**. Contribut
 
 The working source branch is **`dev`**; ordinary design changes flow through `feat/*` PRs and deliberate `dev → test → prod` source promotions. `main` is a retained bootstrap/history branch and **never means production**. The repository is still **design-only**, so no Mira Cloud runtime is deployed from any branch. In particular, **`dev` and `test` have no configured servers**; do not add fake deployment URLs or claim T4/T5 evidence.
 
-Source validation is `node scripts/check-docs.mjs`, reported as the `Docs Contract` job and the aggregate `Mira Gate` status. These checks validate documentation only, not Agent functionality or deployment. See [environment and promotion contract](docs/engineering/environment.md) and the [organization environment model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md).
+Source validation has two layers: `node scripts/check-docs.mjs` (the `Docs Contract` job) and `pnpm check` (the Node 24 workspace tooling and T1 `Engineering Checks` job). Both are aggregated by the `Mira Gate` status. They validate documentation, source configuration and unit-level tooling only, not Agent functionality or deployment. See [environment and promotion contract](docs/engineering/environment.md) and the [organization environment model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md).
 
 **Public, MIT-licensed:** see [LICENSE](LICENSE). GitHub default branch is `dev`. GitHub-native **`prod` branch protection is active**: PR required, at least one approving review, successful `Mira Gate` required with up-to-date branch, stale reviews dismissed, conversations resolved, administrator enforcement, no force pushes or deletion. This does not imply production deployment.
 
@@ -60,7 +76,7 @@ The [AGT-040 initial technology design work item](https://github.com/uichat-mira
 
 ## What is explicitly **not** authorized by this repository
 
-- No implementation, migration, production deployment or release machinery. **Docs-only CI** is enabled; it is not a runtime test or deploy workflow.
+- No business application implementation, migration, production deployment or release machinery. `Mira Gate` runs the Docs Contract and T1 workspace checks only; it is not a T2–T5 runtime test or deploy workflow.
 - No GitHub Issues / engineering cards or automatic changes to existing projects merely because they are mentioned in a design.
 - No assumption that future API endpoints, OAuth scopes or cross-device capabilities already exist.
 
