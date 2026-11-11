@@ -54,6 +54,7 @@ services:
       - db_password
     networks:
       - internal
+      - ingress
     cap_drop:
       - ALL
     security_opt:
@@ -113,3 +114,5 @@ networks:
   internal:
     driver: bridge
     internal: true
+  ingress:
+    driver: bridge

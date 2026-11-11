@@ -12,7 +12,7 @@
 
 ## Runtime topology
 
-cloud.tomzlab.cn → existing host Caddy TLS → React dist directory and /api reverse proxy → 127.0.0.1:34170 → Hono Docker container → Docker-only PostgreSQL 16.15.
+cloud.tomzlab.cn → existing host Caddy TLS → React dist directory and /api reverse proxy → 127.0.0.1:34170 → Hono Docker container (isolated DB network plus loopback ingress network) → Docker-only PostgreSQL 16.15.
 
 - PostgreSQL has no host/public port, a persistent Docker volume, and a root-owned secret file under /opt/mira-cloud/secrets. The API image runs non-root with a dedicated supplementary group for secret access.
 - Web static releases are immutable directories under /srv/www/cloud.tomzlab.cn/releases, with an atomic current symlink.

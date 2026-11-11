@@ -119,7 +119,11 @@ jobs:
           jq -e '.services.postgres.ports == null and
             (.services.api.ports | length) == 1 and
             .services.api.ports[0].host_ip == "127.0.0.1" and
-            .services.api.ports[0].published == "34170"' /tmp/mira-cloud-compose.json
+            .services.api.ports[0].published == "34170" and
+            (.services.postgres.networks | keys) == ["internal"] and
+            (.services.api.networks | keys) == ["ingress", "internal"] and
+            .networks.internal.internal == true and
+            .networks.ingress.internal != true' /tmp/mira-cloud-compose.json
           docker run --rm -v "$PWD/deploy/mira-cloud/cloud.tomzlab.cn.caddy:/etc/caddy/Caddyfile:ro"             caddy:2.10 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Real production Compose database, migration and HTTP smoke
         shell: bash
