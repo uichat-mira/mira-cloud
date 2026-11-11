@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN" data-mira-preset="default" data-mira-appearance="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#f5f4ed" />
+    <title>Mira Cloud · 工作台</title>
+    <script>
+      (() => {
+        const presets = ["default", "knowledge-blue", "archive-green", "slate-ocean"];
+        try {
+          const saved = JSON.parse(localStorage.getItem("mira-cloud-theme-v1") || "null");
+          if (
+            saved &&
+            presets.includes(saved.preset) &&
+            ["light", "dark"].includes(saved.appearance)
+          ) {
+            document.documentElement.dataset.miraPreset = saved.preset;
+            document.documentElement.dataset.miraAppearance = saved.appearance;
+          } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            document.documentElement.dataset.miraAppearance = "dark";
+          }
+        } catch {
+          // Invalid optional appearance preference must not block first paint.
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
