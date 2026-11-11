@@ -105,7 +105,7 @@ export default function Drawer({
         ) : null}
 
         <div
-          className={`stable-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 ${bodyClassName}`}
+          className={`mira-stable-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 ${bodyClassName}`}
         >
           {children}
         </div>
