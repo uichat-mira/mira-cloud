@@ -1,0 +1,178 @@
+@import "tailwindcss";
+@import "./tokens.generated.css";
+
+@theme inline {
+  --color-mira-canvas: var(--mira-color-canvas);
+  --color-mira-card: var(--mira-color-card);
+  --color-mira-soft: var(--mira-color-soft);
+  --color-mira-ink: var(--mira-color-ink);
+  --color-mira-text: var(--mira-color-text);
+  --color-mira-muted: var(--mira-color-muted);
+  --color-mira-border: var(--mira-color-border);
+  --color-mira-primary: var(--mira-color-primary);
+  --color-mira-action: var(--mira-color-action);
+  --color-mira-on-primary: var(--mira-color-on-primary);
+}
+:root {
+  color-scheme: light;
+}
+:root[data-mira-appearance="dark"] {
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: var(--mira-color-canvas);
+  color: var(--mira-color-text);
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+:focus-visible {
+  outline: 2px solid var(--mira-color-action);
+  outline-offset: 3px;
+}
+.app-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr);
+}
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px 16px;
+  background: var(--mira-color-card);
+  border-right: 1px solid var(--mira-color-border);
+}
+.page-content {
+  min-width: 0;
+  max-width: 1220px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 36px clamp(16px, 4vw, 64px) max(32px, env(safe-area-inset-bottom));
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 18px;
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--mira-color-text);
+}
+.nav-link[aria-current="page"] {
+  background: var(--mira-color-soft);
+  color: var(--mira-color-ink);
+  font-weight: 600;
+}
+.nav-link:hover {
+  background: var(--mira-color-soft);
+}
+.mira-card {
+  background: var(--mira-color-card);
+  border: 1px solid var(--mira-color-border);
+  border-radius: var(--mira-radius-card);
+}
+.mira-input {
+  background: var(--mira-color-input);
+  border: 1px solid var(--mira-color-border);
+  color: var(--mira-color-ink);
+  border-radius: var(--mira-radius-control);
+  min-height: 44px;
+  width: 100%;
+  padding: 10px 12px;
+}
+.mira-input[aria-invalid="true"] {
+  border-color: var(--mira-color-error);
+}
+.mira-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border-radius: var(--mira-radius-control);
+  padding: 10px 16px;
+  font-weight: 600;
+  transition: opacity 150ms ease;
+}
+.mira-button-primary {
+  background: var(--mira-color-action);
+  color: var(--mira-color-on-primary);
+  border: 1px solid transparent;
+}
+.mira-button-secondary {
+  background: var(--mira-color-card);
+  color: var(--mira-color-ink);
+  border: 1px solid var(--mira-color-border);
+}
+.mira-button-ghost {
+  background: transparent;
+  color: var(--mira-color-ink);
+  border: 1px solid transparent;
+}
+.mira-button:hover:not(:disabled) {
+  opacity: 0.88;
+}
+.mira-button:disabled {
+  opacity: 0.55;
+}
+.mira-icon-button {
+  width: 44px;
+  padding: 10px;
+}
+@media (max-width: 790px) {
+  .app-shell {
+    display: block;
+  }
+  .sidebar {
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px;
+    gap: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--mira-color-border);
+  }
+  .sidebar .mobile-hide {
+    display: none;
+  }
+  .sidebar nav {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+  .nav-link {
+    white-space: nowrap;
+    width: auto;
+  }
+  .page-content {
+    padding-top: 24px;
+  }
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

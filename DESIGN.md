@@ -1,6 +1,6 @@
 # Mira Cloud — Design System
 
-**Status:** design contract only; no Web component library has been implemented.
+**Status:** Web design contract with an AGT-042 P0 static React implementation; no independently published Web component library or deployed Cloud application.
 **Owner of canonical Mira visual tokens:** [Mira Mobile `src/theme/tokens.ts`](https://github.com/uichat-mira/mira-mobile/blob/dev/src/theme/tokens.ts), [`palette.ts`](https://github.com/uichat-mira/mira-mobile/blob/dev/src/theme/palette.ts), and [Mobile `DESIGN.md`](https://github.com/uichat-mira/mira-mobile/blob/dev/DESIGN.md).
 
 This `DESIGN.md` is **Mira Cloud's Web and Mobile-WebView design-consumption contract**, not a competing token authority. Refer to [component library specification](docs/design/component-library.md) for the future React implementation plan and to [workbench product brief](docs/product/workbench.md) for user journeys.
@@ -59,7 +59,7 @@ Cloud Web must preserve the **preset + appearance** model if user theme settings
 
 Use semantic, theme-scoped CSS variables such as `--mira-color-primary`, `--mira-color-canvas`, `--mira-color-card`, `--mira-color-text`, `--mira-color-border`, `--mira-radius-card`, `--mira-space-md`. Tailwind must refer to these variables, not duplicate raw hex values. Components consume semantic roles; brand values are mapped in one generated adapter.
 
-No CSS variables, Tailwind config, token generator, package or build output exists in this repository yet. Those belong to a later authorized frontend implementation.
+AGT-042 provides deterministic semantic CSS variables generated from a pinned Mobile revision, consumed by Tailwind CSS 4 in the local Web package. This does not create an independent token authority.
 
 ## 4. Typography and layout
 

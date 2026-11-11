@@ -8,7 +8,7 @@ Mira Cloud is the future independent, continuously available agent workspace, gr
 
 ## Engineering base (implemented)
 
-This repository now has a reproducible **Node 24 / pnpm 10 / TypeScript strict** workspace scaffold. It contains tooling only: there is still **no React page, PostgreSQL schema, Drizzle migration, OAuth flow, Cloud Pi connection, Docker/Caddy deployment or runtime service**.
+This repository now has a reproducible **Node 24 / pnpm 10 / TypeScript strict** workspace scaffold. It contains a local-only Hono API and a responsive React Web shell; there is still **no PostgreSQL schema, Drizzle migration, OAuth flow, Cloud Pi connection, Docker/Caddy deployment or production service**.
 
 Prerequisites: Node.js 24 and Corepack. pnpm is pinned by `packageManager` in `package.json`.
 
@@ -29,7 +29,7 @@ The workspace is intentionally empty until an authorized application Issue adds 
 - **Clients:** browser, Mira Mobile (WebView), Mira Desktop (OAuth Cloud Client and separately a local-first Capability Host), and IM channels.
 - **Work:** temporary and scheduled tasks, run status, artifacts, memory, skills/MCP, GitHub collaboration, and explicit cross-runtime handoff.
 - **Permissions:** same-account sign-in is not tool authority. Desktop-owned runs and files stay local until explicitly shared.
-- **UI:** future Web UI aligns with canonical [Mira Mobile design tokens](https://github.com/uichat-mira/mira-mobile/blob/dev/src/theme/tokens.ts). This repository currently contains **no frontend or backend application implementation**.
+- **UI:** future Web UI aligns with canonical [Mira Mobile design tokens](https://github.com/uichat-mira/mira-mobile/blob/dev/src/theme/tokens.ts). AGT-042 provides a local-only static React workspace; AGT-043 provides a local-only Hono HTTP service. Neither is a deployed or authenticated product.
 
 ## Open-source license
 
@@ -54,7 +54,7 @@ No other agent, review provider, server, environment or deployment automation is
 ## Design system and component plan
 
 - [`DESIGN.md`](DESIGN.md) is the **Mira Cloud Web design-consumption specification**. It inherits the current Mira Mobile Token/palette and `DESIGN.md` owners, including four light/dark presets. This is not an independent token database or an implemented CSS package.
-- [Component library contract](docs/design/component-library.md): Tailwind 4, Radix only where appropriate, Lucide, locally owned typed React components. Begin inside the future Web app; **no separate npm component package or frontend scaffold now**.
+- [Component library contract](docs/design/component-library.md): Tailwind 4, Radix only where appropriate, Lucide, locally owned typed React components. The first Button, IconButton, Input, FormField and Card sources live in the local Web app; no independently published npm component library.
 - The existing [workbench prototype](prototypes/workbench-v0.1/) is mock HTML and predates this specification; it has not been migrated or validated for all themes.
 
 ## Technology stack initiative
@@ -103,3 +103,18 @@ pnpm --filter @mira-cloud/api build
 `GET /api/v1/health` returns this process's own liveness/version; it makes **no** statement about Cloud Auth, Cloud Pi or PostgreSQL availability. `?detail=basic` is the only optional diagnostic query parameter. Unexpected/duplicate parameters return `INVALID_QUERY` (400), unsupported methods `METHOD_NOT_ALLOWED` (405), missing routes `NOT_FOUND` (404), and internal exceptions a scrubbed `INTERNAL_ERROR` (500). Errors carry a request ID. All HTTP integration tests use an actual ephemeral TCP listener and disable machine-wide proxy routing for loopback requests.
 
 No secrets, Docker/Caddy/prod, Cloud Auth, Cloud Pi or database configuration is created by this package.
+
+## Local React Web workspace (AGT-042)
+
+The `apps/web` package provides a responsive **React 19 / Vite / Tailwind CSS 4** static workbench. It does not connect to Cloud Auth, Cloud Pi or a database, and displays unavailable actions instead of fake runs.
+
+Visual tokens come from a byte-identical source snapshot of `uichat-mira/mira-mobile` pinned at full Git commit `31ee125953fe23e0af14f280a0b316637e46fa45`. Both Mobile source files are verified by Git blob SHA tests and mapped into semantic Web CSS via `pnpm --filter @mira-cloud/web tokens:generate`. CI verifies the generated CSS, all four Mobile presets in light/dark, and the accessible primary-action text contrast. No new manual color palette is maintained.
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --filter @mira-cloud/web dev
+pnpm --filter @mira-cloud/web build
+pnpm check
+```
+
+The only persisted Web preference is local appearance. No credentials, user data or Cloud session are saved by this UI shell.
