@@ -19,11 +19,7 @@ import {
   type ThemePresetId,
 } from "../theme/mira-design/index.ts";
 import { applyTheme, currentTheme } from "../theme/mira-design/theme-preference.ts";
-import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
-import { IconButton } from "../components/ui/icon-button";
-import { FormField } from "../components/ui/form-field";
-import { Input } from "../components/ui/input";
+import { Button, Card, IconButton, TextInput } from "../components/mira-design/index.ts";
 import { ConnectionPanel } from "../features/connection/connection-panel";
 
 const nav = [
@@ -61,17 +57,18 @@ function ThemeControls() {
         ))}
       </select>
       <IconButton
-        variant="secondary"
-        label={theme.appearance === "light" ? "切换深色模式" : "切换浅色模式"}
-        icon={
-          theme.appearance === "light" ? (
-            <Moon aria-hidden="true" size={18} />
-          ) : (
-            <Sun aria-hidden="true" size={18} />
-          )
-        }
+        styleType="outline"
+        size="lg"
+        className="h-11 w-11"
+        ariaLabel={theme.appearance === "light" ? "切换深色模式" : "切换浅色模式"}
         onClick={() => change(theme.preset, theme.appearance === "light" ? "dark" : "light")}
-      />
+      >
+        {theme.appearance === "light" ? (
+          <Moon aria-hidden="true" size={18} />
+        ) : (
+          <Sun aria-hidden="true" size={18} />
+        )}
+      </IconButton>
     </div>
   );
 }
@@ -109,7 +106,7 @@ function MainWorkbench() {
           <p className="mt-4 max-w-lg text-sm leading-7 text-text-secondary">
             任务、运行、记忆与成果将在完成身份与执行服务接入后开放。现在不创建虚构的运行记录。
           </p>
-          <Button className="mt-8" disabled aria-describedby="task-not-ready">
+          <Button className="mt-8" variant="primary" disabled aria-describedby="task-not-ready">
             <Plus size={16} aria-hidden="true" />
             创建云端任务
           </Button>
@@ -127,9 +124,14 @@ function MainWorkbench() {
           <p className="mt-2 mb-5 text-sm text-text-secondary">
             Artifact 索引尚未接入，搜索暂不可用。
           </p>
-          <FormField id="artifact-search" label="成果搜索" description="等待真实成果库接入">
-            <Input id="artifact-search" placeholder="搜索报告、文件或来源" disabled />
-          </FormField>
+          <TextInput
+            label="成果搜索"
+            labelHelp="等待真实成果库接入"
+            value=""
+            onChange={() => {}}
+            placeholder="搜索报告、文件或来源"
+            disabled
+          />
         </Card>
         <Card className="p-6" aria-labelledby="next-title">
           <h2 id="next-title" className="text-lg font-semibold text-text-primary">

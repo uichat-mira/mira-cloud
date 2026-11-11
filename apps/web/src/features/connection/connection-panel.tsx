@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Cloud, Database, LoaderCircle, RefreshCw, WifiOff } from "lucide-react";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
+import { Button, Card } from "../../components/mira-design/index.ts";
 import { checkConnection, type ConnectionFetcher, type ConnectionView } from "./connection-client";
 
 const states: Record<ConnectionView["kind"], { title: string; explanation: string }> = {

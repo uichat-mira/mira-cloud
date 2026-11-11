@@ -1,39 +1,38 @@
 # Mira Cloud — React Component Library Contract
 
-**Status:** design contract; AGT-042 implements the first five local Web UI primitives and AGT-047 establishes the MiraDesign Foundation, without publishing an independent component package. This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
+**Status:** design contract; AGT-047 establishes the MiraDesign Foundation and AGT-048 migrates the reusable Desktop Core UI components into the Cloud-owned MiraDesign layer, without publishing an independent component package. The per-component source record is [MiraDesign Core UI Migration Record](./mira-design-migration.md). This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
 
 ## 1. Technology direction
 
 When the independent React Web application is separately authorized:
 
 - **Tailwind CSS 4** for layout/style utilities, configured through generated semantic Mira CSS variables.
-- **Radix Primitives**, only for accessible behaviors that justify an external primitive (Dialog, Dropdown Menu, Tabs, Select, Popover, Tooltip). Evaluate bundle/maintenance cost per dependency.
+- **Accessible primitives**, only where native composition would be hard to maintain: Radix Dropdown Menu today, with Dialog/Tabs/Select/Popover evaluated per need; the migrated Tooltip uses the pinned `react-tooltip` dependency. Evaluate bundle/maintenance cost per dependency.
 - **Lucide React** icons, consistent with Mira Mobile's Lucide visual language.
 - **Locally owned typed React components** (shadcn-style composition may be used as implementation inspiration; do not require a runtime `shadcn/ui` package). Components are source-controlled and tested in this repository.
 - Avoid an all-in-one dashboard design kit, global CSS overrides that conflict with tokens, duplicating Mira Mobile React Native implementations, or creating a separately published npm component library at P0.
 
-**Library location:** begin as `apps/web/src/components/ui/` for reusable primitives and `apps/web/src/features/<domain>/components/` for product-domain components. Extract to `packages/ui` only if a **second actual compatible Web consumer** appears and cross-package maintenance costs are justified. The first local UI primitives now live under apps/web/src/components/ui; domain components and independent shared packages are not yet implemented.
+**Library location:** reusable MiraDesign primitives live under `apps/web/src/components/mira-design/` and are exported from its `index.ts`; product-domain components belong under `apps/web/src/features/<domain>/components/`. Extract to `packages/ui` only if a **second actual compatible Web consumer** appears and cross-package maintenance costs are justified. Domain components and independent shared packages are not yet implemented.
 
 ## 2. Component contract and naming
 
 | Layer | Examples | Responsibility |
 | --- | --- | --- |
 | Foundations | MiraDesign semantic tokens, type, spacing, radius, icon, focus ring | Implemented from pinned Mira Desktop sources; one Web token authority under `apps/web/src/theme/mira-design/` |
-| UI primitives | Button, IconButton, Input, Textarea, Select, Checkbox, Radio, Switch, Dialog, Tabs, Tooltip, Popover, Card, Badge, Separator, Skeleton | Generic interactions, accessibility, theming; no Cloud API or domain data |
-| Patterns | EmptyState, ErrorState, LoadingState, ConfirmAction, FormField, SearchFilterBar, ResponsiveSheet, SideNavigation | Consistent reusable UX composition |
+| UI primitives | Alert, Badge, Button/IconButton, Card/SectionCard, Divider, Input/TextArea/NumberInput, Skeleton, Switch, Slider, Tag/TagInput, Tooltip, NavItem, SegmentedTabs/TabCard, CollapsiblePanel/ExpandableSection, Drawer, DropdownMenu, ConfirmDialog, Message, Result, FullPageStatus, FileIcon, ImagePreviewOverlay, StepIndicator, TerminalPanel, WelcomePanel | Generic interactions, accessibility, theming; no Cloud API or domain data |
+| Patterns | EmptyState, ErrorState, LoadingState, ConfirmAction, SearchFilterBar, ResponsiveSheet, SideNavigation | Consistent reusable UX composition |
 | Domain components | TaskCard, TriggerScheduleEditor, RunTimeline, RunStateIndicator, RuntimeBadge, ArtifactRow, CostBudgetSummary, CapabilityGrantPanel, HandoffPrompt | Typed cloud-specific concepts and real status semantics; owned by their feature modules |
 
 UI primitives must not import Cloud Pi/GitHub/OAuth adapters. Domain components should receive validated typed props and explicit user callbacks; they don't invent their own backend requests when a service/query layer already owns that behavior.
 
-### First batch only
+### Implemented batches
 
-When Web implementation is approved, build in order of actual screens, rather than generating an entire library:
+The first two batches are already implemented as Cloud-owned MiraDesign source:
 
-1. Button / IconButton / FormField / Input / Card (navigation and first task form).
-2. Dialog / ConfirmAction / Tabs / Badge / EmptyState / ErrorState / Skeleton (state clarity).
-3. TaskCard / RunStateIndicator / RuntimeBadge / ArtifactRow (first real Task → Run → Artifact journey).
+1. Alert / Badge / Button / IconButton / Card / SectionCard / Divider / Input / TextArea / NumberInput / Skeleton / Switch / Slider / Tag / TagInput / Tooltip / NavItem / SegmentedTabs / TabCard / CollapsiblePanel / ExpandableSection / Drawer / DropdownMenu / ConfirmDialog / Message / Result / FullPageStatus / FileIcon / ImagePreviewOverlay / StepIndicator / TerminalPanel / WelcomePanel.
+2. TaskCard / RunStateIndicator / RuntimeBadge / ArtifactRow remain the first domain-component journey and are not implied by the base layer.
 
-Additional components such as DatePicker, charts, resource tree, command palette or data grid are **not** P0 just because a UI toolkit offers them.
+Table, Markdown/Editor, SearchSelect and NavigationCardTabs are deferred to AGT-049. Additional components such as DatePicker, charts, resource tree, command palette or data grid are **not** P0 just because a UI toolkit offers them.
 
 ## 3. State semantics matter more than decoration
 
@@ -57,7 +56,7 @@ A display label must preserve all factual distinctions owned by the backing doma
 - Mobile WebView layout respects safe-area insets, keyboard, viewport changes, bottom bars and return/back behavior. Responsive desktop lists support keyboard reachability without creating a second design language.
 - Real dark mode and each palette preset need visual contrast checks; avoid hardcoded per-component hex overrides.
 
-## 5. Component API and testing (future)
+## 5. Component API and testing
 
 - TS props are narrow/typed, variant tokens explicit; avoid undocumented `any` / arbitrary style blobs and implicit global state.
 - Story/example fixtures show loading, empty, error, success, disabled, offline, request pending, unknown outcome and permission denied. Fixtures are identified as demo data.
@@ -75,4 +74,4 @@ A display label must preserve all factual distinctions owned by the backing doma
 
 ## 7. Current state and approval boundary
 
-The repository now contains a local static React Web shell and base UI primitives as well as Hono transport, plus the older HTML mock prototype. This catalog does not imply real Agent tasks, OAuth or deployed product state. Production Web component work needs a separately authorized Issue and implementation/testing contract. `dev` and `test` have **no servers**.
+The repository now contains a local static React Web shell, the Cloud-owned MiraDesign Core UI layer and Hono transport, plus the older HTML mock prototype. This catalog does not imply real Agent tasks, OAuth or deployed product state. Production Web component work needs a separately authorized Issue and implementation/testing contract. `dev` and `test` have **no servers**.

@@ -156,6 +156,90 @@ button:disabled {
   outline-offset: 3px;
 }
 
+/* MiraDesign component-level Web primitives that cannot be expressed by Tailwind utilities alone. */
+.mira-stable-scrollbar {
+  scrollbar-gutter: stable;
+}
+
+.mira-range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--mira-radius-pill);
+  background: transparent;
+  outline: none;
+}
+
+.mira-range-slider::-webkit-slider-runnable-track,
+.mira-range-slider::-moz-range-track {
+  height: 4px;
+  border-radius: var(--mira-radius-pill);
+  background: transparent;
+}
+
+.mira-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border: 2px solid rgb(var(--mira-color-surface-primary));
+  border-radius: var(--mira-radius-pill);
+  background: rgb(var(--mira-color-primary));
+  box-shadow:
+    0 0 0 1px rgb(var(--mira-color-border)),
+    var(--mira-shadow-sm);
+  transition:
+    transform var(--mira-motion-duration-150) ease,
+    box-shadow var(--mira-motion-duration-150) ease;
+}
+
+.mira-range-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.mira-range-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 4px rgb(var(--mira-color-primary) / 0.22),
+    0 0 0 1px rgb(var(--mira-color-border));
+}
+
+.mira-range-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgb(var(--mira-color-surface-primary));
+  border-radius: var(--mira-radius-pill);
+  background: rgb(var(--mira-color-primary));
+  box-shadow:
+    0 0 0 1px rgb(var(--mira-color-border)),
+    var(--mira-shadow-sm);
+  transition:
+    transform var(--mira-motion-duration-150) ease,
+    box-shadow var(--mira-motion-duration-150) ease;
+}
+
+.mira-range-slider:hover::-moz-range-thumb {
+  transform: scale(1.15);
+}
+
+.mira-range-slider:focus-visible::-moz-range-thumb {
+  box-shadow:
+    0 0 0 4px rgb(var(--mira-color-primary) / 0.22),
+    0 0 0 1px rgb(var(--mira-color-border));
+}
+
+.mira-range-slider-compact::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+}
+
+.mira-range-slider-compact::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+}
+
 .app-shell {
   min-height: 100dvh;
   display: grid;
