@@ -1,4 +1,9 @@
-export { default as MarkdownText } from "./MarkdownText.tsx";
-export type { MarkdownTextProps } from "./MarkdownText.tsx";
-export { default as MarkdownEditor } from "./MarkdownEditor.tsx";
-export type { MarkdownEditorProps } from "./MarkdownEditor.tsx";
+export const loadMarkdownText = async () => {
+  const [, module] = await Promise.all([
+    import("katex/dist/katex.min.css"),
+    import("./MarkdownText.tsx"),
+  ]);
+  return module;
+};
+
+export const loadMarkdownEditor = () => import("./MarkdownEditor.tsx");
