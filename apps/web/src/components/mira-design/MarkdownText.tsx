@@ -3,7 +3,6 @@ import { code } from "@streamdown/code";
 import { createMathPlugin } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 import { memo, type ComponentProps } from "react";
-import "katex/dist/katex.min.css";
 
 export type MarkdownTextProps = Omit<ComponentProps<typeof Streamdown>, "children"> & {
   children?: string;
