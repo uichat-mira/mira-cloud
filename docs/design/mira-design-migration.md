@@ -62,6 +62,8 @@ than left as a second implementation.
 - `FileIcon` maps PDF/XLSX/other to the Foundation `danger`/`success`/`info` status roles
   instead of introducing a second raw palette.
 - `Slider` uses the Cloud `--mira-color-*` variables for its native range track.
+- Slider thumb/track/focus and stable scrollbar hooks are Cloud-owned `mira-*` CSS in `globals.css`; no Desktop-only global class is required.
+- `Message` preserves the static API through a namespaced browser event bridge instead of Desktop's module-level mutable provider reference.
 
 ## Deferred components
 
