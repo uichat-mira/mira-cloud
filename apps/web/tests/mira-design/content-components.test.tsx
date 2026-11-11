@@ -2,10 +2,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { CodeBlock } from "../../src/components/mira-design/index.ts";
-import {
-  loadMarkdownEditor,
-  loadMarkdownText,
-} from "../../src/components/mira-design/content.ts";
+import { loadMarkdownEditor, loadMarkdownText } from "../../src/components/mira-design/content.ts";
 
 describe("AGT-049 content component loading", () => {
   it("keeps CodeBlock in the light main component entry", () => {
