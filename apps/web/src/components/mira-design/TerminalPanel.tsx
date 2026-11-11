@@ -48,7 +48,7 @@ export default function TerminalPanel({
 
       <div
         ref={scrollRef}
-        className="stable-scrollbar min-h-0 flex-1 overflow-y-auto bg-surface-primary px-4 py-3 font-mono text-[12px] leading-[1.75] text-text-primary"
+        className="mira-stable-scrollbar min-h-0 flex-1 overflow-y-auto bg-surface-primary px-4 py-3 font-mono text-[12px] leading-[1.75] text-text-primary"
       >
         {children}
       </div>
