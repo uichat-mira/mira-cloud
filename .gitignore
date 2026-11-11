@@ -1,0 +1,10 @@
+node_modules/
+.pnpm-store/
+coverage/
+dist/
+.vite/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store

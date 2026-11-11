@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository currently houses the Mira Cloud **product vision, interaction references and system architecture only**. Its product design baseline is `docs/architecture/v0.4.md`, and the current implementation technology design baseline is `docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`. There is no authorized frontend/backend implementation yet.
+This repository currently houses the Mira Cloud **product vision, interaction references, system architecture and a tooling-only Node/pnpm workspace**. Its product design baseline is `docs/architecture/v0.4.md`, and the current implementation technology design baseline is `docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`. There is no authorized frontend or backend application implementation yet.
 
 Before engineering judgments or mutations involving the `uichat-mira` organization, read the current [organization AGENTS.md](https://github.com/uichat-mira/.github/blob/main/AGENTS.md), relevant instructions, actual target-repository code and applicable Issue/PR/task contracts. Never infer runtime facts from design diagrams.
 

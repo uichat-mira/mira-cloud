@@ -1,6 +1,6 @@
 # Mira Cloud — Environment and promotion contract
 
-**Status:** Design-only repository (2026-11-11).
+**Status:** Design baseline plus a tooling-only engineering workspace; no deployable application (2026-11-11).
 **Organization owner:** [Environment Model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md).
 **Testing owner:** [Testing Standard](https://github.com/uichat-mira/.github/blob/main/docs/engineering/testing-standard.md).
 
@@ -11,7 +11,7 @@ This repository has **no frontend or backend runtime to deploy**, and **no confi
 | Branch | Source workflow | Effective environment today | Deployment |
 | --- | --- | --- | --- |
 | `feat/*` | Isolated work, PR into `dev` | Versioned source + CI | None |
-| `dev` | Integration branch, GitHub default | Source validation (Docs Contract / Mira Gate) | **No dev server configured** |
+| `dev` | Integration branch, GitHub default | Source validation (Docs Contract, `pnpm check` / Mira Gate) | **No dev server configured** |
 | `test` | Explicitly promoted, reviewable candidate | Source/contract review and CI | **No test server configured** |
 | `prod` | Intentionally promoted source baseline | Versioned design baseline; no live service | **No production deployment configured** |
 | `main` | Original bootstrap / historical compatibility | Not an environment, not default release authority | None |
@@ -33,9 +33,9 @@ feat/* --PR, checks--> dev --reviewed promotion--> test --reviewed promotion--> 
 
 ## Available validation
 
-`node scripts/check-docs.mjs` runs local deterministic docs/prototype-path checks. GitHub Actions publishes a `Docs Contract` result and aggregates it in **Mira Gate**. This is **source integrity only**: it does not test functionality, OAuth, deployment, cloud service health or any mobile/desktop journey.
+`node scripts/check-docs.mjs` runs local deterministic docs/prototype-path checks. `pnpm check` runs the Node 24 workspace format, lint, TypeScript strict and Vitest T1 checks, and requires every future workspace package to declare a runnable `check` script. GitHub Actions publishes a `Docs Contract` result, an `Engineering Checks` result, and the aggregate **Mira Gate**. These are **source integrity and T1 tooling checks only**: they do not test application functionality, OAuth, deployment, cloud service health or any mobile/desktop journey.
 
-T1–T3 runtime layers are not applicable while this remains a design-only repository. T4 and T5 are unavailable until real corresponding environments and a working service exist.
+The repository has a tooling-only workspace with no application packages. T2/T3 application layers are not applicable until real application code exists. T4 and T5 are unavailable until real corresponding environments and a working service exist.
 
 ## Public MIT repository and `prod` protection
 

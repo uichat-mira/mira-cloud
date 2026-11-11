@@ -66,7 +66,7 @@ Cloud Auth 的 account ID 只作外部身份引用；数据隔离必须在查询
 
 Cloud Pi 当前的文件型 Scheduler/Run/Delivery 是单进程写入事实。新 Core 对其只能按受控 Owner API 观察或授权调用；迁移需冻结旧写入、校验映射、回滚锚点，绝不能长期同步双主状态。
 
-## 5. 工程目录设计（未来，不创建源码）
+## 5. 工程目录设计（应用源码仍待授权）
 
 ~~~text
 apps/
@@ -81,7 +81,7 @@ packages/
   design-tokens/          # generated from pinned Mira Mobile source
 ~~~
 
-依赖版本由未来 implementation PR 精确锁定并验证；不是本次文档写了便自动下载/安装。
+根工作区已具备 Node 24、pinned pnpm、TypeScript strict、格式/静态检查和 Vitest T1 工具底座，但上述应用目录仍为空。应用依赖版本由未来 implementation PR 按锁文件精确锁定并验证；本文档不创造业务实现。
 
 ## 6. 实时、Skills、MCP、记忆和成本
 
