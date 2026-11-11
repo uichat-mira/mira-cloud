@@ -16,7 +16,8 @@ WORKDIR /app
 COPY --from=compile --chown=node:node /out/ /app/
 COPY --from=compile --chown=node:node /workspace/apps/api/dist/ /app/dist/
 COPY --from=compile --chown=node:node /workspace/apps/api/drizzle/ /app/drizzle/
-COPY --chown=node:node --chmod=0555 apps/api/deploy/entrypoint.sh /app/entrypoint.sh
+COPY --chown=node:node apps/api/deploy/entrypoint.sh /app/entrypoint.sh
+RUN chmod 0555 /app/entrypoint.sh
 USER node
 EXPOSE 3000
 ENTRYPOINT ["/app/entrypoint.sh"]
