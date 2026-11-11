@@ -1,7 +1,7 @@
 # Mira Cloud — Engineering & Agent Coding Standard (v0.1)
 
-**状态：适用于已授权的 AGT-041–044 本地工程实现；OAuth、Agent 集成及生产部署仍未实现。**
-**权威层级：** 当前 [组织宪法](https://github.com/uichat-mira/.github/blob/main/AGENTS.md) → 当前 Issue/PR 合同 → 根目录 [AGENTS.md](../../AGENTS.md) → 本仓库特定技术规范 → 真实代码/测试。组织治理、Issue/Project 权威、通用测试与分支模型由组织拥有，**这里不复制一套新组织制度**。
+**状态：适用于当前 Mira Cloud React Web、Hono API、PostgreSQL/Drizzle、MiraDesign 与 prod-only 腾讯部署实现；OAuth、Cloud Pi 集成、Cloud-owned Task 编排等能力仅在实际代码与运行证据存在时成立。**
+**指令优先级：** 当前维护者明确指令 → 当前 Issue/PR/任务合同 → 根目录 [AGENTS.md](../../AGENTS.md) → 当前组织政策/Skill → 本文件中的通用实现细则。**事实判断另看实际代码、配置、workflow、测试与 runtime，文档优先级不能把未验证事实变成真的。** 组织治理、Issue/Project 权威、通用测试与分支模型由组织拥有，这里不复制一套新组织制度。
 
 - [技术裁决](../decisions/ADR-003-hono-drizzle-postgres-deployment.md)
 - [初始技术设计](../architecture/initial-technical-design.md)
@@ -63,13 +63,13 @@
 - 合同 T2：HTTP、Cloud Auth Audience、Cloud Pi Adapter、外部重试/错误响应、跨端 Handoff、迁移接口。
 - 集成 T3：真实 Hono Node + PostgreSQL 临时实例 + Drizzle migrations；失败注入/事务/租约；不得 mock 掉待测试的数据库或执行 Owner 边界。
 - T4：真实非生产环境/版本 E2E（**当前 dev/test 无服务器，没有此证据**）。
-- T5：真实生产部署健康/smoke（当前无 Mira Cloud production runtime）。
-- 未来有应用代码时，按组织测试标准提供 check、test:unit、test:contract、test:integration 等适用命令，并将必要结果纳入 Mira Gate。现有 Docs Contract 只能证明文档路径结构，不证明任何功能。
+- T5：真实生产部署健康/smoke。当前 prod-only 腾讯 runtime 已有部署路径；只有针对确切部署版本执行并通过的生产 smoke 才算 T5，不能由源码 Gate 代替。
+- 当前应用代码按组织测试标准提供适用的 check / test:unit / test:integration 等命令，并将必要结果纳入 Mira Gate。Docs Contract 只证明文档/路径合同；Engineering、PostgreSQL Integration 与 Production Package 各自只证明其实际执行层，不能互相冒充。
 - 不靠禁用测试、扩大 mock、吞掉异常、无故提高超时将红灯变绿。PR 必须明确 commit SHA、测试层、实际运行命令与结果，且测试代码与变更对应。
 
 ## 8. 部署和文档责任
 
 - 源码晋级 feat/* → dev → test → prod；但目前 dev/test 只承担 CI/source review，**不存在 dev/test 服务器**。main 不等于 prod。
-- 若未来批准部署：Docker Compose 跑新 API 和 PostgreSQL；优先复用已存在的宿主 Caddy；仅 prod 有权触发生产部署；必须有真实密钥、备份恢复、版本锚点、rollback 和安全 smoke。
+- 当前已批准 prod-only 腾讯部署：Docker Compose 运行 API 和 PostgreSQL，复用宿主 Caddy；仅明确的 prod 发布流程可触发生产部署，并要求真实密钥、版本锚点、备份/恢复、rollback 与生产 smoke。具体执行以 `docs/operations/tencent-production.md` 和实际 workflow/runtime 为准。
 - 永远不要为了“规范”在 dev/test 配置虚假的域名、server、Secrets、GitHub Deployment Environments；Cloud Pi 和 Cloud Auth 的现有部署归其仓库管理。
 - 单一事实来源：变更协议在实际 Owner 仓库/Issue，通用治理在组织仓库，Mira Cloud 的当前技术方向在 ADR-003，实施细则在本文件，部署真实状态取自 workflow/runtime。
