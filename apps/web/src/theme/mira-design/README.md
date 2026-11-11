@@ -39,3 +39,15 @@ Desktop provider. A local `localStorage` key stores only the visual preference.
 
 Run `pnpm --filter @mira-cloud/web tokens:generate` after changing the pinned upstream
 revision, then review the generated diff and run the Web checks.
+
+
+## Cloud documentation
+
+The Cloud-owned component and responsive consumption contracts live in:
+
+- [MiraDesign component guide](../../../../../docs/design/mira-design-components.md)
+- [MiraDesign Web guidelines](../../../../../docs/design/mira-design-guidelines.md)
+- [MiraDesign final cutover matrix](../../../../../docs/design/mira-design-cutover.md)
+
+Mira Mobile is not a visual-token upstream for this Foundation. Its contribution is limited
+to responsive/touch/WebView interaction guidance documented in the Cloud design contract.

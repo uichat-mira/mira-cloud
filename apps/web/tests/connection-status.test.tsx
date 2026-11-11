@@ -112,6 +112,7 @@ describe("connection contracts", () => {
 describe("live status panel", () => {
   it("renders checking then real ready and leaves Task authority disabled", async () => {
     render(<ConnectionPanel fetcher={fetcherFor(ready)} />);
+    expect(screen.getByRole("heading", { name: "基础服务连接" })).toBeTruthy();
     expect(await screen.findByText("基础设施已就绪")).toBeTruthy();
     expect(screen.getByText(/用户登录、Agent 和任务执行仍未接入/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "重新检查基础服务" })).toBeTruthy();

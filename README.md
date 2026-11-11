@@ -53,8 +53,8 @@ No other agent, review provider, server, environment or deployment automation is
 
 ## Design system and component plan
 
-- [`DESIGN.md`](DESIGN.md) is the **Mira Cloud Web design-consumption specification**. It inherits the current Mira Mobile Token/palette and `DESIGN.md` owners, including four light/dark presets. This is not an independent token database; Web uses a pinned snapshot and generated semantic CSS.
-- [Component library contract](docs/design/component-library.md): Tailwind 4, Radix only where appropriate, Lucide, locally owned typed React components. AGT-048 migrates the Core UI set into the Cloud-owned MiraDesign layer under `apps/web/src/components/mira-design/`; the [migration record](docs/design/mira-design-migration.md) pins each upstream source and blob SHA. No independently published npm component library.
+- [`DESIGN.md`](DESIGN.md) is the **Mira Cloud Web design-consumption specification**. Mira Desktop shared design assets are the pinned visual/token and generic-component baseline; Mira Mobile contributes responsive/touch/WebView interaction guidance only.
+- [MiraDesign component guide](docs/design/mira-design-components.md) and [Web design guidelines](docs/design/mira-design-guidelines.md) are the Cloud-native documentation baseline. The [final cutover matrix](docs/design/mira-design-cutover.md) covers the full pinned Desktop shared-UI inventory and records migrated, adapted, consolidated, deferred and excluded outcomes. No independently published npm component library.
 - The existing [workbench prototype](prototypes/workbench-v0.1/) is mock HTML and predates this specification; it has not been migrated or validated for all themes.
 
 ## Technology stack initiative

@@ -1,18 +1,18 @@
 # Mira Cloud — React Component Library Contract
 
-**Status:** design contract; AGT-047 establishes the MiraDesign Foundation, AGT-048 migrates Core UI, and AGT-049 adds the Web-decoupled Advanced / Content layer without publishing an independent component package. Source records: [Core UI](./mira-design-migration.md) and [Advanced / Content](./mira-design-advanced-migration.md). This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
+**Status:** implemented MiraDesign consumption contract after AGT-047/048/049 and the AGT-050 Cloud cutover. Read the Cloud-native [component guide](./mira-design-components.md), [Web design guidelines](./mira-design-guidelines.md), [final cutover matrix](./mira-design-cutover.md), [Core migration record](./mira-design-migration.md) and [Advanced / Content record](./mira-design-advanced-migration.md). This document extends root [`DESIGN.md`](../../DESIGN.md) and the [Workbench product brief](../product/workbench.md).
 
 ## 1. Technology direction
 
-When the independent React Web application is separately authorized:
+The current React Web application uses:
 
 - **Tailwind CSS 4** for layout/style utilities, configured through generated semantic Mira CSS variables.
 - **Accessible primitives**, only where native composition would be hard to maintain: Radix Dropdown Menu today, with Dialog/Tabs/Select/Popover evaluated per need; the migrated Tooltip uses the pinned `react-tooltip` dependency. Evaluate bundle/maintenance cost per dependency.
-- **Lucide React** icons, consistent with Mira Mobile's Lucide visual language.
+- **Lucide React** icons for the current Cloud Web icon language; icon choice does not make Mobile the visual-token authority.
 - **Locally owned typed React components** (shadcn-style composition may be used as implementation inspiration; do not require a runtime `shadcn/ui` package). Components are source-controlled and tested in this repository.
 - Avoid an all-in-one dashboard design kit, global CSS overrides that conflict with tokens, duplicating Mira Mobile React Native implementations, or creating a separately published npm component library at P0.
 
-**Library location:** reusable MiraDesign primitives live under `apps/web/src/components/mira-design/` and are exported from its `index.ts`; product-domain components belong under `apps/web/src/features/<domain>/components/`. Extract to `packages/ui` only if a **second actual compatible Web consumer** appears and cross-package maintenance costs are justified. Domain components and independent shared packages are not yet implemented.
+**Library location:** reusable MiraDesign primitives live under `apps/web/src/components/mira-design/`. Lightweight Core/Advanced components are exported from `index.ts`; heavy Markdown/editor capabilities stay behind `content.ts`. Product-domain components belong under `apps/web/src/features/<domain>/components/`. Extract to `packages/ui` only if a **second actual compatible Web consumer** appears and cross-package maintenance costs are justified.
 
 ## 2. Component contract and naming
 
@@ -75,4 +75,4 @@ A display label must preserve all factual distinctions owned by the backing doma
 
 ## 7. Current state and approval boundary
 
-The repository now contains a local static React Web shell, the Cloud-owned MiraDesign Core UI layer and Hono transport, plus the older HTML mock prototype. This catalog does not imply real Agent tasks, OAuth or deployed product state. Production Web component work needs a separately authorized Issue and implementation/testing contract. `dev` and `test` have **no servers**.
+The repository contains the real React Web shell consuming Cloud-owned MiraDesign Foundation, Core and Advanced / Content assets, plus the older HTML mock prototype. Workspace navigation and `ConnectionPanel` now consume MiraDesign primitives instead of carrying a parallel shell/component implementation. This catalog does not imply real Agent tasks, OAuth or Cloud Pi execution. `dev` and `test` have **no servers**; deployment reality remains owned by the environment/deployment contracts.
