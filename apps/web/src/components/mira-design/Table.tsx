@@ -22,7 +22,7 @@ export interface ColumnMeta<TData extends object, TValue = unknown> {
   formatter?: (value: TValue, row: TData) => React.ReactNode;
 }
 
-type Props<T> = {
+export type TableProps<T> = {
   data: T[];
   columns: ColumnDef<T, any>[];
   className?: string;
@@ -132,7 +132,7 @@ export function MinimalTable<T extends object>({
   getRowProps,
   scrollRef: externalScrollRef,
   rowSelection,
-}: Props<T>) {
+}: TableProps<T>) {
   const internalScrollRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = externalScrollRef ?? internalScrollRef;
   const [showLeftShadow, setShowLeftShadow] = useState(false);
