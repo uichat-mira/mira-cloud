@@ -1,0 +1,115 @@
+name: mira-cloud
+services:
+  postgres:
+    image: postgres:16.15-trixie
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mira_cloud
+      POSTGRES_USER: mira_cloud
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    shm_size: 64mb
+    mem_limit: 768m
+    cpus: 1
+    pids_limit: 128
+    command:
+      - postgres
+      - -c
+      - max_connections=20
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - work_mem=4MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mira_cloud -d mira_cloud"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    image: mira-cloud-api:${MIRA_CLOUD_SHA:?Deployment commit SHA is required}
+    restart: unless-stopped
+    user: "1000:1000"
+    group_add: ["45045"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    environment:
+      PORT: "3000"
+      HOST: "0.0.0.0"
+      NODE_ENV: production
+      DB_POOL_MAX: "4"
+      DB_CONNECT_TIMEOUT_MS: "2000"
+    ports:
+      - "127.0.0.1:34170:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    secrets:
+      - db_password
+    networks:
+      - internal
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 384m
+    cpus: 0.75
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/v1/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    profiles: ["migration"]
+    image: mira-cloud-api:${MIRA_CLOUD_SHA:?Deployment commit SHA is required}
+    restart: "no"
+    command: ["migrate"]
+    user: "1000:1000"
+    group_add: ["45045"]
+    read_only: true
+    environment:
+      NODE_ENV: production
+      DB_POOL_MAX: "2"
+    secrets:
+      - db_password
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 384m
+    pids_limit: 128
+
+secrets:
+  db_password:
+    file: /opt/mira-cloud/secrets/db_password
+
+volumes:
+  postgres_data:
+    name: mira-cloud-postgres-data
+
+networks:
+  internal:
+    driver: bridge
+    internal: true
