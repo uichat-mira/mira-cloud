@@ -1,4 +1,13 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { AlertCircle, CheckCircle, Info, Loader2, XCircle } from "lucide-react";
 
 export type MessageType = "success" | "error" | "warning" | "info" | "loading";
@@ -26,7 +35,20 @@ export interface MessageContextType {
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
-let globalMessageApi: MessageContextType | undefined;
+type MessageOpenConfig = Parameters<MessageContextType["open"]>[0];
+type MessageCommand =
+  | { kind: "open"; config: MessageOpenConfig }
+  | { kind: "destroy" };
+
+const messageEventName = "mira-design:message";
+
+function dispatchMessageCommand(command: MessageCommand) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent<MessageCommand>(messageEventName, { detail: command }));
+}
 
 export function MessageProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<MessageItem[]>([]);
@@ -43,11 +65,7 @@ export function MessageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const open = useCallback(
-    (config: {
-      content: ReactNode;
-      type?: MessageType | undefined;
-      duration?: number | undefined;
-    }) => {
+    (config: MessageOpenConfig) => {
       const { content, type = "info", duration = 3 } = config;
       const key = `msg_${messageKeyCounter.current++}`;
 
@@ -61,27 +79,53 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     [removeMessage],
   );
 
-  const createTypedMethod = (type: MessageType) => (content: ReactNode, duration?: number) => {
-    open({ content, type, duration });
-  };
-
   const destroy = useCallback(() => {
     timers.current.forEach((timer) => clearTimeout(timer));
     timers.current.clear();
     setMessages([]);
   }, []);
 
-  const api: MessageContextType = {
-    open,
-    success: createTypedMethod("success"),
-    error: createTypedMethod("error"),
-    warning: createTypedMethod("warning"),
-    info: createTypedMethod("info"),
-    loading: createTypedMethod("loading"),
-    destroy,
-  };
+  const api = useMemo<MessageContextType>(
+    () => ({
+      open,
+      success: (content, duration) => open({ content, type: "success", duration }),
+      error: (content, duration) => open({ content, type: "error", duration }),
+      warning: (content, duration) => open({ content, type: "warning", duration }),
+      info: (content, duration) => open({ content, type: "info", duration }),
+      loading: (content, duration) => open({ content, type: "loading", duration }),
+      destroy,
+    }),
+    [destroy, open],
+  );
 
-  globalMessageApi = api;
+  useEffect(() => {
+    const handleCommand = (event: Event) => {
+      const command = (event as CustomEvent<MessageCommand>).detail;
+      if (!command) {
+        return;
+      }
+
+      if (command.kind === "destroy") {
+        destroy();
+        return;
+      }
+
+      open(command.config);
+    };
+
+    window.addEventListener(messageEventName, handleCommand);
+    return () => {
+      window.removeEventListener(messageEventName, handleCommand);
+    };
+  }, [destroy, open]);
+
+  useEffect(
+    () => () => {
+      timers.current.forEach((timer) => clearTimeout(timer));
+      timers.current.clear();
+    },
+    [],
+  );
 
   const getIcon = (type: MessageType) => {
     switch (type) {
@@ -131,25 +175,25 @@ export function useMessage(): MessageContextType {
 
 const createStaticApi = (): MessageContextType => ({
   open: (config) => {
-    globalMessageApi?.open(config);
+    dispatchMessageCommand({ kind: "open", config });
   },
   success: (content, duration) => {
-    globalMessageApi?.success(content, duration);
+    dispatchMessageCommand({ kind: "open", config: { content, type: "success", duration } });
   },
   error: (content, duration) => {
-    globalMessageApi?.error(content, duration);
+    dispatchMessageCommand({ kind: "open", config: { content, type: "error", duration } });
   },
   warning: (content, duration) => {
-    globalMessageApi?.warning(content, duration);
+    dispatchMessageCommand({ kind: "open", config: { content, type: "warning", duration } });
   },
   info: (content, duration) => {
-    globalMessageApi?.info(content, duration);
+    dispatchMessageCommand({ kind: "open", config: { content, type: "info", duration } });
   },
   loading: (content, duration) => {
-    globalMessageApi?.loading(content, duration);
+    dispatchMessageCommand({ kind: "open", config: { content, type: "loading", duration } });
   },
   destroy: () => {
-    globalMessageApi?.destroy();
+    dispatchMessageCommand({ kind: "destroy" });
   },
 });
 
