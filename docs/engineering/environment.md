@@ -1,6 +1,6 @@
 # Mira Cloud — Environment and promotion contract
 
-**Status:** Design baseline plus a tooling-only engineering workspace; no deployable application (2026-11-11).
+**Status:** Design-only repository (2026-11-11).
 **Organization owner:** [Environment Model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md).
 **Testing owner:** [Testing Standard](https://github.com/uichat-mira/.github/blob/main/docs/engineering/testing-standard.md).
 
@@ -11,7 +11,7 @@ This repository has **no frontend or backend runtime to deploy**, and **no confi
 | Branch | Source workflow | Effective environment today | Deployment |
 | --- | --- | --- | --- |
 | `feat/*` | Isolated work, PR into `dev` | Versioned source + CI | None |
-| `dev` | Integration branch, GitHub default | Source validation (Docs Contract, `pnpm check` / Mira Gate) | **No dev server configured** |
+| `dev` | Integration branch, GitHub default | Source validation (Docs Contract / Mira Gate) | **No dev server configured** |
 | `test` | Explicitly promoted, reviewable candidate | Source/contract review and CI | **No test server configured** |
 | `prod` | Intentionally promoted source baseline | Versioned design baseline; no live service | **No production deployment configured** |
 | `main` | Original bootstrap / historical compatibility | Not an environment, not default release authority | None |
@@ -33,21 +33,13 @@ feat/* --PR, checks--> dev --reviewed promotion--> test --reviewed promotion--> 
 
 ## Available validation
 
-`node scripts/check-docs.mjs` runs local deterministic docs/prototype-path checks. `pnpm check` runs the Node 24 workspace format, lint, TypeScript strict and Vitest T1 checks, and requires every future workspace package to declare a runnable `check` script. GitHub Actions publishes a `Docs Contract` result, an `Engineering Checks` result, and the aggregate **Mira Gate**. These are **source integrity and T1 tooling checks only**: they do not test application functionality, OAuth, deployment, cloud service health or any mobile/desktop journey.
+`node scripts/check-docs.mjs` runs local deterministic docs/prototype-path checks. GitHub Actions publishes a `Docs Contract` result and aggregates it in **Mira Gate**. This is **source integrity only**: it does not test functionality, OAuth, deployment, cloud service health or any mobile/desktop journey.
 
-The repository has a tooling-only workspace with no application packages. T2/T3 application layers are not applicable until real application code exists. T4 and T5 are unavailable until real corresponding environments and a working service exist.
+T1–T3 runtime layers are not applicable while this remains a design-only repository. T4 and T5 are unavailable until real corresponding environments and a working service exist.
 
-## Public MIT repository and `prod` protection
+## Protection limitation
 
-On 2026-11-11, the maintainer switched `uichat-mira/mira-cloud` from Private to **Public** and adopted the root [MIT License](../../LICENSE). The former GitHub API 403 for private repository protection is historical, not current. The repository default branch remains `dev`.
-
-**Native GitHub branch protection was created and read back successfully for `prod`:**
-- Require PR with **at least one approval**; dismiss stale reviews; require conversation resolution.
-- Require **`Mira Gate`** status and require branch up to date before merging.
-- `enforce_admins=true`; **force pushes and branch deletion disabled**.
-- The Docs-only Mira Gate separately rejects `prod` promotion PRs not sourced from this repository's `test` branch. Do not equate this source check with production acceptance or full server tests.
-
-This protection is GitHub-enforced for `prod`, not for `dev` or `test` (not requested). A new review or repo setting may change the effective rules; verify live branch protection via GitHub API before relying on it. `prod` remains a **source branch** with no Mira Cloud production runtime, despite the branch protection. No dev/test server or deployment Environment exists.
+When normalized, GitHub reported that branch protection and Rulesets are unavailable for this **private** repository under the current subscription (403 upgrade/public requirement). This is a **documented enforcement gap**, not an applied protection rule. Keep the repo private; use PR review and evidence discipline. Reconsider branch protection when supported, without declaring it enabled meanwhile.
 
 ## Gate for future implementation
 

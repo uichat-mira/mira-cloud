@@ -1,3 +1,0 @@
-# The pinned Mobile sources and derived Web stylesheet must remain byte-for-byte immutable.
-src/theme/upstream/
-src/styles/tokens.generated.css
