@@ -20,7 +20,7 @@ pnpm check
 
 `pnpm check` runs Prettier, ESLint, TypeScript strict checking and Vitest T1 unit tests. Before recursing, it also verifies that every `apps/*` / `packages/*` workspace package declares a runnable `check` script, so a later Web/API package cannot be silently skipped. This covers local unit/source/HTTP testing; the separate required PostgreSQL Integration job establishes real DB T3, never OAuth, Agent execution, hosted T4/T5 or deployment.
 
-The workspace is intentionally empty until an authorized application Issue adds real packages. Design documents and `prototypes/` are not executable applications.
+The workspace now has real local-only Web/API packages. Design documents and `prototypes/` remain non-runtime references.
 
 ## Current decisions
 
@@ -117,7 +117,7 @@ pnpm --filter @mira-cloud/web build
 pnpm check
 ```
 
-The only persisted Web preference is local appearance. No credentials, user data or Cloud session are saved by this UI shell.
+The only persisted Web preference is local appearance. No credentials, user data or Cloud session are saved by this UI shell. AGT-045 adds live infrastructure status checks without adding authentication or task execution.
 
 ## PostgreSQL / Drizzle metadata foundation (AGT-044)
 
@@ -139,3 +139,29 @@ pnpm --filter @mira-cloud/api test:integration
 ```
 
 CI test credentials are ephemeral only. No hosted dev/test database, production database, open 5432 port, production volume, deploy workflow or promotion is configured by this card.
+
+## Live local Web → API → PostgreSQL status (AGT-045)
+
+The workbench's **基础服务连接** card now checks real same-origin endpoints rather than always saying "not connected": `GET /api/v1/health` for Hono process liveness and `GET /api/v1/ready` for PostgreSQL readiness. It clearly distinguishes checking, API unavailable, invalid API responses, unconfigured DB, unreachable DB and ready. Use **重新检查** to refresh after a connection or database change; stale/aborted requests cannot replace newer results.
+
+### Local startup
+
+From two terminals after `pnpm install --frozen-lockfile`:
+
+```bash
+# Terminal A: optional DATABASE_URL for a locally controlled PostgreSQL 16 instance.
+# With DATABASE_URL set, apply reviewed migrations before starting the API:
+pnpm --filter @mira-cloud/api db:migrate
+pnpm --filter @mira-cloud/api dev
+# Hono listens at http://127.0.0.1:3000
+
+# Terminal B:
+pnpm --filter @mira-cloud/web dev
+# Vite serves http://127.0.0.1:5173, proxies /api to local 127.0.0.1:3000
+```
+
+Without `DATABASE_URL`, the Hono API still starts and reports **database not configured**, not "user logged out" or a fake ready state. Without Hono, Web reports the API as unreachable. Restart services or repair the DB and use the explicit **重新检查** control.
+
+The Vite proxy is **only for local dev/preview**. A future hosted deployment must implement an explicitly reviewed same-origin `/api` reverse proxy; no permissive CORS, production host, OAuth session, Agent Runtime or database instance is provisioned here.
+
+GitHub CI's required PostgreSQL Integration job now launches **actual Vite + compiled Hono + ephemeral PostgreSQL** and tests ready → API offline → DB unconfigured → DB unreachable → ready again through real proxied HTTP requests. The Web's contract and retry/race behavior are covered by component tests. This is local/CI T1–T3 only, **not** browser device T4, live prod, or an authenticated Cloud Pi connection.

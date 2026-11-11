@@ -87,6 +87,10 @@ jobs:
         run: pnpm --filter @mira-cloud/api db:migrate
       - name: Test real PostgreSQL isolation, constraints and transactions
         run: pnpm --filter @mira-cloud/api test:integration
+      - name: Check real Web Vite proxy to compiled Hono and PostgreSQL
+        run: |
+          pnpm --filter @mira-cloud/api build
+          node scripts/verify-workspace-connection.mjs
 
   prod_promotion:
     name: Prod Promotion Route

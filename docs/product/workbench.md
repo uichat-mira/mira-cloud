@@ -1,6 +1,6 @@
 # Mira Cloud Workspace — experience scope (design only)
 
-**Status:** interaction reference, not an implemented product. Product baseline: [v0.4](../architecture/v0.4.md). Visual/interaction language: [root DESIGN.md](../../DESIGN.md); planned UI components: [component library contract](../design/component-library.md).
+**Status:** product interaction reference; AGT-042 provides a local static Web shell and AGT-045 displays real local infrastructure connectivity. This is not an authenticated or deployed Cloud workspace. Product baseline: [v0.4](../architecture/v0.4.md). Visual/interaction language: [root DESIGN.md](../../DESIGN.md); planned UI components: [component library contract](../design/component-library.md).
 
 ## Promise
 
