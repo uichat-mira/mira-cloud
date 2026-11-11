@@ -83,6 +83,12 @@ for (const file of activeDesignTruth) {
   if (source.includes("inherits the current Mira Mobile Token/palette")) {
     failures.push(`Stale Mobile visual-token authority in ${relative(root, file)}`);
   }
+  if (
+    file === join(root, "DESIGN.md") &&
+    source.includes("github.com/uichat-mira/mira-desktop/blob/dev/")
+  ) {
+    failures.push("DESIGN.md must link pinned Mira Desktop sources, not moving dev URLs");
+  }
   if (/\/D:\/workspace\/|[A-Z]:\\\\workspace\\\\/i.test(source)) {
     failures.push(`Desktop-local path leaked into Cloud design docs: ${relative(root, file)}`);
   }

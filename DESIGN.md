@@ -1,7 +1,7 @@
 # Mira Cloud — Design System
 
 **Status:** implemented Web design-consumption contract after AGT-047 Foundation, AGT-048 Core, AGT-049 Advanced / Content and the AGT-050 Cloud UI/documentation cutover. A prod-only Tencent path exists for the current Web/Hono/PostgreSQL foundation; this does not imply an authenticated Cloud business application, Cloud Pi integration, or an independently published Web component library.
-**Owner of canonical Mira visual tokens:** [Mira Desktop `desktop/src/shared/theme/colorThemes.ts`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts), [`desktop/src/styles.css`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/styles.css), and [`desktop/tailwind.config.cjs`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/tailwind.config.cjs). Mira Cloud pins a full Desktop commit and consumes it through the local Foundation; it does not maintain a second palette.
+**Owner of canonical Mira visual tokens:** [Mira Desktop `desktop/src/shared/theme/colorThemes.ts`](https://github.com/uichat-mira/mira-desktop/blob/5036067d3a87ba95d798e01ededc7fbd678327de/desktop/src/shared/theme/colorThemes.ts), [`desktop/src/styles.css`](https://github.com/uichat-mira/mira-desktop/blob/5036067d3a87ba95d798e01ededc7fbd678327de/desktop/src/styles.css), and [`desktop/tailwind.config.cjs`](https://github.com/uichat-mira/mira-desktop/blob/5036067d3a87ba95d798e01ededc7fbd678327de/desktop/tailwind.config.cjs). Mira Cloud pins a full Desktop commit and consumes it through the local Foundation; it does not maintain a second palette.
 
 This `DESIGN.md` is **Mira Cloud's Web and Mobile-WebView design-consumption contract**, not a competing token authority. Use the [MiraDesign component guide](docs/design/mira-design-components.md), [Web guidelines](docs/design/mira-design-guidelines.md), [final cutover matrix](docs/design/mira-design-cutover.md) and [component library specification](docs/design/component-library.md) for implementation detail; use the [workbench product brief](docs/product/workbench.md) for user journeys.
 
@@ -17,9 +17,9 @@ AGT-047 pins Mira Desktop `dev` commit `5036067d3a87ba95d798e01ededc7fbd678327de
 
 | Upstream source | Git blob SHA | Authority |
 | --- | --- | --- |
-| [`desktop/src/shared/theme/colorThemes.ts`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts) | `95fcc33be0b6769cae4e5ba4e1e32de69aa5bef2` | Four presets, light/dark semantic colors and primary scales |
-| [`desktop/src/styles.css`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/styles.css) | `55c9f5622c8334f1b2bc0f38856241fae7562a4c` | Typography, radius, surface and shell reference |
-| [`desktop/tailwind.config.cjs`](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/tailwind.config.cjs) | `591f6df8dde4f3726ecfce5d06fca6f2e19a099c` | Tailwind 3 semantic names, spacing, radius, shadow and type roles |
+| [`desktop/src/shared/theme/colorThemes.ts`](https://github.com/uichat-mira/mira-desktop/blob/5036067d3a87ba95d798e01ededc7fbd678327de/desktop/src/shared/theme/colorThemes.ts) | `95fcc33be0b6769cae4e5ba4e1e32de69aa5bef2` | Four presets, light/dark semantic colors and primary scales |
+| [`desktop/src/styles.css`](https://github.com/uichat-mira/mira-desktop/blob/5036067d3a87ba95d798e01ededc7fbd678327de/desktop/src/styles.css) | `55c9f5622c8334f1b2bc0f38856241fae7562a4c` | Typography, radius, surface and shell reference |
+| [`desktop/tailwind.config.cjs`](https://github.com/uichat-mira/mira-desktop/blob/5036067d3a87ba95d798e01ededc7fbd678327de/desktop/tailwind.config.cjs) | `591f6df8dde4f3726ecfce5d06fca6f2e19a099c` | Tailwind 3 semantic names, spacing, radius, shadow and type roles |
 
 The implementation lives at `apps/web/src/theme/mira-design/`. Its `README.md` records the
 upstream provenance; the unaltered Desktop snapshots are under `upstream/`.
