@@ -43,3 +43,7 @@ The [AGT-040 technology design contract](https://github.com/uichat-mira/mira-clo
 - Never confuse a signed-in Cloud Client with a permitted local Host tool invocation; no unscoped credentials, long-running Agent work inside HTTP requests, or duplicate Scheduler/Run writers.
 - Explicitly isolate database queries, ORM migrations, auth adapters and external runtime boundaries. Design/PR text does not waive the need for T1/T2/T3 evidence once code exists.
 - **No dev/test servers, deployment environments, URLs or secrets.** Production design is not an authorization to deploy.
+
+## Approved Tencent deployment scope (2026-11-11)
+
+The maintainer explicitly approved a manual prod-only Tencent runtime deployment using Organization root-password SSH Secrets, strict pinned host-key validation and the existing host Caddy. Follow docs/operations/tencent-production.md. Do not add dev/test servers, reuse Alibaba credentials, expose DB ports, deploy Cloud Auth/Pi, or equate source CI with public HTTPS smoke.
