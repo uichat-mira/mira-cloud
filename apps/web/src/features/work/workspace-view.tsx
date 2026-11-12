@@ -26,7 +26,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router";
-import { Badge } from "../../components/mira-design/index.ts";
+import { Badge, ExpandableSection } from "../../components/mira-design/index.ts";
 import { ConnectionPanel } from "../connection/connection-panel";
 import { GeneralSettingsPage } from "../settings/general-settings";
 import { MiraBrandLogo } from "../workspace-shell/mira-brand";
@@ -50,7 +50,7 @@ import {
 } from "./fixture-data";
 
 type PreviewLink = (path: string) => string;
-type TaskTopic = "overview" | "attention" | "runs" | "artifacts" | "history";
+type TaskTopic = "overview" | "progress" | "artifacts";
 type ArtifactTopic = "preview" | "source" | "versions";
 
 interface ShellTopic {
@@ -68,9 +68,8 @@ function withScenario(path: string, scenario: PreviewScenario): string {
 }
 
 function taskTopic(value: string | null): TaskTopic {
-  if (value === "attention" || value === "runs" || value === "artifacts" || value === "history") {
-    return value;
-  }
+  if (value === "artifacts") return "artifacts";
+  if (value === "progress" || value === "runs" || value === "history") return "progress";
   return "overview";
 }
 
@@ -101,10 +100,8 @@ function resolveShellTopics(
   if (pathname.startsWith("/tasks/")) {
     const tabs = [
       { value: "overview", label: "概览", to: pathname },
-      { value: "attention", label: "待处理", to: pathname + "?view=attention" },
-      { value: "runs", label: "运行", to: pathname + "?view=runs" },
+      { value: "progress", label: "进展", to: pathname + "?view=progress" },
       { value: "artifacts", label: "成果", to: pathname + "?view=artifacts" },
-      { value: "history", label: "历史", to: pathname + "?view=history" },
     ] as const;
     return { tabs, value: taskTopic(searchParams.get("view")) };
   }
@@ -283,7 +280,7 @@ function AttentionRow({ attention, to }: { attention: PreviewAttention; to: Prev
   const source = findPreviewTask(attention.taskId);
   return (
     <Link
-      to={to("/tasks/" + attention.taskId + "?view=attention")}
+      to={to("/tasks/" + attention.taskId)}
       className="workbench-attention-row"
     >
       <div className="workbench-attention-meta">
@@ -498,6 +495,191 @@ function TaskRunRow({ run }: { run: PreviewRun }) {
   );
 }
 
+function taskStatusLabel(status: PreviewTask["status"]): string {
+  if (status === "running") return "正在进行";
+  if (status === "requested") return "已交代 · 等待开始";
+  return "可继续";
+}
+
+function progressLabel(status: PreviewRun["status"]): string {
+  if (status === "running") return "正在进行";
+  if (status === "requested") return "等待开始";
+  return "本次执行完成";
+}
+
+function TaskProgressFeed({
+  runs,
+  artifacts,
+  to,
+  limit,
+}: {
+  runs: readonly PreviewRun[];
+  artifacts: readonly PreviewArtifact[];
+  to: PreviewLink;
+  limit?: number;
+}) {
+  const items = [
+    ...runs.map((run, index) => ({
+      id: "run:" + run.id,
+      rank: index * 2,
+      icon: <Clock3 size={14} aria-hidden="true" />,
+      time: run.updated,
+      meta: run.label + " · " + progressLabel(run.status),
+      content: <span>{run.summary}</span>,
+    })),
+    ...artifacts.map((artifact, index) => ({
+      id: "artifact:" + artifact.id,
+      rank: index * 2 + 1,
+      icon: <FileText size={14} aria-hidden="true" />,
+      time: artifact.updated,
+      meta: "留下成果 · " + artifact.version,
+      content: <Link to={to("/artifacts/" + artifact.id)}>{artifact.title}</Link>,
+    })),
+  ]
+    .sort((left, right) => left.rank - right.rank)
+    .slice(0, limit ?? Number.POSITIVE_INFINITY);
+
+  if (items.length === 0) {
+    return <p className="workbench-inline-empty">这项工作还没有可展示的进展。</p>;
+  }
+
+  return (
+    <div className="workbench-progress-list">
+      {items.map((item) => (
+        <div key={item.id} className="workbench-progress-row">
+          <span className="workbench-progress-icon">{item.icon}</span>
+          <div className="workbench-progress-copy">
+            <div>
+              <strong>{item.meta}</strong>
+              <small>{item.time}</small>
+            </div>
+            <p>{item.content}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TaskOverview({
+  task,
+  attentions,
+  runs,
+  artifacts,
+  to,
+}: {
+  task: PreviewTask;
+  attentions: readonly PreviewAttention[];
+  runs: readonly PreviewRun[];
+  artifacts: readonly PreviewArtifact[];
+  to: PreviewLink;
+}) {
+  return (
+    <div className="workbench-task-overview">
+      <section className="workbench-task-now" aria-label="当前状态与下一步">
+        <div className="workbench-task-now-main">
+          <div className="workbench-zone-heading">
+            <span>现在</span>
+            <TaskStatus status={task.status} />
+          </div>
+          <p className="workbench-next-step">{task.description}</p>
+          <div className="workbench-task-next">
+            <small>下一步</small>
+            <strong>{task.next}</strong>
+            <span>真实执行动作尚未接入，本页只展示工作上下文。</span>
+          </div>
+        </div>
+
+        <dl className="workbench-fact-list workbench-task-facts">
+          <div>
+            <dt>状态</dt>
+            <dd>{taskStatusLabel(task.status)}</dd>
+          </div>
+          <div>
+            <dt>执行位置</dt>
+            <dd>{task.location}</dd>
+          </div>
+          <div>
+            <dt>最近更新</dt>
+            <dd>{task.update}</dd>
+          </div>
+        </dl>
+      </section>
+
+      {attentions.length > 0 ? (
+        <section className="workbench-task-section" aria-label="需要你处理">
+          <div className="workbench-zone-heading">
+            <span>需要你处理</span>
+            <small>{attentions.length} 项</small>
+          </div>
+          <AttentionQueue items={attentions} to={to} />
+        </section>
+      ) : null}
+
+      <section className="workbench-task-section" aria-label="近期进展">
+        <div className="workbench-zone-heading">
+          <span>近期进展</span>
+          <Link to={to("/tasks/" + task.id + "?view=progress")}>查看全部</Link>
+        </div>
+        <TaskProgressFeed runs={runs} artifacts={artifacts} to={to} limit={3} />
+      </section>
+
+      {artifacts.length > 0 ? (
+        <section className="workbench-task-section" aria-label="相关成果">
+          <div className="workbench-zone-heading">
+            <span>相关成果</span>
+            <Link to={to("/tasks/" + task.id + "?view=artifacts")}>全部成果</Link>
+          </div>
+          <ArtifactLedger artifacts={artifacts} to={to} />
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function TaskProgress({
+  task,
+  runs,
+  artifacts,
+  to,
+}: {
+  task: PreviewTask;
+  runs: readonly PreviewRun[];
+  artifacts: readonly PreviewArtifact[];
+  to: PreviewLink;
+}) {
+  return (
+    <div className="workbench-task-progress">
+      <section aria-label={task.title + " 的进展"}>
+        <div className="workbench-zone-heading">
+          <span>工作进展</span>
+          <small>按 Fixture 记录展示，不推断真实执行阶段</small>
+        </div>
+        <TaskProgressFeed runs={runs} artifacts={artifacts} to={to} />
+      </section>
+
+      {runs.length > 0 ? (
+        <ExpandableSection
+          collapsedLabel={"查看执行详情（" + runs.length + " 次）"}
+          expandedLabel="收起执行详情"
+          className="workbench-run-details"
+          contentClassName="pt-3"
+        >
+          <div className="workbench-run-list">
+            {runs.map((run) => (
+              <TaskRunRow key={run.id} run={run} />
+            ))}
+          </div>
+          <p className="workbench-boundary-note">
+            Fixture Run 只保留 requested / running / completed 的来源事实；它是工作进展的执行证据，
+            不是 Task 的一级产品对象。
+          </p>
+        </ExpandableSection>
+      ) : null}
+    </div>
+  );
+}
+
 function TaskDetail({ task, view, to }: { task: PreviewTask; view: TaskTopic; to: PreviewLink }) {
   const attentions = findPreviewAttentions(task.id);
   const runs = findPreviewRuns(task.id);
@@ -513,103 +695,22 @@ function TaskDetail({ task, view, to }: { task: PreviewTask; view: TaskTopic; to
       />
 
       {view === "overview" ? (
-        <div className="workbench-detail-grid">
-          <section aria-label="下一步">
-            <div className="workbench-zone-heading">
-              <span>下一步</span>
-            </div>
-            <p className="workbench-next-step">
-              {task.next}。真实执行动作尚未接入，本页只展示工作上下文。
-            </p>
-          </section>
-          <section aria-label="工作摘要">
-            <div className="workbench-zone-heading">
-              <span>工作摘要</span>
-            </div>
-            <dl className="workbench-fact-list">
-              <div>
-                <dt>状态</dt>
-                <dd>
-                  {task.status === "running"
-                    ? "进行中"
-                    : task.status === "requested"
-                      ? "等待开始"
-                      : "可继续"}
-                </dd>
-              </div>
-              <div>
-                <dt>执行位置</dt>
-                <dd>{task.location}</dd>
-              </div>
-              <div>
-                <dt>最近更新</dt>
-                <dd>{task.update}</dd>
-              </div>
-              <div>
-                <dt>成果</dt>
-                <dd>{artifacts.length} 份 Fixture</dd>
-              </div>
-            </dl>
-          </section>
-          <section className="workbench-detail-span" aria-label="最近运行">
-            <div className="workbench-zone-heading">
-              <span>最近运行</span>
-            </div>
-            <div className="workbench-run-list">
-              {runs.slice(0, 2).map((run) => (
-                <TaskRunRow key={run.id} run={run} />
-              ))}
-            </div>
-          </section>
-        </div>
+        <TaskOverview
+          task={task}
+          attentions={attentions}
+          runs={runs}
+          artifacts={artifacts}
+          to={to}
+        />
       ) : null}
 
-      {view === "attention" ? (
-        <section className="workbench-full-ledger" aria-label={task.title + " 的待处理"}>
-          <AttentionQueue items={attentions} to={to} />
-        </section>
-      ) : null}
-
-      {view === "runs" ? (
-        <section className="workbench-full-ledger" aria-label={task.title + " 的运行"}>
-          <div className="workbench-run-list">
-            {runs.map((run) => (
-              <TaskRunRow key={run.id} run={run} />
-            ))}
-          </div>
-          <p className="workbench-boundary-note">
-            Fixture Run 只演示 requested / running / completed 的阅读层级，不代表 Cloud Pi 或
-            Desktop 实际执行。
-          </p>
-        </section>
+      {view === "progress" ? (
+        <TaskProgress task={task} runs={runs} artifacts={artifacts} to={to} />
       ) : null}
 
       {view === "artifacts" ? (
         <section className="workbench-full-ledger" aria-label={task.title + " 的成果"}>
           <ArtifactLedger artifacts={artifacts} to={to} />
-        </section>
-      ) : null}
-
-      {view === "history" ? (
-        <section className="workbench-full-ledger" aria-label={task.title + " 的历史"}>
-          <div className="workbench-history-list">
-            {runs.map((run) => (
-              <div key={run.id} className="workbench-history-row">
-                <Clock3 size={14} aria-hidden="true" />
-                <span>{run.updated}</span>
-                <strong>{run.label}</strong>
-                <span>{run.summary}</span>
-              </div>
-            ))}
-            {artifacts.map((artifact) => (
-              <div key={artifact.id} className="workbench-history-row">
-                <FileText size={14} aria-hidden="true" />
-                <span>{artifact.updated}</span>
-                <strong>{artifact.version}</strong>
-                <Link to={to("/artifacts/" + artifact.id)}>{artifact.title}</Link>
-              </div>
-            ))}
-          </div>
         </section>
       ) : null}
     </>
