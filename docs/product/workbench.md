@@ -30,22 +30,31 @@ Mira Cloud 是一个用户能长期交代、接续与复用工作的**个人工�
 
 ## 2. 信息架构与路由合同
 
-### 2.1 一级目的地
+### 2.1 系统级 Shell 与当前「工作」业务
 
-| 入口 | 候选路径 | 用户期待 | 列表/内容事实 | 不承担 |
+AGT-053 起，Mira Cloud 不再把「首页 / 待处理 / 我的工作 / 成果」冻结为系统永久一级导航。它们只代表当前 **工作（Work）** 业务面向的一期视图与对象入口。系统级 Layout 使用四层空间模型：
+
+1. **L0 · Global Rail** — 切换稳定的业务工作台。当前只有「工作」启用；知识、自动化、连接等未来面向只能以明确禁用/占位出现，不能伪造能力。
+2. **L1 · Workspace Sidebar** — 当前业务里的对象、列表与入口，例如「全部工作」、最近 Task、固定 Task，以及「交代工作」。
+3. **L2 · Topic Tabs** — 当前主题内部的观察角度。页面级 Tabs 优先复用 MiraDesign `NavigationCardTabs`，而不是让每个业务页自行发明顶栏。
+4. **L3 · Content Canvas** — 当前主题的主内容。打开 Task、Artifact 或其它对象时保持 Shell 稳定，只改变上下文、Tabs 与内容。
+
+当前「工作」业务的已知入口仍保留以下路由，但它们不再等价于系统级产品导航：
+
+| 工作业务入口 | 候选路径 | 用户期待 | 列表/内容事实 | 不承担 |
 | --- | --- | --- | --- | --- |
-| **首页** | `/` | 现在要注意什么、从哪继续 | 用户获权可见的 Attention、Task 进展、最近 Artifact | 运行/系统监控全量表 |
+| **概览** | `/` | 现在要注意什么、从哪继续 | 用户获权可见的 Attention、Task 进展、最近 Artifact | 运行/系统监控全量表 |
 | **待处理** | `/attention` | 需要我决定、补充、核对什么 | 由源对象投影的待处理事项，按可行动性排序 | 普通通知、第二份审批状态库 |
-| **我的工作** | `/tasks` | 我的目标、进度、历史接续 | 受权 Task 列表；Run 藏在 Task 之下 | 独立 Run 首页、GitHub Issues 的复制 |
+| **全部工作** | `/tasks` | 我的目标、进度、历史接续 | 受权 Task 列表；Run 藏在 Task 之下 | 独立 Run 首页、GitHub Issues 的复制 |
 | **成果** | `/artifacts` | 找到、使用、追溯产物 | 受权 Artifact 索引及版本/来源 | 无权限文件的目录索引 |
 | **交代工作** | `/new` | 提交目标与边界 | 独立 Delegation Composer；结构化目标/材料/能力/权限预览 | 直接执行的聊天输入框 |
 
-- 「交代工作」是**全局主操作**，不占第五个并列标签；Desktop 置于 Shell 显著位置，Mobile 提供可触达且不会遮挡内容的固定入口。
-- 一级导航固定四项：**首页 / 待处理 / 我的工作 / 成果**。当前「工作台」改名为「首页」是**后续原型设计**，本卡不修改 React 路由。
-- 任务详情：`/tasks/:taskId`；任务下的一次执行：`/tasks/:taskId/runs/:runId`；成果详情：`/artifacts/:artifactId`。
+- 「交代工作」是当前「工作」业务的高可达主操作，但不意味着未来所有业务工作台都必须复用同一种创建动作。
+- 「全部工作」更适合由 L1 Workspace Sidebar 承担长期对象导航；「概览 / 待处理 / 成果」可作为工作主题的 L2 视图。具体收敛由 AGT-054 完成。
+- 任务详情：`/tasks/:taskId`；任务下的一次执行：`/tasks/:taskId/runs/:runId`；成果详情：`/artifacts/:artifactId`。打开详情时不得另起一套全局 Shell。
 - Attention 列表是聚合入口，处理地点优先指向其**源 Task / Artifact / Handoff 的受控操作上下文**，而非复制一份可编辑 Decision。具体 URL 可在后续领域卡内落定；不得猜测 `/attention/:id` 已有后端资源。
-- Schedule / Trigger、Runs、Memory、Skills / MCP、GitHub、连接及诊断、权限设置保留能力入口但不抢一级导航；已有计划可从其所属 Task 进入，必要时在「我的工作」内筛选。
-- Web 与 Mobile WebView 使用同一 IA；Desktop 原生 Cloud Client 是另一客户端，并非默认共享 Web Session。
+- Schedule / Trigger、Runs、Memory、Skills / MCP、GitHub、连接及诊断、权限设置是否成为未来业务工作台、Sidebar 对象或 Topic Tab，由各自稳定产品身份决定；不得仅按当前功能数量塞入 Global Rail。
+- Web 与 Mobile WebView 共享同一业务层级语义；Mobile 只改变折叠与触达方式，不创建第二套 IA。Desktop 原生 Cloud Client 是另一客户端，并非默认共享 Web Session。
 
 ### 2.2 IA 关系图（产品投影，而非数据库图）
 

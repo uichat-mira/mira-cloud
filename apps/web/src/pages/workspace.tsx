@@ -2,6 +2,8 @@ import { useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  BookOpen,
+  Briefcase,
   ChevronRight,
   CircleHelp,
   Cloud,
@@ -11,15 +13,27 @@ import {
   Inbox,
   Layers3,
   Moon,
+  Plug,
   Plus,
   Settings2,
   Sparkles,
   Sun,
   WifiOff,
+  Workflow,
 } from "lucide-react";
-import { Link, NavLink, Route, Routes, useParams, useSearchParams } from "react-router";
+import {
+  Link,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router";
 import { Badge, Card, IconButton, NavItem } from "../components/mira-design/index.ts";
 import { ConnectionPanel } from "../features/connection/connection-panel";
+import { WorkspaceShellFrame } from "../features/workspace/workspace-shell-frame";
 import {
   findPreviewArtifact,
   findPreviewTask,
@@ -39,12 +53,48 @@ import {
 } from "../theme/mira-design/index.ts";
 import { applyTheme, currentTheme } from "../theme/mira-design/theme-preference.ts";
 
-const nav = [
+const mobileNavigation = [
   { to: "/", label: "首页", icon: Home, end: true },
   { to: "/attention", label: "待处理", icon: Inbox, end: true },
   { to: "/tasks", label: "我的工作", icon: Layers3, end: true },
   { to: "/artifacts", label: "成果", icon: FolderOpen, end: true },
 ] as const;
+
+interface ShellTopic {
+  value: string;
+  label: string;
+  to?: string;
+}
+
+function resolveShellTopics(pathname: string): { tabs: readonly ShellTopic[]; value: string } {
+  if (pathname === "/" || pathname === "/attention" || pathname === "/artifacts") {
+    const tabs = [
+      { value: "overview", label: "概览", to: "/" },
+      { value: "attention", label: "待处理", to: "/attention" },
+      { value: "artifacts", label: "成果", to: "/artifacts" },
+    ] as const;
+    if (pathname === "/attention") return { tabs, value: "attention" };
+    if (pathname === "/artifacts") return { tabs, value: "artifacts" };
+    return { tabs, value: "overview" };
+  }
+
+  if (pathname === "/tasks") {
+    return { tabs: [{ value: "tasks", label: "全部工作" }], value: "tasks" };
+  }
+  if (pathname.startsWith("/tasks/")) {
+    return { tabs: [{ value: "task", label: "工作详情" }], value: "task" };
+  }
+  if (pathname.startsWith("/artifacts/")) {
+    return { tabs: [{ value: "artifact", label: "成果详情" }], value: "artifact" };
+  }
+  if (pathname === "/new") {
+    return { tabs: [{ value: "new", label: "交代工作" }], value: "new" };
+  }
+  if (pathname === "/diagnostics") {
+    return { tabs: [{ value: "diagnostics", label: "连接诊断" }], value: "diagnostics" };
+  }
+  return { tabs: [{ value: "unknown", label: "工作" }], value: "unknown" };
+}
 
 type PreviewLink = (path: string) => string;
 
@@ -489,6 +539,8 @@ function ComposerPreview({ to }: { to: PreviewLink }) {
 
 export function WorkspaceShell() {
   const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const scenario = parsePreviewScenario(params.get("scenario"));
   const to: PreviewLink = (path) => path + (scenario === "active" ? "" : "?scenario=" + scenario);
   const changeScenario = (next: PreviewScenario) => {
@@ -498,156 +550,204 @@ export function WorkspaceShell() {
     setParams(updated);
   };
 
+  const topics = resolveShellTopics(location.pathname);
+  const changeTopic = (value: string) => {
+    const target = topics.tabs.find((tab) => tab.value === value)?.to;
+    if (target) navigate(to(target));
+  };
+
+  const railItems = [
+    {
+      id: "work",
+      label: "工作",
+      icon: <Briefcase size={19} aria-hidden="true" />,
+      active: true,
+      to: to("/"),
+    },
+    {
+      id: "knowledge",
+      label: "知识",
+      icon: <BookOpen size={19} aria-hidden="true" />,
+      disabled: true,
+    },
+    {
+      id: "automation",
+      label: "自动化",
+      icon: <Workflow size={19} aria-hidden="true" />,
+      disabled: true,
+    },
+    {
+      id: "connections",
+      label: "连接",
+      icon: <Plug size={19} aria-hidden="true" />,
+      disabled: true,
+    },
+  ] as const;
+
+  const sidebarSections = [
+    {
+      id: "workspace",
+      label: "工作",
+      items: [
+        {
+          id: "all-work",
+          label: "全部工作",
+          to: to("/tasks"),
+          icon: <Layers3 size={16} aria-hidden="true" />,
+          end: true,
+        },
+      ],
+    },
+    {
+      id: "recent",
+      label: "最近",
+      items: previewTasks.map((task) => ({
+        id: task.id,
+        label: task.title,
+        to: to("/tasks/" + task.id),
+        meta: "示例",
+      })),
+    },
+  ] as const;
+
+  const mobileHeader = (
+    <>
+      <NavLink
+        to={to("/")}
+        className="flex items-center gap-2 text-sm font-semibold text-text-primary no-underline"
+        aria-label="Mira Cloud 首页"
+      >
+        <span className="flex h-9 w-9 items-center justify-center rounded-ui-control bg-primary font-bold text-text-inverted">
+          M
+        </span>
+        Mira Cloud
+      </NavLink>
+      <Link
+        to={to("/new")}
+        className="mira-touch-target inline-flex items-center gap-1 rounded-ui-control bg-primary px-3 py-2 text-xs font-medium text-text-inverted no-underline"
+      >
+        <Plus size={16} aria-hidden="true" /> 交代工作
+      </Link>
+    </>
+  );
+
+  const mobileNav = mobileNavigation.map(({ to: path, label, icon: Icon, end }) => (
+    <NavItem
+      key={path}
+      to={to(path)}
+      end={end}
+      icon={<Icon size={19} aria-hidden="true" />}
+      className="mira-workspace-nav-item mira-touch-target"
+    >
+      {label}
+    </NavItem>
+  ));
+
   return (
-    <div className="workspace-shell">
-      <aside className="workspace-sidebar" aria-label="Mira Cloud 侧边栏">
-        <NavLink
+    <WorkspaceShellFrame
+      brand={
+        <Link
           to={to("/")}
-          className="flex items-center gap-3 text-text-primary no-underline"
-          aria-label="Mira Cloud 首页"
+          className="workspace-brand-mark"
+          aria-label="Mira Cloud"
+          title="Mira Cloud"
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-ui-panel bg-primary text-lg font-bold text-text-inverted">
-            M
-          </span>
-          <span className="text-base font-semibold">Mira Cloud</span>
-        </NavLink>
-        <nav className="mt-9 flex flex-col gap-1" aria-label="桌面主导航">
-          {nav.map(({ to: path, label, icon: Icon, end }) => (
-            <NavItem
-              key={path}
-              to={to(path)}
-              end={end}
-              icon={<Icon size={18} aria-hidden="true" />}
-            >
-              {label}
-            </NavItem>
-          ))}
-        </nav>
+          M
+        </Link>
+      }
+      railItems={railItems}
+      sidebarTitle="工作"
+      sidebarSubtitle="Personal Workspace"
+      sidebarAction={
         <Link
           to={to("/new")}
-          className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-ui-control border border-border bg-surface-primary px-4 text-sm font-medium text-text-primary no-underline hover:bg-surface-soft"
+          className="workspace-sidebar-create"
+          aria-label="交代工作"
+          title="交代工作"
         >
-          <Plus size={17} aria-hidden="true" /> 交代工作
+          <Plus size={16} aria-hidden="true" />
         </Link>
-        <div className="mt-auto space-y-4 pt-8">
-          <Link
-            to={to("/diagnostics")}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary no-underline hover:text-text-primary"
-          >
-            <Settings2 size={16} aria-hidden="true" /> 连接诊断
+      }
+      sidebarSections={sidebarSections}
+      sidebarFooter={
+        <div className="space-y-4">
+          <Link to={to("/diagnostics")} className="workspace-sidebar-utility">
+            <Settings2 size={15} aria-hidden="true" /> 连接诊断
           </Link>
-          <div className="border-t border-border pt-4">
-            <PreviewNotice />
-          </div>
+          <PreviewNotice />
         </div>
-      </aside>
-
-      <header className="workspace-mobile-header">
-        <NavLink
-          to={to("/")}
-          className="flex items-center gap-2 text-sm font-semibold text-text-primary no-underline"
-          aria-label="Mira Cloud 首页"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-ui-control bg-primary font-bold text-text-inverted">
-            M
-          </span>
-          Mira Cloud
-        </NavLink>
-        <Link
-          to={to("/new")}
-          className="mira-touch-target inline-flex items-center gap-1 rounded-ui-control bg-primary px-3 py-2 text-xs font-medium text-text-inverted no-underline"
-        >
-          <Plus size={16} aria-hidden="true" /> 交代工作
-        </Link>
-      </header>
-
-      <div className="workspace-main">
-        <div className="workspace-topbar">
-          <span className="flex items-center gap-2 text-sm text-text-secondary">
-            <Cloud size={17} aria-hidden="true" />
-            <span className="hidden sm:inline">个人持续工作空间</span>
-            <span className="sm:hidden">Workspace</span>
-          </span>
-          <ThemeControls />
+      }
+      topicTabs={topics.tabs}
+      topicValue={topics.value}
+      onTopicChange={changeTopic}
+      topbarLeading={
+        <div className="flex min-w-0 items-center gap-2 text-sm text-text-secondary">
+          <Cloud size={16} aria-hidden="true" />
+          <span className="truncate">工作 / 个人持续工作空间</span>
         </div>
-        <main className="workspace-content" id="main-content">
-          <div className="mb-6 lg:hidden">
-            <PreviewNotice />
-          </div>
-          <Routes>
-            <Route
-              path="/"
-              element={<HomePage scenario={scenario} changeScenario={changeScenario} to={to} />}
-            />
-            <Route
-              path="/attention"
-              element={<PreviewList view="attention" scenario={scenario} to={to} />}
-            />
-            <Route
-              path="/tasks"
-              element={<PreviewList view="tasks" scenario={scenario} to={to} />}
-            />
-            <Route
-              path="/artifacts"
-              element={<PreviewList view="artifacts" scenario={scenario} to={to} />}
-            />
-            <Route
-              path="/tasks/:taskId"
-              element={<DetailPreview kind="task" scenario={scenario} to={to} />}
-            />
-            <Route
-              path="/artifacts/:artifactId"
-              element={<DetailPreview kind="artifact" scenario={scenario} to={to} />}
-            />
-            <Route path="/new" element={<ComposerPreview to={to} />} />
-            <Route
-              path="/diagnostics"
-              element={
-                <>
-                  <PageHeading
-                    label="System"
-                    title="连接诊断"
-                    subtitle="只检查真实基础服务，不代表账号登录和 Agent 执行。"
-                  />
-                  <ConnectionPanel />
-                  <Link
-                    to={to("/")}
-                    className="mira-touch-target mt-5 inline-flex gap-2 text-sm text-primary"
-                  >
-                    <ArrowLeft size={16} aria-hidden="true" /> 返回首页
-                  </Link>
-                </>
-              }
-            />
-            <Route
-              path="*"
-              element={
-                <Card className="p-8">
-                  <CircleHelp size={26} className="mb-4 text-icon-secondary" aria-hidden="true" />
-                  <h1 className="text-xl font-semibold text-text-primary">没有找到这个页面</h1>
-                  <Link to={to("/")} className="mt-4 inline-flex text-sm text-primary">
-                    返回首页
-                  </Link>
-                </Card>
-              }
-            />
-          </Routes>
-        </main>
+      }
+      topbarActions={<ThemeControls />}
+      mobileHeader={mobileHeader}
+      mobileNavigation={mobileNav}
+    >
+      <div className="mb-6 lg:hidden">
+        <PreviewNotice />
       </div>
-
-      <nav className="workspace-bottom-nav" aria-label="手机主导航">
-        {nav.map(({ to: path, label, icon: Icon, end }) => (
-          <NavItem
-            key={path}
-            to={to(path)}
-            end={end}
-            icon={<Icon size={19} aria-hidden="true" />}
-            className="mira-workspace-nav-item mira-touch-target"
-          >
-            {label}
-          </NavItem>
-        ))}
-      </nav>
-    </div>
+      <Routes>
+        <Route
+          path="/"
+          element={<HomePage scenario={scenario} changeScenario={changeScenario} to={to} />}
+        />
+        <Route
+          path="/attention"
+          element={<PreviewList view="attention" scenario={scenario} to={to} />}
+        />
+        <Route path="/tasks" element={<PreviewList view="tasks" scenario={scenario} to={to} />} />
+        <Route
+          path="/artifacts"
+          element={<PreviewList view="artifacts" scenario={scenario} to={to} />}
+        />
+        <Route
+          path="/tasks/:taskId"
+          element={<DetailPreview kind="task" scenario={scenario} to={to} />}
+        />
+        <Route
+          path="/artifacts/:artifactId"
+          element={<DetailPreview kind="artifact" scenario={scenario} to={to} />}
+        />
+        <Route path="/new" element={<ComposerPreview to={to} />} />
+        <Route
+          path="/diagnostics"
+          element={
+            <>
+              <PageHeading
+                label="System"
+                title="连接诊断"
+                subtitle="只检查真实基础服务，不代表账号登录和 Agent 执行。"
+              />
+              <ConnectionPanel />
+              <Link
+                to={to("/")}
+                className="mira-touch-target mt-5 inline-flex gap-2 text-sm text-primary"
+              >
+                <ArrowLeft size={16} aria-hidden="true" /> 返回首页
+              </Link>
+            </>
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <Card className="p-8">
+              <CircleHelp size={26} className="mb-4 text-icon-secondary" aria-hidden="true" />
+              <h1 className="text-xl font-semibold text-text-primary">没有找到这个页面</h1>
+              <Link to={to("/")} className="mt-4 inline-flex text-sm text-primary">
+                返回首页
+              </Link>
+            </Card>
+          }
+        />
+      </Routes>
+    </WorkspaceShellFrame>
   );
 }
