@@ -1,5 +1,6 @@
+import { useState } from "react";
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -135,7 +136,7 @@ describe("Drawer", () => {
 
   it("closes on Escape and restores focus to the opening control", async () => {
     function Harness() {
-      const [open, setOpen] = React.useState(false);
+      const [open, setOpen] = useState(false);
       return (
         <>
           <button type="button" onClick={() => setOpen(true)}>
@@ -162,7 +163,7 @@ describe("Drawer", () => {
 
   it("does not steal focus back when a newer overlay already owns it", async () => {
     function Harness() {
-      const [open, setOpen] = React.useState(false);
+      const [open, setOpen] = useState(false);
       return (
         <>
           <button type="button" onClick={() => setOpen(true)}>
