@@ -148,7 +148,9 @@ describe("AGT-054 Work workspace migration", () => {
       "page",
     );
     expect(within(drawer).getByRole("button", { name: "知识（尚未开放）" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "关闭工作台导航" })).toBeInTheDocument();
+    const workspaceCloseButtons = screen.getAllByRole("button", { name: "关闭工作台导航" });
+    expect(workspaceCloseButtons).toHaveLength(2);
+    expect(workspaceCloseButtons.some((button) => button.closest("aside") !== null)).toBe(true);
   });
 
   it("opens current Work objects in a separate mobile drawer and preserves route context", async () => {
@@ -160,8 +162,8 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("tab", { name: "运行" })).toHaveAttribute("aria-selected", "true");
 
     await user.click(objectTrigger);
-    const closeObjectDrawer = await screen.findByRole("button", { name: "关闭工作对象导航" });
-    const objectDrawer = closeObjectDrawer.closest("aside");
+    const objectCloseButtons = await screen.findAllByRole("button", { name: "关闭工作对象导航" });
+    const objectDrawer = objectCloseButtons.find((button) => button.closest("aside"))?.closest("aside");
     expect(objectDrawer).not.toBeNull();
     const pinned = within(objectDrawer as HTMLElement).getByRole("navigation", { name: "置顶" });
     await user.click(within(pinned).getByRole("link", { name: /新品牌定位与故事/ }));
