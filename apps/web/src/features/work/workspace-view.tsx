@@ -991,6 +991,64 @@ export function WorkspaceShell() {
     },
   ] as const;
 
+  const mobileWorkSidebarSections = [
+    {
+      id: "work",
+      label: "工作",
+      items: [
+        {
+          id: "new-work",
+          label: "交代工作",
+          onSelect: openComposer,
+          icon: <Plus size={15} aria-hidden="true" />,
+        },
+        {
+          id: "all-work",
+          label: "全部工作",
+          to: to("/tasks"),
+          icon: <Layers3 size={15} aria-hidden="true" />,
+          end: true,
+        },
+      ],
+    },
+    {
+      id: "projects",
+      label: "项目",
+      meta: previewTasks.length + " 项",
+      collapsible: true,
+      items: previewTasks.map((task) => ({
+        id: "project-" + task.id,
+        label: task.title,
+        to: to("/tasks/" + task.id),
+        meta: task.status === "running" ? "进行中" : task.status === "requested" ? "等待开始" : "待续",
+      })),
+    },
+    {
+      id: "pinned",
+      label: "置顶",
+      meta: previewTasks.slice(0, 2).length + " 项",
+      collapsible: true,
+      items: previewTasks.slice(0, 2).map((task) => ({
+        id: "pinned-" + task.id,
+        label: task.title,
+        to: to("/tasks/" + task.id),
+        meta: task.status === "running" ? "进行中" : "待续",
+      })),
+    },
+    {
+      id: "recent",
+      label: "最近",
+      meta: previewTasks.slice(2).length + " 项",
+      collapsible: true,
+      items: previewTasks.slice(2).map((task) => ({
+        id: "recent-" + task.id,
+        label: task.title,
+        to: to("/tasks/" + task.id),
+        meta: "示例",
+      })),
+    },
+  ] as const;
+
   const settingsSidebarSections = [
     {
       id: "settings",
@@ -1008,6 +1066,7 @@ export function WorkspaceShell() {
 
   const isSettings = location.pathname.startsWith("/settings/");
   const sidebarSections = isSettings ? settingsSidebarSections : workSidebarSections;
+  const mobileSidebarSections = isSettings ? settingsSidebarSections : mobileWorkSidebarSections;
 
   return (
     <WorkspaceShellFrame
@@ -1026,6 +1085,7 @@ export function WorkspaceShell() {
       sidebarTitle={isSettings ? "设置" : "工作"}
       sidebarSubtitle={isSettings ? "Preferences" : "Personal Workspace"}
       sidebarSections={sidebarSections}
+      mobileSidebarSections={mobileSidebarSections}
       sidebarFooter={
         <div className="space-y-4">
           {isSettings ? (
