@@ -50,7 +50,9 @@ describe("AGT-054 Work workspace migration", () => {
     renderWorkspace();
 
     const logos = Array.from(
-      document.querySelectorAll('img[src="https://assets.tomz.io/images/mira-logo.png"]'),
+      document.querySelectorAll<HTMLImageElement>(
+        'img[src="https://assets.tomz.io/images/mira-logo.png"]',
+      ),
     );
     expect(logos).toHaveLength(2);
     expect(screen.getByRole("link", { name: "Mira Cloud" })).toContainElement(logos[0] ?? null);
