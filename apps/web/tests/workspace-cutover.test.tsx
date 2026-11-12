@@ -90,7 +90,7 @@ describe("AGT-054 Work workspace migration", () => {
     await user.click(screen.getByRole("tab", { name: "运行" }));
     expect(screen.getByRole("region", { name: "东南亚市场进入研究 的运行" })).toBeInTheDocument();
     expect(screen.getByText("R04")).toBeInTheDocument();
-    expect(screen.getByText("已交代 · 等待开始")).not.toBeInTheDocument();
+    expect(screen.queryByText("已交代 · 等待开始")).not.toBeInTheDocument();
     expect(screen.getByText("本次执行完成")).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "成果" }));
