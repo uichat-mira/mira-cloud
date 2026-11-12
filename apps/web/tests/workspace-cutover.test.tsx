@@ -10,6 +10,10 @@ import { WorkspaceShell } from "../src/pages/workspace";
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  document.documentElement.removeAttribute("data-mira-color-theme");
+  document.documentElement.removeAttribute("data-mira-theme-mode");
+  document.documentElement.classList.remove("dark");
+  localStorage.clear();
 });
 
 function renderWorkspace(path = "/") {
@@ -40,6 +44,51 @@ describe("AGT-054 Work workspace migration", () => {
     expect(within(allWork).getByRole("link", { name: /东南亚市场进入研究/ })).toBeInTheDocument();
     expect(within(allWork).getByRole("link", { name: /新品牌定位与故事/ })).toBeInTheDocument();
     expect(within(allWork).getByRole("link", { name: "交代工作" })).toBeInTheDocument();
+  });
+
+  it("uses the canonical Mira logo on desktop and mobile shell surfaces", () => {
+    renderWorkspace();
+
+    const logos = Array.from(
+      document.querySelectorAll(
+        'img[src="https://assets.tomz.io/images/mira-logo.png"]',
+      ),
+    );
+    expect(logos).toHaveLength(2);
+    expect(screen.getByRole("link", { name: "Mira Cloud" })).toContainElement(logos[0] ?? null);
+    expect(screen.getByRole("button", { name: "切换业务工作台" })).toContainElement(
+      logos[1] ?? null,
+    );
+  });
+
+  it("moves visual preferences from the Topbar into Settings General and persists changes", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    expect(screen.queryByLabelText("外观偏好")).toBeNull();
+    const workSidebar = screen.getByRole("complementary", { name: "当前业务" });
+    await user.click(within(workSidebar).getByRole("link", { name: "设置" }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "通用" })).toBeInTheDocument();
+    const settingsSidebar = screen.getByRole("complementary", { name: "当前业务" });
+    expect(within(settingsSidebar).getByText("设置")).toBeInTheDocument();
+    expect(within(settingsSidebar).getByRole("link", { name: "通用" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+
+    const themePreset = screen.getByRole("combobox", { name: "主题预设" });
+    await user.click(themePreset);
+    await user.click(await screen.findByRole("option", { name: "海石灰蓝" }));
+
+    expect(document.documentElement.dataset["miraColorTheme"]).toBe("slate-ocean");
+    expect(JSON.parse(localStorage.getItem("mira-cloud-theme-v1") ?? "null")).toMatchObject({
+      preset: "slate-ocean",
+    });
+
+    await user.click(screen.getByRole("switch", { name: "深色模式" }));
+    expect(document.documentElement.dataset["miraThemeMode"]).toBe("dark");
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
   it("renders Home as a continuous work stack plus Attention queue without fetching APIs", () => {
