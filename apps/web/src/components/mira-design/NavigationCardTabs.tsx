@@ -190,31 +190,41 @@ export default function NavigationCardTabs<T extends string>({
 }: NavigationCardTabsProps<T>) {
   const listRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
-  const measureKey = tabs.map((tab) => tab.value).join("\u0000");
+  const overflowMeasureRef = useRef<HTMLButtonElement>(null);
+  const measureKey = tabs
+    .map((tab) => {
+      const label = typeof tab.label === "string" || typeof tab.label === "number" ? tab.label : "";
+      return `${tab.value}\u0001${label}`;
+    })
+    .join("\u0000");
   const [measurement, setMeasurement] = useState<{
     availableWidth: number;
     tabWidths: number[];
-  }>({ availableWidth: 0, tabWidths: [] });
+    overflowWidth: number;
+  }>({ availableWidth: 0, tabWidths: [], overflowWidth: OVERFLOW_TRIGGER_WIDTH });
 
   useLayoutEffect(() => {
     const list = listRef.current;
     const measure = measureRef.current;
-    if (!list || !measure) return;
+    const overflowMeasure = overflowMeasureRef.current;
+    if (!list || !measure || !overflowMeasure) return;
 
     const readLayout = () => {
       const availableWidth = list.getBoundingClientRect().width;
-      const tabWidths = Array.from(measure.children).map(
-        (child) => child.getBoundingClientRect().width,
-      );
+      const tabWidths = Array.from(
+        measure.querySelectorAll("[data-navigation-card-tabs-measure-item]"),
+      ).map((node) => node.getBoundingClientRect().width);
+      const overflowWidth = overflowMeasure.getBoundingClientRect().width || OVERFLOW_TRIGGER_WIDTH;
 
       setMeasurement((current) => {
         if (
           current.availableWidth === availableWidth &&
+          current.overflowWidth === overflowWidth &&
           areNumberArraysEqual(current.tabWidths, tabWidths)
         ) {
           return current;
         }
-        return { availableWidth, tabWidths };
+        return { availableWidth, tabWidths, overflowWidth };
       });
     };
 
@@ -225,6 +235,7 @@ export default function NavigationCardTabs<T extends string>({
     const observer = new ResizeObserver(readLayout);
     observer.observe(list);
     observer.observe(measure);
+    observer.observe(overflowMeasure);
     return () => observer.disconnect();
   }, [measureKey]);
 
@@ -237,10 +248,10 @@ export default function NavigationCardTabs<T extends string>({
     availableWidth: measurement.availableWidth,
     tabWidths: measuredTabWidths,
     selectedIndex,
+    overflowTriggerWidth: measurement.overflowWidth,
   });
 
   const visibleTabs = tabs.slice(tabWindow.start, tabWindow.end);
-  const hiddenTabs = tabs.filter((_, index) => index < tabWindow.start || index >= tabWindow.end);
   const tabSurfaceClassName = getTabSurfaceClassName();
   const tabStateClassName = getTabStateClassName(activeTabStyle);
 
@@ -267,7 +278,7 @@ export default function NavigationCardTabs<T extends string>({
           </Tabs.Trigger>
         ))}
 
-        {hiddenTabs.length > 0 ? (
+        {tabWindow.hasOverflow ? (
           <DropdownMenuPrimitive.Root modal={false}>
             <DropdownMenuPrimitive.Trigger asChild>
               <button
@@ -296,7 +307,7 @@ export default function NavigationCardTabs<T extends string>({
                   value={value}
                   onValueChange={(nextValue) => onChange(nextValue as T)}
                 >
-                  {hiddenTabs.map((tab) => (
+                  {tabs.map((tab) => (
                     <DropdownMenuPrimitive.RadioItem
                       key={tab.value}
                       value={tab.value}
@@ -337,6 +348,13 @@ export default function NavigationCardTabs<T extends string>({
               <NavigationCardTabContent tab={tab as NavigationCardTab<string>} />
             </span>
           ))}
+          <button
+            ref={overflowMeasureRef}
+            type="button"
+            tabIndex={-1}
+            data-navigation-card-tabs-overflow-measure=""
+            className="h-8 w-8 shrink-0"
+          />
         </div>
       </Tabs.List>
     </Tabs.Root>
