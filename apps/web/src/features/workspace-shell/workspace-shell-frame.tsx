@@ -63,6 +63,20 @@ function RailItem({ item }: { item: WorkspaceRailItem }) {
   );
 }
 
+function SidebarItemContent({ item }: { item: WorkspaceSidebarSection["items"][number] }) {
+  return (
+    <>
+      {item.icon ? (
+        <span className="workspace-sidebar-item-icon" aria-hidden="true">
+          {item.icon}
+        </span>
+      ) : null}
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      {item.meta ? <span className="workspace-sidebar-item-meta">{item.meta}</span> : null}
+    </>
+  );
+}
+
 function MobileWorkspaceDrawer({
   open,
   onClose,
@@ -157,23 +171,38 @@ function MobileObjectDrawer({
           <section key={section.id}>
             {section.label ? <h2>{section.label}</h2> : null}
             <nav aria-label={section.label ?? "移动工作对象"}>
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.id}
-                  to={item.to}
-                  {...(item.end !== undefined ? { end: item.end } : {})}
-                  onClick={onClose}
-                  className={({ isActive }) => (isActive ? "is-active" : "")}
-                >
-                  {item.icon ? (
+              {section.items.map((item) =>
+                item.onSelect ? (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      item.onSelect?.();
+                      onClose();
+                    }}
+                  >
                     <span aria-hidden="true">{item.icon}</span>
-                  ) : (
-                    <span aria-hidden="true" />
-                  )}
-                  <span>{item.label}</span>
-                  {item.meta ? <small>{item.meta}</small> : null}
-                </NavLink>
-              ))}
+                    <span>{item.label}</span>
+                    {item.meta ? <small>{item.meta}</small> : null}
+                  </button>
+                ) : (
+                  <NavLink
+                    key={item.id}
+                    to={item.to ?? "#"}
+                    {...(item.end !== undefined ? { end: item.end } : {})}
+                    onClick={onClose}
+                    className={({ isActive }) => (isActive ? "is-active" : "")}
+                  >
+                    {item.icon ? (
+                      <span aria-hidden="true">{item.icon}</span>
+                    ) : (
+                      <span aria-hidden="true" />
+                    )}
+                    <span>{item.label}</span>
+                    {item.meta ? <small>{item.meta}</small> : null}
+                  </NavLink>
+                ),
+              )}
             </nav>
           </section>
         ))}
@@ -197,7 +226,6 @@ export function WorkspaceShellFrame({
   topbarLeading,
   topbarActions,
   mobileContextTitle,
-  mobileAction,
   layout,
   density = "compact",
   children,
@@ -240,28 +268,31 @@ export function WorkspaceShellFrame({
                 className="workspace-sidebar-list"
                 aria-label={section.label ?? sidebarTitle?.toString()}
               >
-                {section.items.map((item) => (
-                  <NavLink
-                    key={item.id}
-                    to={item.to}
-                    {...(item.end !== undefined ? { end: item.end } : {})}
-                    className={({ isActive }) =>
-                      ["workspace-sidebar-item", isActive ? "workspace-sidebar-item-active" : ""]
-                        .filter(Boolean)
-                        .join(" ")
-                    }
-                  >
-                    {item.icon ? (
-                      <span className="workspace-sidebar-item-icon" aria-hidden="true">
-                        {item.icon}
-                      </span>
-                    ) : null}
-                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                    {item.meta ? (
-                      <span className="workspace-sidebar-item-meta">{item.meta}</span>
-                    ) : null}
-                  </NavLink>
-                ))}
+                {section.items.map((item) =>
+                  item.onSelect ? (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="workspace-sidebar-item"
+                      onClick={item.onSelect}
+                    >
+                      <SidebarItemContent item={item} />
+                    </button>
+                  ) : (
+                    <NavLink
+                      key={item.id}
+                      to={item.to ?? "#"}
+                      {...(item.end !== undefined ? { end: item.end } : {})}
+                      className={({ isActive }) =>
+                        ["workspace-sidebar-item", isActive ? "workspace-sidebar-item-active" : ""]
+                          .filter(Boolean)
+                          .join(" ")
+                      }
+                    >
+                      <SidebarItemContent item={item} />
+                    </NavLink>
+                  ),
+                )}
               </nav>
             </section>
           ))}
@@ -295,8 +326,6 @@ export function WorkspaceShellFrame({
           <span className="truncate">{mobileContextTitle}</span>
           <ChevronDown size={13} aria-hidden="true" />
         </button>
-
-        {mobileAction ? <div className="workspace-mobile-action">{mobileAction}</div> : null}
       </header>
 
       <MobileWorkspaceDrawer
