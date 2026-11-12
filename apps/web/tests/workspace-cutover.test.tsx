@@ -142,7 +142,7 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.queryByRole("tab", { name: "历史" })).toBeNull();
 
     const now = screen.getByRole("region", { name: "当前状态与下一步" });
-    expect(within(now).getByText("正在进行")).toBeInTheDocument();
+    expect(within(now).getAllByText("正在进行")).toHaveLength(2);
     expect(within(now).getByText("查看工作进展")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "需要你处理" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "近期进展" })).toBeInTheDocument();
@@ -251,7 +251,7 @@ describe("AGT-054 Work workspace migration", () => {
 
     const objectTrigger = screen.getByRole("button", { name: "切换工作对象" });
     expect(objectTrigger).toHaveTextContent("东南亚市场进入研究");
-    expect(screen.getByRole("tab", { name: "运行" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "进展" })).toHaveAttribute("aria-selected", "true");
 
     await user.click(objectTrigger);
     const objectCloseButtons = await screen.findAllByRole("button", { name: "关闭工作对象导航" });
