@@ -340,6 +340,12 @@ AGT-052 在 `apps/web/src/pages/workspace.tsx` 和 `apps/web/src/features/worksp
 
 `apps/web/wrangler.jsonc` 为单独的 Cloudflare Workers 静态文件预览提供 SPA 路由回退；部署通道读取 `dev` 源构建前端，不代表 Cloud Auth、Cloud Pi 或 Tencent `prod` 已接入。**Fixture 的值、状态和时间均为虚构；任何后续真实业务接线都应替换 Fixture 数据源并遵守本文访问控制与状态合同。**
 
+### 8.5 AGT-053/054 · 四层 Shell 与工作业务迁移
+
+AGT-053 将系统级布局收敛为 **Global Rail → Workspace Sidebar → Topic Tabs → Content Canvas**：Rail 只承载稳定业务工作台，当前仅「工作」启用；Sidebar 承载当前业务对象；Topic Tabs 承载当前主题视图；打开 Task / Artifact 时 Shell 保持稳定。
+
+AGT-054 进一步把「工作」一期内容迁入该结构：工作对象主要出现在 Sidebar，Home 使用连续工作栈 + Attention 队列而不是 Dashboard Card Grid；Task 主题提供概览 / 待处理 / 运行 / 成果 / 历史 Fixture 视图，Artifact 主题提供预览 / 来源 / 版本 Fixture 视图。Run/Artifact/Attention 的内容仍是**明确的演示数据**，只用于验证信息架构与状态阅读，不证明 Cloud Pi、Cloud Auth 或任何真实业务 API 已接通。
+
 ## 9. 设计来源和变更说明
 
 - 产品所有权与跨端架构：[v0.4](../architecture/v0.4.md)
