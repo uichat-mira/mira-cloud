@@ -372,6 +372,14 @@ AGT-065 修正 Mobile / WebView 的空间语法：左上角「切换工作台」
 
 移动 Work 对象导航不再直接复用 Desktop Sidebar 的平铺视觉结构。Shell 接受独立的 `mobileSidebarSections` 投影，但数据、路由和 Task 身份仍来自同一 Work 真相源。第一层只展示「工作」业务动作；具体 Task 下沉到「项目 / 置顶 / 最近」三个可独立折叠的组，默认折叠，用户展开后才进入 Task 列表。折叠组复用 MiraDesign `CollapsiblePanel`，保留 `aria-expanded / aria-controls`，并确保折叠内容不进入焦点顺序。
 
+### 8.10 首轮可用性修订 · 空/未知状态与入口一致性
+
+- Home 先呈现真正需要用户处理的 Attention，再呈现持续工作和最近成果；没有 Attention 时不保留空位。
+- “首次使用”与“来源不可用”必须在 Canvas、Sidebar 和 Mobile Drawer 同步表达。前者没有示例 Task，后者不能把未知当成空；两种情境的深链不能伪装成已存在的任务。
+- 示例 Task 的“等待补充材料”“等待开始”“正在进行”属于不同事实；下一步文案说清工作要求，查看详情的链接统一明确为“查看工作”。
+- Mobile 改为唯一可折叠“项目”导航，置顶/最近作为条目属性而非三份重复列表。这一轮覆盖 §8.9 关于三个独立折叠组的历史安排，保留左侧 Drawer 与两层结构。
+- Composer 填写、Attention 操作、成果阅读及业务 API 均留待后续独立范围，不能假造执行成功。
+
 ## 9. 设计来源和变更说明
 
 - 产品所有权与跨端架构：[v0.4](../architecture/v0.4.md)
