@@ -62,6 +62,7 @@ export function GeneralSettingsPage() {
               </p>
             </div>
             <Select
+              label="主题预设"
               value={theme.preset}
               onChange={(value) => {
                 if (presetIds.some((preset) => preset === value)) {
