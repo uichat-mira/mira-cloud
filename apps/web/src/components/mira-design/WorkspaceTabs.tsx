@@ -266,8 +266,8 @@ export default function WorkspaceTabs<T extends string>({
                     <DropdownMenuPrimitive.RadioItem
                       key={tab.value}
                       value={tab.value}
-                      disabled={tab.disabled}
-                      aria-label={typeof tab.label === "string" ? tab.label : undefined}
+                      {...(tab.disabled ? { disabled: true } : {})}
+                      {...(typeof tab.label === "string" ? { "aria-label": tab.label } : {})}
                       className="group relative flex min-h-9 w-full cursor-default items-center justify-between gap-3 rounded-ui-control px-2.5 py-2 text-left text-sm text-text-primary outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[highlighted]:bg-surface-secondary data-[state=checked]:bg-surface-secondary"
                     >
                       <span className="inline-flex min-w-0 items-center gap-2">
