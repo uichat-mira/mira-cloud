@@ -84,26 +84,31 @@ describe("AGT-054 Work workspace migration", () => {
     const homeView = renderWorkspace("/");
     const homeHeader = screen.getByRole("heading", { name: "工作台" }).closest("header");
     expect(homeHeader).not.toBeNull();
-    await user.click(within(homeHeader as HTMLElement).getByRole("button", { name: "交代工作" }));
+    const homeTrigger = within(homeHeader as HTMLElement).getByRole("button", {
+      name: "交代工作",
+    });
+    await user.click(homeTrigger);
     await screen.findByRole("dialog", { name: "交代工作" });
     await user.click(screen.getByRole("button", { name: "取消" }));
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
     );
+    expect(homeTrigger).toHaveFocus();
     expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
     homeView.unmount();
 
     renderWorkspace("/artifacts/market-note");
-    await user.click(
-      within(document.getElementById("main-content") as HTMLElement).getByRole("button", {
-        name: "交代工作",
-      }),
+    const artifactTrigger = within(document.getElementById("main-content") as HTMLElement).getByRole(
+      "button",
+      { name: "交代工作" },
     );
+    await user.click(artifactTrigger);
     await screen.findByRole("dialog", { name: "交代工作" });
     await user.keyboard("{Escape}");
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
     );
+    expect(artifactTrigger).toHaveFocus();
     expect(screen.getByRole("heading", { level: 1, name: "市场机会研究摘要" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "预览" })).toHaveAttribute("aria-selected", "true");
   });
