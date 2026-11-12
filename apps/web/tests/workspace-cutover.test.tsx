@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 
-import { resolveNavigationCardTabsWindow } from "../src/components/mira-design/index.ts";
+import { resolveWorkspaceTabsWindow } from "../src/components/mira-design/index.ts";
 import { WorkspaceShell } from "../src/pages/workspace";
 
 afterEach(() => {
@@ -177,15 +177,19 @@ describe("AGT-054 Work workspace migration", () => {
   it.each([360, 390, 430, 600, 820])(
     "keeps the selected topic reachable without horizontal navigation at %ipx",
     (viewportWidth) => {
-      const window = resolveNavigationCardTabsWindow({
-        availableWidth: viewportWidth - 32,
-        tabWidths: [92, 92, 92, 92, 92],
+      const availableWidth = viewportWidth - 32;
+      const tabWidths = [92, 92, 92, 92, 92];
+      const window = resolveWorkspaceTabsWindow({
+        availableWidth,
+        tabWidths,
         selectedIndex: 4,
       });
 
       expect(window.start).toBeLessThanOrEqual(4);
       expect(window.end).toBeGreaterThan(4);
-      if (viewportWidth < 820) expect(window.hasOverflow).toBe(true);
+      const fullWidth =
+        tabWidths.reduce((total, width) => total + width, 0) + (tabWidths.length - 1) * 2;
+      expect(window.hasOverflow).toBe(fullWidth > availableWidth);
     },
   );
 });
