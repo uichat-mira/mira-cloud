@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 
+import { resolveNavigationCardTabsWindow } from "../src/components/mira-design/index.ts";
 import { WorkspaceShell } from "../src/pages/workspace";
 
 afterEach(() => {
@@ -134,8 +135,50 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("heading", { name: "工作台" })).toBeInTheDocument();
   });
 
-  it("retains the temporary mobile navigation only until AGT-055 replaces the collapse model", () => {
+  it("replaces the legacy mobile bottom navigation with an explicit workspace drawer", async () => {
+    const user = userEvent.setup();
     renderWorkspace();
-    expect(screen.getByRole("navigation", { name: "手机主导航" })).toBeInTheDocument();
+
+    expect(screen.queryByRole("navigation", { name: "手机主导航" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "切换业务工作台" }));
+
+    const drawer = await screen.findByRole("navigation", { name: "移动业务工作台" });
+    expect(within(drawer).getByRole("link", { name: "工作" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(within(drawer).getByRole("button", { name: "知识（尚未开放）" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "关闭工作台导航" })).toBeInTheDocument();
   });
+
+  it("opens current Work objects in a separate mobile drawer and preserves route context", async () => {
+    const user = userEvent.setup();
+    renderWorkspace("/tasks/market-research?view=runs");
+
+    const objectTrigger = screen.getByRole("button", { name: "切换工作对象" });
+    expect(objectTrigger).toHaveTextContent("东南亚市场进入研究");
+    expect(screen.getByRole("tab", { name: "运行" })).toHaveAttribute("aria-selected", "true");
+
+    await user.click(objectTrigger);
+    const pinned = await screen.findByRole("navigation", { name: "置顶" });
+    await user.click(within(pinned).getByRole("link", { name: /新品牌定位与故事/ }));
+
+    expect(screen.getByRole("heading", { name: "新品牌定位与故事" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it.each([360, 390, 430, 600, 820])(
+    "keeps the selected topic reachable without horizontal navigation at %ipx",
+    (viewportWidth) => {
+      const window = resolveNavigationCardTabsWindow({
+        availableWidth: viewportWidth - 32,
+        tabWidths: [92, 92, 92, 92, 92],
+        selectedIndex: 4,
+      });
+
+      expect(window.start).toBeLessThanOrEqual(4);
+      expect(window.end).toBeGreaterThan(4);
+      if (viewportWidth < 820) expect(window.hasOverflow).toBe(true);
+    },
+  );
 });
