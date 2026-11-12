@@ -1020,7 +1020,8 @@ export function WorkspaceShell() {
         id: "project-" + task.id,
         label: task.title,
         to: to("/tasks/" + task.id),
-        meta: task.status === "running" ? "进行中" : task.status === "requested" ? "等待开始" : "待续",
+        meta:
+          task.status === "running" ? "进行中" : task.status === "requested" ? "等待开始" : "待续",
       })),
     },
     {
