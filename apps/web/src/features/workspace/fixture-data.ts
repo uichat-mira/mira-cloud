@@ -26,9 +26,19 @@ export interface PreviewTask {
 export interface PreviewArtifact {
   id: string;
   taskId: string;
+  runId?: string;
   title: string;
   type: string;
   version: string;
+  updated: string;
+}
+
+export interface PreviewRun {
+  id: string;
+  taskId: string;
+  label: string;
+  status: "requested" | "running" | "completed";
+  summary: string;
   updated: string;
 }
 
@@ -85,6 +95,7 @@ export const previewArtifacts: readonly PreviewArtifact[] = [
   {
     id: "market-note",
     taskId: "market-research",
+    runId: "market-r04",
     title: "市场机会研究摘要",
     type: "研究笔记",
     version: "v1",
@@ -93,10 +104,46 @@ export const previewArtifacts: readonly PreviewArtifact[] = [
   {
     id: "brand-proposal",
     taskId: "brand-direction",
+    runId: "brand-r03",
     title: "品牌叙事初稿",
     type: "文档",
     version: "v2",
     updated: "更新于昨天（示例）",
+  },
+];
+
+export const previewRuns: readonly PreviewRun[] = [
+  {
+    id: "market-r04",
+    taskId: "market-research",
+    label: "R04",
+    status: "running",
+    summary: "正在核对重点市场准入条件与来源。",
+    updated: "12 分钟前（示例）",
+  },
+  {
+    id: "market-r03",
+    taskId: "market-research",
+    label: "R03",
+    status: "completed",
+    summary: "完成区域机会初筛并留下研究摘要。",
+    updated: "今天 08:10（示例）",
+  },
+  {
+    id: "brand-r03",
+    taskId: "brand-direction",
+    label: "R03",
+    status: "completed",
+    summary: "形成两版品牌叙事方向，等待补充材料。",
+    updated: "昨天（示例）",
+  },
+  {
+    id: "followup-r01",
+    taskId: "research-followup",
+    label: "R01",
+    status: "requested",
+    summary: "工作请求已接收，尚未观察到执行开始。",
+    updated: "今天（示例）",
   },
 ];
 
@@ -120,4 +167,19 @@ export function findPreviewTask(id: string | undefined): PreviewTask | undefined
 
 export function findPreviewArtifact(id: string | undefined): PreviewArtifact | undefined {
   return previewArtifacts.find((artifact) => artifact.id === id);
+}
+
+export function findPreviewRuns(taskId: string | undefined): readonly PreviewRun[] {
+  if (!taskId) return [];
+  return previewRuns.filter((run) => run.taskId === taskId);
+}
+
+export function findPreviewAttentions(taskId: string | undefined): readonly PreviewAttention[] {
+  if (!taskId) return [];
+  return previewAttentions.filter((attention) => attention.taskId === taskId);
+}
+
+export function findPreviewArtifacts(taskId: string | undefined): readonly PreviewArtifact[] {
+  if (!taskId) return [];
+  return previewArtifacts.filter((artifact) => artifact.taskId === taskId);
 }
