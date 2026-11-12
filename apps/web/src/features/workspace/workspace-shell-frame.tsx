@@ -146,7 +146,7 @@ export function WorkspaceShellFrame({
                   <NavLink
                     key={item.id}
                     to={item.to}
-                    end={item.end}
+                    {...(item.end !== undefined ? { end: item.end } : {})}
                     className={({ isActive }) =>
                       ["workspace-sidebar-item", isActive ? "workspace-sidebar-item-active" : ""]
                         .filter(Boolean)
