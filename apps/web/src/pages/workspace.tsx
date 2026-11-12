@@ -343,7 +343,7 @@ function PreviewList({
     attention: ["Attention", "待处理", "需要你决定、补充或核对的事情。"],
     tasks: ["Continuity", "我的工作", "以工作目标为中心，而不是运行记录列表。"],
     artifacts: ["Artifacts", "成果", "每份成果都能追溯到它来自的工作。"],
-  };
+  } as const;
   const [label, title, subtitle] = headings[view];
   return (
     <>
