@@ -163,7 +163,9 @@ describe("AGT-054 Work workspace migration", () => {
 
     await user.click(objectTrigger);
     const objectCloseButtons = await screen.findAllByRole("button", { name: "关闭工作对象导航" });
-    const objectDrawer = objectCloseButtons.find((button) => button.closest("aside"))?.closest("aside");
+    const objectDrawer = objectCloseButtons
+      .find((button) => button.closest("aside"))
+      ?.closest("aside");
     expect(objectDrawer).not.toBeNull();
     const pinned = within(objectDrawer as HTMLElement).getByRole("navigation", { name: "置顶" });
     await user.click(within(pinned).getByRole("link", { name: /新品牌定位与故事/ }));
