@@ -127,20 +127,38 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("region", { name: "成果列表" })).toBeInTheDocument();
   });
 
-  it("keeps the Shell stable while a Task owns overview, Attention, runs, artifacts and history tabs", async () => {
+  it("keeps the Shell stable while Task Detail tells a continuous-work story", async () => {
     const user = userEvent.setup();
     renderWorkspace("/tasks/market-research");
 
     expect(screen.getByRole("heading", { name: "东南亚市场进入研究" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "业务工作台" })).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "当前业务" })).toBeInTheDocument();
-    expect(screen.getAllByRole("tab")).toHaveLength(5);
-    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
 
-    await user.click(screen.getByRole("tab", { name: "运行" }));
-    expect(screen.getByRole("region", { name: "东南亚市场进入研究 的运行" })).toBeInTheDocument();
+    expect(screen.getAllByRole("tab")).toHaveLength(3);
+    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab", { name: "待处理" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "运行" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "历史" })).toBeNull();
+
+    const now = screen.getByRole("region", { name: "当前状态与下一步" });
+    expect(within(now).getAllByText("正在进行")).toHaveLength(2);
+    expect(within(now).getByText("查看工作进展")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "需要你处理" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "近期进展" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "相关成果" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "市场机会研究摘要" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "进展" }));
+    expect(screen.getByRole("region", { name: "东南亚市场进入研究 的进展" })).toBeInTheDocument();
+    const executionDetails = screen.getByRole("button", { name: "查看执行详情（2 次）" });
+    expect(executionDetails).toHaveAttribute("aria-expanded", "false");
+    await user.click(executionDetails);
+    expect(screen.getByRole("button", { name: "收起执行详情" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
     expect(screen.getByText("R04")).toBeInTheDocument();
-    expect(screen.queryByText("已交代 · 等待开始")).not.toBeInTheDocument();
     expect(screen.getByText("本次执行完成")).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "成果" }));
@@ -148,9 +166,34 @@ describe("AGT-054 Work workspace migration", () => {
     expect(
       within(artifactRegion).getByRole("link", { name: /市场机会研究摘要/ }),
     ).toBeInTheDocument();
+  });
 
-    await user.click(screen.getByRole("tab", { name: "历史" }));
-    expect(screen.getByRole("region", { name: "东南亚市场进入研究 的历史" })).toBeInTheDocument();
+  it("does not manufacture Attention or Artifact sections when a Task has none", () => {
+    renderWorkspace("/tasks/research-followup");
+
+    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("region", { name: "当前状态与下一步" })).toHaveTextContent(
+      "已交代 · 等待开始",
+    );
+    expect(screen.queryByRole("region", { name: "需要你处理" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "相关成果" })).toBeNull();
+    expect(screen.getByRole("region", { name: "近期进展" })).toHaveTextContent(
+      "工作请求已接收，尚未观察到执行开始",
+    );
+  });
+
+  it("maps legacy Task view links into the smaller narrative without blank states", () => {
+    const runsView = renderWorkspace("/tasks/market-research?view=runs");
+    expect(screen.getByRole("tab", { name: "进展" })).toHaveAttribute("aria-selected", "true");
+    runsView.unmount();
+
+    const historyView = renderWorkspace("/tasks/market-research?view=history");
+    expect(screen.getByRole("tab", { name: "进展" })).toHaveAttribute("aria-selected", "true");
+    historyView.unmount();
+
+    renderWorkspace("/tasks/market-research?view=attention");
+    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("region", { name: "需要你处理" })).toBeInTheDocument();
   });
 
   it("gives an Artifact stable preview, source and version topic views", async () => {
@@ -208,7 +251,7 @@ describe("AGT-054 Work workspace migration", () => {
 
     const objectTrigger = screen.getByRole("button", { name: "切换工作对象" });
     expect(objectTrigger).toHaveTextContent("东南亚市场进入研究");
-    expect(screen.getByRole("tab", { name: "运行" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "进展" })).toHaveAttribute("aria-selected", "true");
 
     await user.click(objectTrigger);
     const objectCloseButtons = await screen.findAllByRole("button", { name: "关闭工作对象导航" });

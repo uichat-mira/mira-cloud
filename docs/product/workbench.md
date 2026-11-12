@@ -36,7 +36,7 @@ AGT-053 起，Mira Cloud 不再把「首页 / 待处理 / 我的工作 / 成果�
 
 1. **L0 · Global Rail** — 切换稳定的业务工作台。当前只有「工作」启用；知识、自动化、连接等未来面向只能以明确禁用/占位出现，不能伪造能力。
 2. **L1 · Workspace Sidebar** — 当前业务里的对象、列表与入口，例如「全部工作」、最近 Task、固定 Task，以及「交代工作」。
-3. **L2 · Topic Tabs** — 当前主题内部的观察角度。页面级 Tabs 优先复用 MiraDesign `NavigationCardTabs`，而不是让每个业务页自行发明顶栏。
+3. **L2 · Topic Tabs** — 当前主题内部的观察角度。页面级 Tabs 使用 MiraDesign `WorkspaceTabs` 的轻量工作区导航；可见数量由真实容器宽度决定，业务页不得复制测宽/overflow 算法。
 4. **L3 · Content Canvas** — 当前主题的主内容。打开 Task、Artifact 或其它对象时保持 Shell 稳定，只改变上下文、Tabs 与内容。
 
 当前「工作」业务的已知入口仍保留以下路由，但它们不再等价于系统级产品导航：
@@ -344,11 +344,11 @@ AGT-052 在 `apps/web/src/pages/workspace.tsx` 和 `apps/web/src/features/worksp
 
 AGT-053 将系统级布局收敛为 **Global Rail → Workspace Sidebar → Topic Tabs → Content Canvas**：Rail 只承载稳定业务工作台，当前仅「工作」启用；Sidebar 承载当前业务对象；Topic Tabs 承载当前主题视图；打开 Task / Artifact 时 Shell 保持稳定。
 
-AGT-054 进一步把「工作」一期内容迁入该结构：工作对象主要出现在 Sidebar，Home 使用连续工作栈 + Attention 队列而不是 Dashboard Card Grid；Task 主题提供概览 / 待处理 / 运行 / 成果 / 历史 Fixture 视图，Artifact 主题提供预览 / 来源 / 版本 Fixture 视图。Run/Artifact/Attention 的内容仍是**明确的演示数据**，只用于验证信息架构与状态阅读，不证明 Cloud Pi、Cloud Auth 或任何真实业务 API 已接通。
+AGT-054 进一步把「工作」一期内容迁入该结构：工作对象主要出现在 Sidebar，Home 使用连续工作栈 + Attention 队列而不是 Dashboard Card Grid。它最初给 Task 提供概览 / 待处理 / 运行 / 成果 / 历史五个等权 Fixture 视图；该初版 Task 叙事已由 AGT-063 收敛，不再代表当前 Task Detail 合同。Artifact 主题仍提供预览 / 来源 / 版本 Fixture 视图。Run/Artifact/Attention 的内容仍是**明确的演示数据**，只用于验证信息架构与状态阅读，不证明 Cloud Pi、Cloud Auth 或任何真实业务 API 已接通。
 
 ### 8.6 AGT-055 · Mobile / WebView Shell 折叠
 
-AGT-055 不为手机创建第二套产品 IA。窄屏下 L0 Global Rail 与 L1 Workspace Sidebar 从常驻栏折叠为两个独立 Drawer 入口；当前主题仍使用同一套 L2 `NavigationCardTabs`，由组件按实际容器宽度保留当前选中项并将超出项收入明确的「更多」菜单；L3 Canvas 单列化并保留 Safe Area、`svh/dvh` 与 coarse-pointer 44px 触控约束。
+AGT-055 不为手机创建第二套产品 IA。窄屏下 L0 Global Rail 与 L1 Workspace Sidebar 从常驻栏折叠为两个独立 Drawer 入口；AGT-061 起当前主题使用同一套 L2 `WorkspaceTabs`，由组件按实际容器与 Tab 自然宽度保留当前选中项，并仅在真实放不下时把超出项收入明确的「更多」菜单；L3 Canvas 单列化并保留 Safe Area、`svh/dvh` 与 coarse-pointer 44px 触控约束。
 
 旧的「首页 / 待处理 / 我的工作 / 成果」手机底栏已移除，因为它会把“工作”一期视图重新提升成系统级一级导航。360 / 390 / 430 / 600 / 820px 的 Topic Tabs 可达性由组件窗口算法测试覆盖；Drawer 导航和深链上下文由 React 路由测试覆盖。该折叠方案仍是 Web / WebView UI 合同，不代表原生 Mobile Session、Host Tool 或本地权限共享。
 
@@ -357,6 +357,12 @@ AGT-055 不为手机创建第二套产品 IA。窄屏下 L0 Global Rail 与 L1 W
 AGT-062 将 Mira Cloud Shell 的品牌资产统一为 `https://assets.tomz.io/images/mira-logo.png`，Desktop Rail 与 Mobile Shell 使用同一 Logo 来源，不再由 Cloud 自造字母标记。Desktop 的 Rail brand、Workspace Sidebar header 与主区 Topbar 共享同一 `headerHeight`，关键 separator 共享同一 `separatorWidth`；Topicbar 只从该 header 基线继续布局，避免各区域用 `height / min-height / 硬编码 58px` 分别计算造成错线。
 
 主题预设与明暗模式不再占用工作上下文 Topbar。它们进入 L1 Sidebar 的「设置 → 通用」页面，继续调用现有 MiraDesign theme preference 与浏览器 localStorage，只表示**当前浏览器的视觉偏好**，不暗示账号、Desktop、Mobile 或其它运行时已经同步设置。连接诊断仍保持独立次级入口。
+
+### 8.8 AGT-061/063 · 轻量主题导航与 Task 持续工作叙事
+
+AGT-061 用 `WorkspaceTabs` 替代当前 Work Shell 对肥厚 Card Tabs 的依赖。组件测量真实容器、Tab 自然宽度和 overflow trigger，保证当前选中项直接可见；能完整放下就直接展示，只有真实空间不足时才使用「更多」菜单。旧 `NavigationCardTabs` 仍保留为独立通用组件，不再承担当前 Work/Task 主题导航。
+
+AGT-063 将 Task Detail 从「对象后台五栏目」收敛为**继续一件工作**：L2 只保留「概览 / 进展 / 成果」。概览首屏直接呈现当前状态与下一步，并且只有存在真实可行动 Attention 时才出现「需要你处理」；随后展示近期进展与已有成果。进展视图讲工作的连续变化，Run 仅作为可展开的执行证据；History 不再作为永久一级栏目。成果仍可独立查看并保留来源追溯。旧 `?view=runs` / `?view=history` 原型深链兼容映射到「进展」，旧 `?view=attention` 映射回包含 Attention 的「概览」，避免制造空页面。
 
 ## 9. 设计来源和变更说明
 
