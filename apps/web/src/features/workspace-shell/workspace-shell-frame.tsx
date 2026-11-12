@@ -3,53 +3,18 @@ import { ChevronDown, Layers3 } from "lucide-react";
 import { Link, NavLink } from "react-router";
 import { Drawer, NavigationCardTabs } from "../../components/mira-design/index.ts";
 
-export interface WorkspaceRailItem {
-  id: string;
-  label: string;
-  icon: ReactNode;
-  active?: boolean;
-  disabled?: boolean;
-  to?: string;
-  badge?: boolean;
-}
-
-export interface WorkspaceSidebarItem {
-  id: string;
-  label: string;
-  to: string;
-  icon?: ReactNode;
-  meta?: ReactNode;
-  end?: boolean;
-}
-
-export interface WorkspaceSidebarSection {
-  id: string;
-  label?: string;
-  items: readonly WorkspaceSidebarItem[];
-}
-
-export interface WorkspaceTopicTab {
-  value: string;
-  label: ReactNode;
-}
-
-export interface WorkspaceShellFrameProps {
-  brand: ReactNode;
-  railItems: readonly WorkspaceRailItem[];
-  sidebarTitle: ReactNode;
-  sidebarSubtitle?: ReactNode;
-  sidebarAction?: ReactNode;
-  sidebarSections: readonly WorkspaceSidebarSection[];
-  sidebarFooter?: ReactNode;
-  topicTabs: readonly WorkspaceTopicTab[];
-  topicValue: string;
-  onTopicChange: (value: string) => void;
-  topbarLeading?: ReactNode;
-  topbarActions?: ReactNode;
-  mobileContextTitle: ReactNode;
-  mobileAction?: ReactNode;
-  children: ReactNode;
-}
+export type {
+  WorkspaceRailItem,
+  WorkspaceSidebarItem,
+  WorkspaceSidebarSection,
+  WorkspaceShellDensity,
+  WorkspaceShellFrameProps,
+  WorkspaceShellLayoutMetrics,
+  WorkspaceTopicTab,
+} from "./types";
+import type { WorkspaceRailItem, WorkspaceSidebarSection, WorkspaceShellFrameProps } from "./types";
+import { createWorkspaceShellStyleVars } from "./layout";
+import "./workspace-shell.css";
 
 type MobilePanel = "workspaces" | "objects" | null;
 
@@ -232,14 +197,21 @@ export function WorkspaceShellFrame({
   topbarActions,
   mobileContextTitle,
   mobileAction,
+  layout,
+  density = "compact",
   children,
 }: WorkspaceShellFrameProps) {
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null);
   const activeWorkspace = railItems.find((item) => item.active) ?? railItems[0];
 
   return (
-    <div className="workspace-shell">
-      <aside className="workspace-rail" aria-label="Mira Cloud 工作台">
+    <div
+      className="workspace-shell"
+      style={createWorkspaceShellStyleVars(layout)}
+      data-workspace-density={density}
+      data-workspace-region="shell"
+    >
+      <aside className="workspace-rail" aria-label="Mira Cloud 工作台" data-workspace-region="rail">
         <div className="workspace-rail-brand">{brand}</div>
         <nav className="workspace-rail-nav" aria-label="业务工作台">
           {railItems.map((item) => (
@@ -248,7 +220,7 @@ export function WorkspaceShellFrame({
         </nav>
       </aside>
 
-      <aside className="workspace-sidebar" aria-label="当前业务">
+      <aside className="workspace-sidebar" aria-label="当前业务" data-workspace-region="sidebar">
         <header className="workspace-sidebar-header">
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-text-primary">{sidebarTitle}</div>
@@ -299,7 +271,7 @@ export function WorkspaceShellFrame({
         ) : null}
       </aside>
 
-      <header className="workspace-mobile-header">
+      <header className="workspace-mobile-header" data-workspace-region="mobile-header">
         <button
           type="button"
           className="workspace-mobile-workspace-trigger"
@@ -339,13 +311,13 @@ export function WorkspaceShellFrame({
         utility={topbarActions}
       />
 
-      <section className="workspace-main">
-        <div className="workspace-topbar">
+      <section className="workspace-main" data-workspace-region="main">
+        <div className="workspace-topbar" data-workspace-region="topbar">
           <div className="min-w-0">{topbarLeading}</div>
           <div className="shrink-0">{topbarActions}</div>
         </div>
 
-        <div className="workspace-topicbar">
+        <div className="workspace-topicbar" data-workspace-region="topicbar">
           <NavigationCardTabs
             tabs={topicTabs.map((tab) => ({ value: tab.value, label: tab.label }))}
             value={topicValue}
@@ -355,7 +327,7 @@ export function WorkspaceShellFrame({
           />
         </div>
 
-        <main className="workspace-content" id="main-content">
+        <main className="workspace-content" id="main-content" data-workspace-region="canvas">
           {children}
         </main>
       </section>

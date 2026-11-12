@@ -104,8 +104,10 @@ describe("AGT-050 MiraDesign cutover contract", () => {
   });
 
   it("cuts the real Workspace and ConnectionPanel over to MiraDesign primitives", () => {
-    const workspace = readRepo("apps/web/src/pages/workspace.tsx");
-    const shell = readRepo("apps/web/src/features/workspace/workspace-shell-frame.tsx");
+    const workspace = readRepo("apps/web/src/features/work/workspace-view.tsx");
+    const shell = readRepo("apps/web/src/features/workspace-shell/workspace-shell-frame.tsx");
+    const shellStyles = readRepo("apps/web/src/features/workspace-shell/workspace-shell.css");
+    const workStyles = readRepo("apps/web/src/features/work/work.css");
     const connection = readRepo("apps/web/src/features/connection/connection-panel.tsx");
     const globals = readRepo("apps/web/src/styles/globals.css");
 
@@ -119,8 +121,12 @@ describe("AGT-050 MiraDesign cutover contract", () => {
     expect(globals).toContain("@media (pointer: coarse)");
     expect(globals).toContain("min-width: 44px");
     expect(globals).toContain("min-height: 44px");
-    expect(globals).toContain("env(safe-area-inset-left)");
-    expect(globals).toContain("100svh");
-    expect(globals).toContain("100dvh");
+    expect(globals).not.toContain(".workspace-shell {");
+    expect(globals).not.toContain(".workbench-page-header {");
+    expect(shellStyles).toContain("env(safe-area-inset-left)");
+    expect(shellStyles).toContain("100svh");
+    expect(shellStyles).toContain("100dvh");
+    expect(shellStyles).toContain("--workspace-rail-width");
+    expect(workStyles).toContain(".workbench-page-header {");
   });
 });
