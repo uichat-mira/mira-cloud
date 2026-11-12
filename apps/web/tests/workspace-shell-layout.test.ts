@@ -31,7 +31,9 @@ describe("AGT-062 Workspace shell geometry", () => {
   it("keeps rail, sidebar and topbar on exact shared header geometry", () => {
     expect(shellCss).not.toContain("min-height: 58px");
     expect(shellCss).not.toContain("min-height: var(--workspace-header-height)");
-    expect(shellCss.match(/height: var\(--workspace-header-height\);/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
+    expect(
+      shellCss.match(/height: var\(--workspace-header-height\);/g)?.length ?? 0,
+    ).toBeGreaterThanOrEqual(3);
     expect(
       shellCss.match(
         /border-bottom: var\(--workspace-separator-width\) solid rgb\(var\(--mira-color-border\)\);/g,

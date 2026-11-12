@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { MonitorCog, Moon, Palette } from "lucide-react";
 import { Select, Switch } from "../../components/mira-design/index.ts";
-import {
-  presetIds,
-  themePresetMap,
-  type ThemePresetId,
-} from "../../theme/mira-design/index.ts";
+import { presetIds, themePresetMap, type ThemePresetId } from "../../theme/mira-design/index.ts";
 import {
   applyTheme,
   currentTheme,
