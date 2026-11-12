@@ -218,7 +218,9 @@ function MobileObjectDrawer({
               <CollapsiblePanel
                 title={section.label ?? "分组"}
                 meta={section.meta}
-                defaultExpanded={section.defaultExpanded}
+                {...(section.defaultExpanded !== undefined
+                  ? { defaultExpanded: section.defaultExpanded }
+                  : {})}
                 className="workspace-mobile-object-group"
                 headerClassName="workspace-mobile-object-group-trigger"
                 contentClassName="workspace-mobile-object-group-content"
