@@ -35,6 +35,7 @@ export interface WorkspaceShellLayoutMetrics {
   sidebarWidth: number;
   headerHeight: number;
   topicbarHeight: number;
+  separatorWidth: number;
   mobileHeaderHeight: number;
   contentMaxWidth: number;
 }
@@ -43,6 +44,7 @@ export type WorkspaceShellDensity = "compact" | "comfortable";
 
 export interface WorkspaceShellFrameProps {
   brand: ReactNode;
+  mobileBrand?: ReactNode;
   railItems: readonly WorkspaceRailItem[];
   sidebarTitle: ReactNode;
   sidebarSubtitle?: ReactNode;
