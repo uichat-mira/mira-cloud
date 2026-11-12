@@ -137,20 +137,18 @@ export function WorkspaceShellFrame({
         <div className="workspace-sidebar-scroll">
           {sidebarSections.map((section) => (
             <section key={section.id} className="workspace-sidebar-section">
-              {section.label ? (
-                <h2 className="workspace-sidebar-label">{section.label}</h2>
-              ) : null}
-              <nav className="workspace-sidebar-list" aria-label={section.label ?? sidebarTitle?.toString()}>
+              {section.label ? <h2 className="workspace-sidebar-label">{section.label}</h2> : null}
+              <nav
+                className="workspace-sidebar-list"
+                aria-label={section.label ?? sidebarTitle?.toString()}
+              >
                 {section.items.map((item) => (
                   <NavLink
                     key={item.id}
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      [
-                        "workspace-sidebar-item",
-                        isActive ? "workspace-sidebar-item-active" : "",
-                      ]
+                      ["workspace-sidebar-item", isActive ? "workspace-sidebar-item-active" : ""]
                         .filter(Boolean)
                         .join(" ")
                     }
@@ -171,7 +169,9 @@ export function WorkspaceShellFrame({
           ))}
         </div>
 
-        {sidebarFooter ? <footer className="workspace-sidebar-footer">{sidebarFooter}</footer> : null}
+        {sidebarFooter ? (
+          <footer className="workspace-sidebar-footer">{sidebarFooter}</footer>
+        ) : null}
       </aside>
 
       {mobileHeader ? <header className="workspace-mobile-header">{mobileHeader}</header> : null}

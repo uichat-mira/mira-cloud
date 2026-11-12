@@ -557,10 +557,31 @@ export function WorkspaceShell() {
   };
 
   const railItems = [
-    { id: "work", label: "工作", icon: <Briefcase size={19} aria-hidden="true" />, active: true, to: to("/") },
-    { id: "knowledge", label: "知识", icon: <BookOpen size={19} aria-hidden="true" />, disabled: true },
-    { id: "automation", label: "自动化", icon: <Workflow size={19} aria-hidden="true" />, disabled: true },
-    { id: "connections", label: "连接", icon: <Plug size={19} aria-hidden="true" />, disabled: true },
+    {
+      id: "work",
+      label: "工作",
+      icon: <Briefcase size={19} aria-hidden="true" />,
+      active: true,
+      to: to("/"),
+    },
+    {
+      id: "knowledge",
+      label: "知识",
+      icon: <BookOpen size={19} aria-hidden="true" />,
+      disabled: true,
+    },
+    {
+      id: "automation",
+      label: "自动化",
+      icon: <Workflow size={19} aria-hidden="true" />,
+      disabled: true,
+    },
+    {
+      id: "connections",
+      label: "连接",
+      icon: <Plug size={19} aria-hidden="true" />,
+      disabled: true,
+    },
   ] as const;
 
   const sidebarSections = [
@@ -650,10 +671,7 @@ export function WorkspaceShell() {
       sidebarSections={sidebarSections}
       sidebarFooter={
         <div className="space-y-4">
-          <Link
-            to={to("/diagnostics")}
-            className="workspace-sidebar-utility"
-          >
+          <Link to={to("/diagnostics")} className="workspace-sidebar-utility">
             <Settings2 size={15} aria-hidden="true" /> 连接诊断
           </Link>
           <PreviewNotice />
@@ -684,10 +702,7 @@ export function WorkspaceShell() {
           path="/attention"
           element={<PreviewList view="attention" scenario={scenario} to={to} />}
         />
-        <Route
-          path="/tasks"
-          element={<PreviewList view="tasks" scenario={scenario} to={to} />}
-        />
+        <Route path="/tasks" element={<PreviewList view="tasks" scenario={scenario} to={to} />} />
         <Route
           path="/artifacts"
           element={<PreviewList view="artifacts" scenario={scenario} to={to} />}

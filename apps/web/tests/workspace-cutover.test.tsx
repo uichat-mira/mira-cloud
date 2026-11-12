@@ -28,9 +28,7 @@ describe("AGT-053 workspace shell foundation", () => {
       "page",
     );
     expect(within(globalRail).getByRole("button", { name: "知识（尚未开放）" })).toBeDisabled();
-    expect(
-      within(globalRail).getByRole("button", { name: "自动化（尚未开放）" }),
-    ).toBeDisabled();
+    expect(within(globalRail).getByRole("button", { name: "自动化（尚未开放）" })).toBeDisabled();
     expect(within(globalRail).getByRole("button", { name: "连接（尚未开放）" })).toBeDisabled();
 
     const workSidebar = screen.getByRole("navigation", { name: "工作" });
@@ -38,10 +36,7 @@ describe("AGT-053 workspace shell foundation", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("tab", { name: "全部工作" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    expect(screen.getByRole("tab", { name: "全部工作" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("heading", { name: "我的工作" })).toBeInTheDocument();
     expect(document.getElementById("main-content")).not.toBeNull();
   });
@@ -95,10 +90,7 @@ describe("AGT-053 workspace shell foundation", () => {
 
     fireEvent.click(screen.getAllByRole("link", { name: /研究摘要，等待你的确认/ })[0]!);
     expect(screen.getByRole("heading", { name: "东南亚市场进入研究" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "工作详情" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    expect(screen.getByRole("tab", { name: "工作详情" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("navigation", { name: "业务工作台" })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("link", { name: "Mira Cloud" })[0]!);
@@ -106,10 +98,7 @@ describe("AGT-053 workspace shell foundation", () => {
     fireEvent.click(screen.getByRole("link", { name: /市场机会研究摘要/ }));
 
     expect(screen.getByRole("heading", { name: "市场机会研究摘要" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "成果详情" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    expect(screen.getByRole("tab", { name: "成果详情" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("link", { name: "查看来源工作" })).toBeInTheDocument();
   });
 

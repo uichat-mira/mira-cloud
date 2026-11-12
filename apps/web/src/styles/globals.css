@@ -630,8 +630,7 @@ button:disabled {
   .workspace-topbar {
     position: static;
     min-height: 58px;
-    padding: 8px max(16px, env(safe-area-inset-right)) 8px
-      max(16px, env(safe-area-inset-left));
+    padding: 8px max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
     background: rgb(var(--mira-color-surface-secondary));
     backdrop-filter: none;
   }
@@ -639,8 +638,7 @@ button:disabled {
   .workspace-topicbar {
     top: 62px;
     min-height: 42px;
-    padding: 0 max(12px, env(safe-area-inset-right)) 0
-      max(12px, env(safe-area-inset-left));
+    padding: 0 max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
   }
 
   .workspace-content {
