@@ -35,6 +35,10 @@ The current Cloud-owned MiraDesign source contains:
 
 Additional components such as DatePicker, charts, resource tree, command palette or a richer data grid are **not** P0 merely because a toolkit offers them.
 
+### Drawer
+
+`Drawer` is the generic side-panel primitive. Its `side` contract is typed as `left | right` and defaults to `right` for compatibility with existing detail/utility consumers. Navigation launched from the left side of the Shell should opt into `side="left"`; utility/detail surfaces may continue to use the right side. Both sides share the same backdrop, Escape handling, focus restoration, Safe Area padding and close-button behavior. Feature code must not fork a second Drawer implementation merely to change slide direction.
+
 ### WorkspaceTabs
 
 `WorkspaceTabs` is the compact page/workspace-view primitive for low-height topic navigation. It measures its **actual container and tab widths**, keeps the selected view visible, and moves excess views behind an explicit overflow menu instead of relying on viewport breakpoints or horizontal scrolling. The overflow menu exposes the complete view set with the current value selected. Work/Task surfaces may style through the component's typed density plus stable `data-mira-workspace-tabs` / `data-slot` hooks; they must not copy the measurement algorithm into feature code. The older `NavigationCardTabs` remains a separate retained primitive for card-like navigation and is not removed by this contract.
