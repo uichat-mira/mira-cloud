@@ -143,7 +143,7 @@ describe("AGT-054 Work workspace migration", () => {
     await user.click(screen.getByRole("button", { name: "切换业务工作台" }));
 
     const drawer = await screen.findByRole("navigation", { name: "移动业务工作台" });
-    expect(within(drawer).getByRole("link", { name: "工作" })).toHaveAttribute(
+    expect(within(drawer).getByRole("link", { name: /工作/ })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -160,7 +160,10 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("tab", { name: "运行" })).toHaveAttribute("aria-selected", "true");
 
     await user.click(objectTrigger);
-    const pinned = await screen.findByRole("navigation", { name: "置顶" });
+    const closeObjectDrawer = await screen.findByRole("button", { name: "关闭工作对象导航" });
+    const objectDrawer = closeObjectDrawer.closest("aside");
+    expect(objectDrawer).not.toBeNull();
+    const pinned = within(objectDrawer as HTMLElement).getByRole("navigation", { name: "置顶" });
     await user.click(within(pinned).getByRole("link", { name: /新品牌定位与故事/ }));
 
     expect(screen.getByRole("heading", { name: "新品牌定位与故事" })).toBeInTheDocument();
