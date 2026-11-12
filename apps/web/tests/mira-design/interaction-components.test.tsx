@@ -34,6 +34,8 @@ describe("CollapsiblePanel", () => {
 
     await userEvent.click(button);
     expect(button).toHaveAttribute("aria-expanded", "false");
+    const collapsedContent = document.getElementById(button.getAttribute("aria-controls") ?? "");
+    expect(collapsedContent).toHaveAttribute("inert");
   });
 });
 
@@ -156,6 +158,35 @@ describe("Drawer", () => {
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("complementary")).not.toBeInTheDocument());
     expect(trigger).toHaveFocus();
+  });
+
+  it("does not steal focus back when a newer overlay already owns it", async () => {
+    function Harness() {
+      const [open, setOpen] = React.useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open drawer
+          </button>
+          <button type="button">New overlay action</button>
+          <Drawer open={open} onClose={() => setOpen(false)}>
+            Drawer body
+          </Drawer>
+        </>
+      );
+    }
+
+    render(<Harness />);
+    await userEvent.click(screen.getByRole("button", { name: "Open drawer" }));
+    await screen.findByRole("complementary");
+
+    const closeButtons = screen.getAllByRole("button", { name: "Close drawer" });
+    await userEvent.click(closeButtons[closeButtons.length - 1] as HTMLElement);
+    const newerOverlayAction = screen.getByRole("button", { name: "New overlay action" });
+    newerOverlayAction.focus();
+
+    await waitFor(() => expect(screen.queryByRole("complementary")).not.toBeInTheDocument());
+    expect(newerOverlayAction).toHaveFocus();
   });
 });
 
