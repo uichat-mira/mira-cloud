@@ -1,0 +1,28 @@
+name: AGT-064 Review Formatter
+on:
+  push:
+    branches:
+      - feat/worker-84-43168883737-1
+permissions:
+  contents: write
+jobs:
+  format-only:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --write apps/web/tests/workspace-cutover.test.tsx
+      - name: Commit formatted test
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add apps/web/tests/workspace-cutover.test.tsx
+            git commit -m "style(web): format AGT-064 review evidence"
+            git push origin HEAD:feat/worker-84-43168883737-1
+          fi
