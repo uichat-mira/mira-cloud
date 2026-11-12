@@ -98,10 +98,9 @@ describe("AGT-054 Work workspace migration", () => {
     homeView.unmount();
 
     renderWorkspace("/artifacts/market-note");
-    const artifactTrigger = within(document.getElementById("main-content") as HTMLElement).getByRole(
-      "button",
-      { name: "交代工作" },
-    );
+    const artifactTrigger = within(
+      document.getElementById("main-content") as HTMLElement,
+    ).getByRole("button", { name: "交代工作" });
     await user.click(artifactTrigger);
     await screen.findByRole("dialog", { name: "交代工作" });
     await user.keyboard("{Escape}");
