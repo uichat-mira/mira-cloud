@@ -31,7 +31,7 @@ describe("AGT-054 Work workspace migration", () => {
     expect(within(globalRail).queryByRole("link", { name: "待处理" })).toBeNull();
     expect(within(globalRail).queryByRole("link", { name: "成果" })).toBeNull();
 
-    const allWork = screen.getByRole("navigation", { name: "当前业务" });
+    const allWork = screen.getByRole("complementary", { name: "当前业务" });
     expect(within(allWork).getByRole("link", { name: "全部工作" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -83,7 +83,7 @@ describe("AGT-054 Work workspace migration", () => {
 
     expect(screen.getByRole("heading", { name: "东南亚市场进入研究" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "业务工作台" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "当前业务" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "当前业务" })).toBeInTheDocument();
     expect(screen.getAllByRole("tab")).toHaveLength(5);
     expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
 
@@ -107,7 +107,7 @@ describe("AGT-054 Work workspace migration", () => {
     const user = userEvent.setup();
     renderWorkspace("/artifacts/market-note");
 
-    expect(screen.getByRole("heading", { name: "市场机会研究摘要" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "市场机会研究摘要" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "预览" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("region", { name: "成果预览" })).toBeInTheDocument();
 
