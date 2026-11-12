@@ -325,6 +325,12 @@ Fixture 列表描述**要设计和测试的场景**，不代表本卡要实现 T
 5. **Handoff：** 只做显式包与目标确认的交互；Cloud→Desktop 主动执行 Host 工具仍是**未经授权的未来提案**。
 6. **业务合同未决：** Task 整体完成的验收条件、跨运行时 Task 关联策略、Attention 来源是否已具备可恢复的 Decision 资源、Cloud Auth Web 会话和可授权的工作服务 API 均须根据实际实现独立裁决；不得由前端 fixture 自动替代。
 
+### 8.4 AGT-052 · 静态 Home / Shell UI 原型
+
+AGT-052 在 `apps/web/src/pages/workspace.tsx` 和 `apps/web/src/features/workspace/fixture-data.ts` 内实现**明确标为 Fixture 的 React 交互预览**：四个一级目的地、全局「交代工作」入口、Attention / Continuity / 最近成果、真空账号与数据不可达状态、移动端底部导航；Task/Artifact 详情与 Composer 仅为只读结构预览，真实执行/批准/上传不可用。现有同源连接状态诊断移到 `/diagnostics`，不会作为 Home 的主视图，也不会在 Home 自动发起探测。
+
+`apps/web/wrangler.jsonc` 为单独的 Cloudflare Workers 静态文件预览提供 SPA 路由回退；部署通道读取 `dev` 源构建前端，不代表 Cloud Auth、Cloud Pi 或 Tencent `prod` 已接入。**Fixture 的值、状态和时间均为虚构；任何后续真实业务接线都应替换 Fixture 数据源并遵守本文访问控制与状态合同。**
+
 ## 9. 设计来源和变更说明
 
 - 产品所有权与跨端架构：[v0.4](../architecture/v0.4.md)
