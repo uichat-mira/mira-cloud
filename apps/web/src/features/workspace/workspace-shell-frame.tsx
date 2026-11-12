@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { ChevronDown, Layers3 } from "lucide-react";
 import { Link, NavLink } from "react-router";
-import { NavigationCardTabs } from "../../components/mira-design/index.ts";
+import { Drawer, NavigationCardTabs } from "../../components/mira-design/index.ts";
 
 export interface WorkspaceRailItem {
   id: string;
@@ -45,10 +46,12 @@ export interface WorkspaceShellFrameProps {
   onTopicChange: (value: string) => void;
   topbarLeading?: ReactNode;
   topbarActions?: ReactNode;
-  mobileHeader?: ReactNode;
-  mobileNavigation?: ReactNode;
+  mobileContextTitle: ReactNode;
+  mobileAction?: ReactNode;
   children: ReactNode;
 }
+
+type MobilePanel = "workspaces" | "objects" | null;
 
 function RailItem({ item }: { item: WorkspaceRailItem }) {
   const className = [
@@ -95,6 +98,125 @@ function RailItem({ item }: { item: WorkspaceRailItem }) {
   );
 }
 
+function MobileWorkspaceDrawer({
+  open,
+  onClose,
+  items,
+}: {
+  open: boolean;
+  onClose: () => void;
+  items: readonly WorkspaceRailItem[];
+}) {
+  return (
+    <Drawer
+      open={open}
+      onClose={onClose}
+      width="min(88vw, 340px)"
+      header={
+        <div>
+          <div className="text-sm font-semibold text-text-primary">切换工作台</div>
+          <div className="mt-1 text-xs text-text-tertiary">选择 Mira Cloud 的业务面向</div>
+        </div>
+      }
+      closeLabel="关闭工作台导航"
+      bodyClassName="px-2 py-3"
+    >
+      <nav className="workspace-mobile-drawer-list" aria-label="移动业务工作台">
+        {items.map((item) =>
+          !item.disabled && item.to ? (
+            <Link
+              key={item.id}
+              to={item.to}
+              onClick={onClose}
+              aria-current={item.active ? "page" : undefined}
+              className={item.active ? "is-active" : ""}
+            >
+              <span aria-hidden="true">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.active ? <small>当前</small> : null}
+            </Link>
+          ) : (
+            <button key={item.id} type="button" disabled aria-label={item.label + "（尚未开放）"}>
+              <span aria-hidden="true">{item.icon}</span>
+              <span>{item.label}</span>
+              <small>尚未开放</small>
+            </button>
+          ),
+        )}
+      </nav>
+    </Drawer>
+  );
+}
+
+function MobileObjectDrawer({
+  open,
+  onClose,
+  title,
+  subtitle,
+  sections,
+  footer,
+  utility,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  sections: readonly WorkspaceSidebarSection[];
+  footer?: ReactNode;
+  utility?: ReactNode;
+}) {
+  return (
+    <Drawer
+      open={open}
+      onClose={onClose}
+      width="min(92vw, 380px)"
+      header={
+        <div>
+          <div className="text-sm font-semibold text-text-primary">{title}</div>
+          {subtitle ? <div className="mt-1 text-xs text-text-tertiary">{subtitle}</div> : null}
+        </div>
+      }
+      footer={
+        footer || utility ? (
+          <div className="flex w-full flex-col items-stretch gap-4">
+            {utility ? <div>{utility}</div> : null}
+            {footer ? <div>{footer}</div> : null}
+          </div>
+        ) : undefined
+      }
+      closeLabel="关闭工作对象导航"
+      bodyClassName="px-2 py-3"
+    >
+      <div className="workspace-mobile-object-sections">
+        {sections.map((section) => (
+          <section key={section.id}>
+            {section.label ? <h2>{section.label}</h2> : null}
+            <nav aria-label={section.label ?? "移动工作对象"}>
+              {section.items.map((item) => (
+                <NavLink
+                  key={item.id}
+                  to={item.to}
+                  {...(item.end !== undefined ? { end: item.end } : {})}
+                  onClick={onClose}
+                  className={({ isActive }) => (isActive ? "is-active" : "")}
+                >
+                  {item.icon ? (
+                    <span aria-hidden="true">{item.icon}</span>
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
+                  <span>{item.label}</span>
+                  {item.meta ? <small>{item.meta}</small> : null}
+                </NavLink>
+              ))}
+            </nav>
+          </section>
+        ))}
+      </div>
+    </Drawer>
+  );
+}
+
 export function WorkspaceShellFrame({
   brand,
   railItems,
@@ -108,10 +230,13 @@ export function WorkspaceShellFrame({
   onTopicChange,
   topbarLeading,
   topbarActions,
-  mobileHeader,
-  mobileNavigation,
+  mobileContextTitle,
+  mobileAction,
   children,
 }: WorkspaceShellFrameProps) {
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null);
+  const activeWorkspace = railItems.find((item) => item.active) ?? railItems[0];
+
   return (
     <div className="workspace-shell">
       <aside className="workspace-rail" aria-label="Mira Cloud 工作台">
@@ -174,7 +299,45 @@ export function WorkspaceShellFrame({
         ) : null}
       </aside>
 
-      {mobileHeader ? <header className="workspace-mobile-header">{mobileHeader}</header> : null}
+      <header className="workspace-mobile-header">
+        <button
+          type="button"
+          className="workspace-mobile-workspace-trigger"
+          aria-label="切换业务工作台"
+          onClick={() => setMobilePanel("workspaces")}
+        >
+          <span aria-hidden="true">{activeWorkspace?.icon ?? <Layers3 size={17} />}</span>
+          <span>{activeWorkspace?.label ?? "工作台"}</span>
+          <ChevronDown size={13} aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          className="workspace-mobile-context-trigger"
+          aria-label="切换工作对象"
+          onClick={() => setMobilePanel("objects")}
+        >
+          <span className="truncate">{mobileContextTitle}</span>
+          <ChevronDown size={13} aria-hidden="true" />
+        </button>
+
+        {mobileAction ? <div className="workspace-mobile-action">{mobileAction}</div> : null}
+      </header>
+
+      <MobileWorkspaceDrawer
+        open={mobilePanel === "workspaces"}
+        onClose={() => setMobilePanel(null)}
+        items={railItems}
+      />
+      <MobileObjectDrawer
+        open={mobilePanel === "objects"}
+        onClose={() => setMobilePanel(null)}
+        title={sidebarTitle}
+        subtitle={sidebarSubtitle}
+        sections={sidebarSections}
+        footer={sidebarFooter}
+        utility={topbarActions}
+      />
 
       <section className="workspace-main">
         <div className="workspace-topbar">
@@ -196,12 +359,6 @@ export function WorkspaceShellFrame({
           {children}
         </main>
       </section>
-
-      {mobileNavigation ? (
-        <nav className="workspace-bottom-nav" aria-label="手机主导航">
-          {mobileNavigation}
-        </nav>
-      ) : null}
     </div>
   );
 }

@@ -105,10 +105,13 @@ describe("AGT-050 MiraDesign cutover contract", () => {
 
   it("cuts the real Workspace and ConnectionPanel over to MiraDesign primitives", () => {
     const workspace = readRepo("apps/web/src/pages/workspace.tsx");
+    const shell = readRepo("apps/web/src/features/workspace/workspace-shell-frame.tsx");
     const connection = readRepo("apps/web/src/features/connection/connection-panel.tsx");
     const globals = readRepo("apps/web/src/styles/globals.css");
 
-    expect(workspace).toContain("<NavItem");
+    expect(workspace).toContain("<WorkspaceShellFrame");
+    expect(shell).toContain("<NavigationCardTabs");
+    expect(shell).toContain("<Drawer");
     expect(workspace).not.toContain('className="nav-link"');
     expect(connection).toContain("<SectionCard");
     expect(connection).toContain("Button");

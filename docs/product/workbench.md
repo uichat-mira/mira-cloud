@@ -346,6 +346,12 @@ AGT-053 将系统级布局收敛为 **Global Rail → Workspace Sidebar → Topi
 
 AGT-054 进一步把「工作」一期内容迁入该结构：工作对象主要出现在 Sidebar，Home 使用连续工作栈 + Attention 队列而不是 Dashboard Card Grid；Task 主题提供概览 / 待处理 / 运行 / 成果 / 历史 Fixture 视图，Artifact 主题提供预览 / 来源 / 版本 Fixture 视图。Run/Artifact/Attention 的内容仍是**明确的演示数据**，只用于验证信息架构与状态阅读，不证明 Cloud Pi、Cloud Auth 或任何真实业务 API 已接通。
 
+### 8.6 AGT-055 · Mobile / WebView Shell 折叠
+
+AGT-055 不为手机创建第二套产品 IA。窄屏下 L0 Global Rail 与 L1 Workspace Sidebar 从常驻栏折叠为两个独立 Drawer 入口；当前主题仍使用同一套 L2 `NavigationCardTabs`，由组件按实际容器宽度保留当前选中项并将超出项收入明确的「更多」菜单；L3 Canvas 单列化并保留 Safe Area、`svh/dvh` 与 coarse-pointer 44px 触控约束。
+
+旧的「首页 / 待处理 / 我的工作 / 成果」手机底栏已移除，因为它会把“工作”一期视图重新提升成系统级一级导航。360 / 390 / 430 / 600 / 820px 的 Topic Tabs 可达性由组件窗口算法测试覆盖；Drawer 导航和深链上下文由 React 路由测试覆盖。该折叠方案仍是 Web / WebView UI 合同，不代表原生 Mobile Session、Host Tool 或本地权限共享。
+
 ## 9. 设计来源和变更说明
 
 - 产品所有权与跨端架构：[v0.4](../architecture/v0.4.md)
