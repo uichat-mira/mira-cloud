@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 
 import { WorkspaceShell } from "../src/pages/workspace";
@@ -41,17 +42,18 @@ describe("AGT-053 workspace shell foundation", () => {
     expect(document.getElementById("main-content")).not.toBeNull();
   });
 
-  it("keeps work overview views in topic tabs rather than the global rail", () => {
+  it("keeps work overview views in topic tabs rather than the global rail", async () => {
+    const user = userEvent.setup();
     renderWorkspace();
 
     const globalRail = screen.getByRole("navigation", { name: "业务工作台" });
     expect(within(globalRail).queryByRole("link", { name: "待处理" })).toBeNull();
     expect(within(globalRail).queryByRole("link", { name: "成果" })).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "待处理" }));
+    await user.click(screen.getByRole("tab", { name: "待处理" }));
     expect(screen.getByRole("heading", { name: "待处理" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "成果" }));
+    await user.click(screen.getByRole("tab", { name: "成果" }));
     expect(screen.getByRole("heading", { name: "成果" })).toBeInTheDocument();
   });
 
