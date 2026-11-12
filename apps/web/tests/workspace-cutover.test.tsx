@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
@@ -43,7 +43,108 @@ describe("AGT-054 Work workspace migration", () => {
     );
     expect(within(allWork).getByRole("link", { name: /东南亚市场进入研究/ })).toBeInTheDocument();
     expect(within(allWork).getByRole("link", { name: /新品牌定位与故事/ })).toBeInTheDocument();
-    expect(within(allWork).getByRole("link", { name: "交代工作" })).toBeInTheDocument();
+    expect(within(allWork).getByRole("button", { name: "交代工作" })).toBeInTheDocument();
+  });
+
+  it("opens the Composer as a modal without leaving the current Task route", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    renderWorkspace("/tasks/market-research");
+
+    const workSidebar = screen.getByRole("complementary", { name: "当前业务" });
+    const trigger = within(workSidebar).getByRole("button", { name: "交代工作" });
+    await user.click(trigger);
+
+    const dialog = await screen.findByRole("dialog", { name: "交代工作" });
+    expect(within(dialog).getByText("先说清目标与边界，再决定交给谁做。")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("未接通任务提交或执行服务", { exact: false }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "东南亚市场进入研究" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("button", { name: "提交委托" })).toBeNull();
+
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
+    );
+
+    expect(trigger).toHaveFocus();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "东南亚市场进入研究" }),
+    ).toBeInTheDocument();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("keeps Home and Artifact context when the Composer modal closes", async () => {
+    const user = userEvent.setup();
+    const homeView = renderWorkspace("/");
+    const homeHeader = screen.getByRole("heading", { name: "工作台" }).closest("header");
+    expect(homeHeader).not.toBeNull();
+    const homeTrigger = within(homeHeader as HTMLElement).getByRole("button", {
+      name: "交代工作",
+    });
+    await user.click(homeTrigger);
+    await screen.findByRole("dialog", { name: "交代工作" });
+    await user.click(screen.getByRole("button", { name: "取消" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
+    );
+    expect(homeTrigger).toHaveFocus();
+    expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
+    homeView.unmount();
+
+    renderWorkspace("/artifacts/market-note");
+    const artifactTrigger = within(
+      document.getElementById("main-content") as HTMLElement,
+    ).getByRole("button", { name: "交代工作" });
+    await user.click(artifactTrigger);
+    await screen.findByRole("dialog", { name: "交代工作" });
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
+    );
+    expect(artifactTrigger).toHaveFocus();
+    expect(screen.getByRole("heading", { level: 1, name: "市场机会研究摘要" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "预览" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("maps the legacy /new entry to the Composer modal instead of a page", async () => {
+    const user = userEvent.setup();
+    renderWorkspace("/new");
+
+    expect(await screen.findByRole("dialog", { name: "交代工作" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /返回工作台/ })).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "取消" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
+  });
+
+  it("moves the mobile create action out of the workspace header into Work content", () => {
+    renderWorkspace("/tasks/market-research");
+
+    const mobileHeader = document.querySelector('[data-workspace-region="mobile-header"]');
+    expect(mobileHeader).not.toBeNull();
+    expect(
+      within(mobileHeader as HTMLElement).queryByRole("button", { name: "交代工作" }),
+    ).toBeNull();
+    expect(
+      within(mobileHeader as HTMLElement).queryByRole("link", { name: "交代工作" }),
+    ).toBeNull();
+    expect(mobileHeader?.querySelector(".workspace-mobile-create")).toBeNull();
+
+    const main = document.getElementById("main-content");
+    expect(main).not.toBeNull();
+    expect(
+      within(main as HTMLElement).getByRole("button", { name: "交代工作" }),
+    ).toBeInTheDocument();
   });
 
   it("uses the canonical Mira logo on desktop and mobile shell surfaces", () => {

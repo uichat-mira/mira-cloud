@@ -44,11 +44,17 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
+  border: 0;
   border-radius: var(--mira-radius-ui-control);
   padding: 7px 12px;
   font-size: 13px;
   font-weight: 500;
   text-decoration: none;
+}
+
+button.workbench-primary-link,
+button.workbench-secondary-link {
+  cursor: pointer;
 }
 
 .workbench-primary-link {
@@ -702,6 +708,13 @@
   color: rgb(var(--mira-color-text-tertiary));
 }
 
+.workbench-composer-summary {
+  margin: 0 0 18px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 13px;
+  line-height: 1.7;
+}
+
 .workbench-composer-outline {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -786,7 +799,32 @@
   color: rgb(var(--mira-color-warning-text));
 }
 
+.workbench-mobile-utility {
+  display: none;
+}
+
 @media (max-width: 980px) {
+  .workbench-mobile-utility {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .workbench-mobile-utility > :first-child {
+    min-width: 0;
+  }
+
+  .workbench-mobile-utility .workbench-primary-link {
+    flex: 0 0 auto;
+    min-height: 40px;
+  }
+
+  .workbench-page-header .workbench-primary-link {
+    display: none;
+  }
+
   .workbench-page-header {
     min-height: 88px;
     gap: 14px;

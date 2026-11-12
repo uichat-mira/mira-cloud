@@ -13,7 +13,8 @@ export interface WorkspaceRailItem {
 export interface WorkspaceSidebarItem {
   id: string;
   label: string;
-  to: string;
+  to?: string;
+  onSelect?: () => void;
   icon?: ReactNode;
   meta?: ReactNode;
   end?: boolean;
@@ -57,7 +58,6 @@ export interface WorkspaceShellFrameProps {
   topbarLeading?: ReactNode;
   topbarActions?: ReactNode;
   mobileContextTitle: ReactNode;
-  mobileAction?: ReactNode;
   layout?: Partial<WorkspaceShellLayoutMetrics>;
   density?: WorkspaceShellDensity;
   children: ReactNode;

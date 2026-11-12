@@ -1,4 +1,5 @@
 import "./work.css";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -26,7 +27,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router";
-import { Badge, ExpandableSection } from "../../components/mira-design/index.ts";
+import { Badge, ExpandableSection, ModalShell } from "../../components/mira-design/index.ts";
 import { ConnectionPanel } from "../connection/connection-panel";
 import { GeneralSettingsPage } from "../settings/general-settings";
 import { MiraBrandLogo } from "../workspace-shell/mira-brand";
@@ -82,7 +83,12 @@ function resolveShellTopics(
   pathname: string,
   searchParams: URLSearchParams,
 ): { tabs: readonly ShellTopic[]; value: string } {
-  if (pathname === "/" || pathname === "/attention" || pathname === "/artifacts") {
+  if (
+    pathname === "/" ||
+    pathname === "/attention" ||
+    pathname === "/artifacts" ||
+    pathname === "/new"
+  ) {
     const tabs = [
       { value: "overview", label: "概览", to: "/" },
       { value: "attention", label: "待处理", to: "/attention" },
@@ -113,10 +119,6 @@ function resolveShellTopics(
       { value: "versions", label: "版本", to: pathname + "?view=versions" },
     ] as const;
     return { tabs, value: artifactTopic(searchParams.get("view")) };
-  }
-
-  if (pathname === "/new") {
-    return { tabs: [{ value: "new", label: "交代工作" }], value: "new" };
   }
 
   if (pathname === "/diagnostics") {
@@ -198,7 +200,7 @@ function FixtureScenarioBar({
   );
 }
 
-function EmptyWorkspace({ to }: { to: PreviewLink }) {
+function EmptyWorkspace({ onCreate }: { onCreate: () => void }) {
   return (
     <div className="workbench-empty">
       <span className="workbench-empty-icon">
@@ -206,10 +208,10 @@ function EmptyWorkspace({ to }: { to: PreviewLink }) {
       </span>
       <h1>从第一件工作开始</h1>
       <p>交代过的工作会在这里持续积累，未来的进展、决定和成果都会留在同一个上下文里。</p>
-      <Link to={to("/new")} className="workbench-primary-link">
+      <button type="button" className="workbench-primary-link" onClick={onCreate}>
         <Plus size={15} aria-hidden="true" />
         交代第一件工作
-      </Link>
+      </button>
       <small>演示空态，暂未连接真实工作服务</small>
     </div>
   );
@@ -382,10 +384,12 @@ function HomePage({
   scenario,
   changeScenario,
   to,
+  onCreate,
 }: {
   scenario: PreviewScenario;
   changeScenario: (next: PreviewScenario) => void;
   to: PreviewLink;
+  onCreate: () => void;
 }) {
   return (
     <>
@@ -394,14 +398,14 @@ function HomePage({
         title="工作台"
         summary="两件事等你处理，三件工作在手边。"
         action={
-          <Link to={to("/new")} className="workbench-primary-link">
+          <button type="button" className="workbench-primary-link" onClick={onCreate}>
             <Plus size={15} aria-hidden="true" /> 交代工作
-          </Link>
+          </button>
         }
       />
       <FixtureScenarioBar scenario={scenario} changeScenario={changeScenario} />
       {scenario === "empty" ? (
-        <EmptyWorkspace to={to} />
+        <EmptyWorkspace onCreate={onCreate} />
       ) : scenario === "unavailable" ? (
         <UnavailableWorkspace to={to} />
       ) : (
@@ -443,10 +447,12 @@ function PreviewList({
   view,
   scenario,
   to,
+  onCreate,
 }: {
   view: ListView;
   scenario: PreviewScenario;
   to: PreviewLink;
+  onCreate: () => void;
 }) {
   const headings = {
     attention: ["Work / Attention", "待处理", "需要你决定、补充或核对的事情。"],
@@ -461,7 +467,7 @@ function PreviewList({
       {scenario === "unavailable" ? (
         <UnavailableWorkspace to={to} />
       ) : scenario === "empty" ? (
-        <EmptyWorkspace to={to} />
+        <EmptyWorkspace onCreate={onCreate} />
       ) : view === "attention" ? (
         <section className="workbench-full-ledger" aria-label="待处理列表">
           <AttentionQueue items={previewAttentions} to={to} />
@@ -827,14 +833,10 @@ function DetailPreview({
   );
 }
 
-function ComposerPreview({ to }: { to: PreviewLink }) {
+function ComposerOutline() {
   return (
     <>
-      <WorkbenchHeader
-        eyebrow="Work / Delegation"
-        title="交代工作"
-        summary="先说清目标与边界，再决定交给谁做。"
-      />
+      <p className="workbench-composer-summary">先说清目标与边界，再决定交给谁做。</p>
       <div className="workbench-composer-outline">
         {[
           ["01", "目标", "希望完成什么，怎样才算有结果"],
@@ -850,10 +852,23 @@ function ComposerPreview({ to }: { to: PreviewLink }) {
         ))}
       </div>
       <p className="workbench-boundary-note">Composer 结构预览，未接通任务提交或执行服务。</p>
-      <Link to={to("/")} className="workbench-secondary-link">
-        <ArrowLeft size={15} aria-hidden="true" /> 返回工作台
-      </Link>
     </>
+  );
+}
+
+function ComposerModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <ModalShell
+      open={open}
+      title="交代工作"
+      width={720}
+      maxHeight="calc(100dvh - 2rem)"
+      closeLabel="关闭交代工作"
+      closeText="取消"
+      onClose={onClose}
+    >
+      <ComposerOutline />
+    </ModalShell>
   );
 }
 
@@ -865,7 +880,6 @@ function getContextTitle(pathname: string): string {
   if (pathname === "/attention") return "待处理";
   if (pathname === "/artifacts") return "成果";
   if (pathname === "/tasks") return "全部工作";
-  if (pathname === "/new") return "交代工作";
   if (pathname === "/diagnostics") return "连接诊断";
   if (pathname === "/settings/general") return "通用";
   return "概览";
@@ -879,10 +893,21 @@ function getContextGroup(pathname: string): string {
 
 export function WorkspaceShell() {
   const [params, setParams] = useSearchParams();
+  const [composerOpen, setComposerOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const scenario = parsePreviewScenario(params.get("scenario"));
   const to: PreviewLink = (path) => withScenario(path, scenario);
+  const openComposer = () => setComposerOpen(true);
+  const closeComposer = () => setComposerOpen(false);
+
+  useEffect(() => {
+    if (location.pathname !== "/new") {
+      return;
+    }
+    setComposerOpen(true);
+    navigate(withScenario("/", scenario), { replace: true });
+  }, [location.pathname, navigate, scenario]);
 
   const changeScenario = (next: PreviewScenario) => {
     const updated = new URLSearchParams(params);
@@ -932,9 +957,8 @@ export function WorkspaceShell() {
         {
           id: "new-work",
           label: "交代工作",
-          to: to("/new"),
+          onSelect: openComposer,
           icon: <Plus size={15} aria-hidden="true" />,
-          end: true,
         },
         {
           id: "all-work",
@@ -1031,33 +1055,47 @@ export function WorkspaceShell() {
         </div>
       }
       mobileContextTitle={getContextTitle(location.pathname)}
-      mobileAction={
-        <Link
-          to={to("/new")}
-          className="workspace-mobile-create"
-          aria-label="交代工作"
-          title="交代工作"
-        >
-          <Plus size={16} aria-hidden="true" />
-        </Link>
-      }
     >
-      <div className="mb-5 lg:hidden">
-        <PreviewNotice />
-      </div>
+      {!isSettings && location.pathname !== "/diagnostics" ? (
+        <div className="workbench-mobile-utility">
+          <PreviewNotice />
+          <button type="button" className="workbench-primary-link" onClick={openComposer}>
+            <Plus size={15} aria-hidden="true" />
+            交代工作
+          </button>
+        </div>
+      ) : (
+        <div className="mb-5 lg:hidden">
+          <PreviewNotice />
+        </div>
+      )}
       <Routes>
         <Route
           path="/"
-          element={<HomePage scenario={scenario} changeScenario={changeScenario} to={to} />}
+          element={
+            <HomePage
+              scenario={scenario}
+              changeScenario={changeScenario}
+              to={to}
+              onCreate={openComposer}
+            />
+          }
         />
         <Route
           path="/attention"
-          element={<PreviewList view="attention" scenario={scenario} to={to} />}
+          element={
+            <PreviewList view="attention" scenario={scenario} to={to} onCreate={openComposer} />
+          }
         />
-        <Route path="/tasks" element={<PreviewList view="tasks" scenario={scenario} to={to} />} />
+        <Route
+          path="/tasks"
+          element={<PreviewList view="tasks" scenario={scenario} to={to} onCreate={openComposer} />}
+        />
         <Route
           path="/artifacts"
-          element={<PreviewList view="artifacts" scenario={scenario} to={to} />}
+          element={
+            <PreviewList view="artifacts" scenario={scenario} to={to} onCreate={openComposer} />
+          }
         />
         <Route
           path="/tasks/:taskId"
@@ -1067,7 +1105,17 @@ export function WorkspaceShell() {
           path="/artifacts/:artifactId"
           element={<DetailPreview kind="artifact" scenario={scenario} to={to} />}
         />
-        <Route path="/new" element={<ComposerPreview to={to} />} />
+        <Route
+          path="/new"
+          element={
+            <HomePage
+              scenario={scenario}
+              changeScenario={changeScenario}
+              to={to}
+              onCreate={openComposer}
+            />
+          }
+        />
         <Route path="/settings/general" element={<GeneralSettingsPage />} />
         <Route
           path="/diagnostics"
@@ -1098,6 +1146,7 @@ export function WorkspaceShell() {
           }
         />
       </Routes>
+      <ComposerModal open={composerOpen} onClose={closeComposer} />
     </WorkspaceShellFrame>
   );
 }
