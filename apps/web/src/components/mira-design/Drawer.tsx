@@ -121,7 +121,7 @@ export default function Drawer({
         ref={panelRef}
         tabIndex={-1}
         data-side={side}
-        className={`absolute top-0 flex h-full w-full max-w-full flex-col bg-surface-primary shadow-shadow-xl transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-transform ${sideClass} ${
+        className={`absolute top-0 flex h-full w-full max-w-full flex-col bg-surface-primary pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-shadow-xl transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-transform ${sideClass} ${
           visible ? "translate-x-0 opacity-100" : `${hiddenTransform} opacity-0`
         } ${panelClassName}`}
         style={{ width: resolveWidth(width) }}
