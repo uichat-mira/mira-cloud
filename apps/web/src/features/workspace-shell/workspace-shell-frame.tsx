@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { ChevronDown, Layers3 } from "lucide-react";
 import { Link, NavLink } from "react-router";
-import { Drawer, WorkspaceTabs } from "../../components/mira-design/index.ts";
+import { CollapsiblePanel, Drawer, WorkspaceTabs } from "../../components/mira-design/index.ts";
 
 export type {
   WorkspaceRailItem,
@@ -90,6 +90,7 @@ function MobileWorkspaceDrawer({
     <Drawer
       open={open}
       onClose={onClose}
+      side="left"
       width="min(88vw, 340px)"
       header={
         <div>
@@ -127,6 +128,49 @@ function MobileWorkspaceDrawer({
   );
 }
 
+function MobileObjectItems({
+  items,
+  onClose,
+  ariaLabel,
+}: {
+  items: readonly WorkspaceSidebarSection["items"][number][];
+  onClose: () => void;
+  ariaLabel: string;
+}) {
+  return (
+    <nav aria-label={ariaLabel}>
+      {items.map((item) =>
+        item.onSelect ? (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => {
+              item.onSelect?.();
+              onClose();
+            }}
+          >
+            <span aria-hidden="true">{item.icon}</span>
+            <span>{item.label}</span>
+            {item.meta ? <small>{item.meta}</small> : null}
+          </button>
+        ) : (
+          <NavLink
+            key={item.id}
+            to={item.to ?? "#"}
+            {...(item.end !== undefined ? { end: item.end } : {})}
+            onClick={onClose}
+            className={({ isActive }) => (isActive ? "is-active" : "")}
+          >
+            {item.icon ? <span aria-hidden="true">{item.icon}</span> : <span aria-hidden="true" />}
+            <span>{item.label}</span>
+            {item.meta ? <small>{item.meta}</small> : null}
+          </NavLink>
+        ),
+      )}
+    </nav>
+  );
+}
+
 function MobileObjectDrawer({
   open,
   onClose,
@@ -148,6 +192,7 @@ function MobileObjectDrawer({
     <Drawer
       open={open}
       onClose={onClose}
+      side="left"
       width="min(92vw, 380px)"
       header={
         <div>
@@ -169,41 +214,33 @@ function MobileObjectDrawer({
       <div className="workspace-mobile-object-sections">
         {sections.map((section) => (
           <section key={section.id}>
-            {section.label ? <h2>{section.label}</h2> : null}
-            <nav aria-label={section.label ?? "移动工作对象"}>
-              {section.items.map((item) =>
-                item.onSelect ? (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      item.onSelect?.();
-                      onClose();
-                    }}
-                  >
-                    <span aria-hidden="true">{item.icon}</span>
-                    <span>{item.label}</span>
-                    {item.meta ? <small>{item.meta}</small> : null}
-                  </button>
-                ) : (
-                  <NavLink
-                    key={item.id}
-                    to={item.to ?? "#"}
-                    {...(item.end !== undefined ? { end: item.end } : {})}
-                    onClick={onClose}
-                    className={({ isActive }) => (isActive ? "is-active" : "")}
-                  >
-                    {item.icon ? (
-                      <span aria-hidden="true">{item.icon}</span>
-                    ) : (
-                      <span aria-hidden="true" />
-                    )}
-                    <span>{item.label}</span>
-                    {item.meta ? <small>{item.meta}</small> : null}
-                  </NavLink>
-                ),
-              )}
-            </nav>
+            {section.collapsible ? (
+              <CollapsiblePanel
+                title={section.label ?? "分组"}
+                meta={section.meta}
+                {...(section.defaultExpanded !== undefined
+                  ? { defaultExpanded: section.defaultExpanded }
+                  : {})}
+                className="workspace-mobile-object-group"
+                headerClassName="workspace-mobile-object-group-trigger"
+                contentClassName="workspace-mobile-object-group-content"
+              >
+                <MobileObjectItems
+                  items={section.items}
+                  onClose={onClose}
+                  ariaLabel={section.label ?? "移动工作对象"}
+                />
+              </CollapsiblePanel>
+            ) : (
+              <>
+                {section.label ? <h2>{section.label}</h2> : null}
+                <MobileObjectItems
+                  items={section.items}
+                  onClose={onClose}
+                  ariaLabel={section.label ?? "移动工作对象"}
+                />
+              </>
+            )}
           </section>
         ))}
       </div>
@@ -219,6 +256,7 @@ export function WorkspaceShellFrame({
   sidebarSubtitle,
   sidebarAction,
   sidebarSections,
+  mobileSidebarSections,
   sidebarFooter,
   topicTabs,
   topicValue,
@@ -338,7 +376,7 @@ export function WorkspaceShellFrame({
         onClose={() => setMobilePanel(null)}
         title={sidebarTitle}
         subtitle={sidebarSubtitle}
-        sections={sidebarSections}
+        sections={mobileSidebarSections ?? sidebarSections}
         footer={sidebarFooter}
         utility={topbarActions}
       />

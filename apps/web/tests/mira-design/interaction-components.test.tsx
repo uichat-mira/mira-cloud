@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -34,6 +35,8 @@ describe("CollapsiblePanel", () => {
 
     await userEvent.click(button);
     expect(button).toHaveAttribute("aria-expanded", "false");
+    const collapsedContent = document.getElementById(button.getAttribute("aria-controls") ?? "");
+    expect(collapsedContent).toHaveAttribute("inert");
   });
 });
 
@@ -105,6 +108,86 @@ describe("Drawer", () => {
     const closeButtons = screen.getAllByRole("button", { name: "Close" });
     await userEvent.click(closeButtons[closeButtons.length - 1] as HTMLElement);
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps right as the default side and supports an explicit left panel", () => {
+    const { rerender } = render(
+      <Drawer open onClose={() => {}}>
+        Right
+      </Drawer>,
+    );
+
+    const rightPanel = screen.getByRole("complementary");
+    expect(rightPanel).toHaveAttribute("data-side", "right");
+    expect(rightPanel).toHaveClass("right-0", "border-l");
+    expect(rightPanel).not.toHaveClass("left-0", "border-r");
+
+    rerender(
+      <Drawer open side="left" onClose={() => {}}>
+        Left
+      </Drawer>,
+    );
+
+    const leftPanel = screen.getByRole("complementary");
+    expect(leftPanel).toHaveAttribute("data-side", "left");
+    expect(leftPanel).toHaveClass("left-0", "border-r");
+    expect(leftPanel).not.toHaveClass("right-0", "border-l");
+  });
+
+  it("closes on Escape and restores focus to the opening control", async () => {
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open drawer
+          </button>
+          <Drawer open={open} onClose={() => setOpen(false)}>
+            Drawer body
+          </Drawer>
+        </>
+      );
+    }
+
+    render(<Harness />);
+    const trigger = screen.getByRole("button", { name: "Open drawer" });
+    await userEvent.click(trigger);
+
+    const panel = await screen.findByRole("complementary");
+    await waitFor(() => expect(panel).toHaveFocus());
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("complementary")).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+  });
+
+  it("does not steal focus back when a newer overlay already owns it", async () => {
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open drawer
+          </button>
+          <button type="button">New overlay action</button>
+          <Drawer open={open} onClose={() => setOpen(false)}>
+            Drawer body
+          </Drawer>
+        </>
+      );
+    }
+
+    render(<Harness />);
+    await userEvent.click(screen.getByRole("button", { name: "Open drawer" }));
+    await screen.findByRole("complementary");
+
+    const closeButtons = screen.getAllByRole("button", { name: "Close drawer" });
+    await userEvent.click(closeButtons[closeButtons.length - 1] as HTMLElement);
+    const newerOverlayAction = screen.getByRole("button", { name: "New overlay action" });
+    newerOverlayAction.focus();
+
+    await waitFor(() => expect(screen.queryByRole("complementary")).not.toBeInTheDocument());
+    expect(newerOverlayAction).toHaveFocus();
   });
 });
 

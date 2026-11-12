@@ -23,7 +23,10 @@ export interface WorkspaceSidebarItem {
 export interface WorkspaceSidebarSection {
   id: string;
   label?: string;
+  meta?: ReactNode;
   items: readonly WorkspaceSidebarItem[];
+  collapsible?: boolean;
+  defaultExpanded?: boolean;
 }
 
 export interface WorkspaceTopicTab {
@@ -51,6 +54,7 @@ export interface WorkspaceShellFrameProps {
   sidebarSubtitle?: ReactNode;
   sidebarAction?: ReactNode;
   sidebarSections: readonly WorkspaceSidebarSection[];
+  mobileSidebarSections?: readonly WorkspaceSidebarSection[];
   sidebarFooter?: ReactNode;
   topicTabs: readonly WorkspaceTopicTab[];
   topicValue: string;

@@ -390,7 +390,33 @@
 }
 
 .workspace-mobile-object-sections section + section {
-  margin-top: 22px;
+  margin-top: 14px;
+}
+
+.workspace-mobile-object-sections .workspace-mobile-object-group {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.workspace-mobile-object-sections .workspace-mobile-object-group-trigger {
+  min-height: 46px;
+  border-radius: var(--mira-radius-ui-control);
+  padding: 8px 10px;
+}
+
+.workspace-mobile-object-sections .workspace-mobile-object-group-trigger:hover {
+  background: rgb(var(--mira-color-surface-secondary));
+}
+
+.workspace-mobile-object-sections .workspace-mobile-object-group-content {
+  padding: 2px 0 4px 14px;
+}
+
+.workspace-mobile-object-sections .workspace-mobile-object-group-content nav {
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgb(var(--mira-color-border));
 }
 
 .workspace-mobile-object-sections h2 {

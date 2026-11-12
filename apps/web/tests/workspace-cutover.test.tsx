@@ -328,7 +328,7 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("heading", { name: "工作台" })).toBeInTheDocument();
   });
 
-  it("replaces the legacy mobile bottom navigation with an explicit workspace drawer", async () => {
+  it("opens the workspace switcher from the left without mixing in Work tasks", async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
@@ -336,17 +336,22 @@ describe("AGT-054 Work workspace migration", () => {
     await user.click(screen.getByRole("button", { name: "切换业务工作台" }));
 
     const drawer = await screen.findByRole("navigation", { name: "移动业务工作台" });
+    const panel = drawer.closest("aside");
+    expect(panel).not.toBeNull();
+    expect(panel).toHaveAttribute("data-side", "left");
     expect(within(drawer).getByRole("link", { name: /工作/ })).toHaveAttribute(
       "aria-current",
       "page",
     );
     expect(within(drawer).getByRole("button", { name: "知识（尚未开放）" })).toBeDisabled();
+    expect(within(drawer).queryByRole("link", { name: "东南亚市场进入研究" })).toBeNull();
+
     const workspaceCloseButtons = screen.getAllByRole("button", { name: "关闭工作台导航" });
     expect(workspaceCloseButtons).toHaveLength(2);
     expect(workspaceCloseButtons.some((button) => button.closest("aside") !== null)).toBe(true);
   });
 
-  it("opens current Work objects in a separate mobile drawer and preserves route context", async () => {
+  it("nests Work tasks under independent collapsible groups in the left object drawer", async () => {
     const user = userEvent.setup();
     renderWorkspace("/tasks/market-research?view=runs");
 
@@ -360,8 +365,31 @@ describe("AGT-054 Work workspace migration", () => {
       .find((button) => button.closest("aside"))
       ?.closest("aside");
     expect(objectDrawer).not.toBeNull();
-    const pinned = within(objectDrawer as HTMLElement).getByRole("navigation", { name: "置顶" });
-    await user.click(within(pinned).getByRole("link", { name: /新品牌定位与故事/ }));
+    expect(objectDrawer).toHaveAttribute("data-side", "left");
+
+    const workNavigation = within(objectDrawer as HTMLElement).getByRole("navigation", {
+      name: "工作",
+    });
+    expect(within(workNavigation).getByRole("button", { name: "交代工作" })).toBeInTheDocument();
+    expect(within(workNavigation).getByRole("link", { name: "全部工作" })).toBeInTheDocument();
+
+    const projects = within(objectDrawer as HTMLElement).getByRole("button", { name: /项目/ });
+    const pinned = within(objectDrawer as HTMLElement).getByRole("button", { name: /置顶/ });
+    const recent = within(objectDrawer as HTMLElement).getByRole("button", { name: /最近/ });
+    expect(projects).toHaveAttribute("aria-expanded", "false");
+    expect(pinned).toHaveAttribute("aria-expanded", "false");
+    expect(recent).toHaveAttribute("aria-expanded", "false");
+    expect(
+      within(objectDrawer as HTMLElement).queryByRole("link", { name: "新品牌定位与故事" }),
+    ).toBeNull();
+
+    await user.click(projects);
+    expect(projects).toHaveAttribute("aria-expanded", "true");
+    expect(pinned).toHaveAttribute("aria-expanded", "false");
+    const projectNavigation = within(objectDrawer as HTMLElement).getByRole("navigation", {
+      name: "项目",
+    });
+    await user.click(within(projectNavigation).getByRole("link", { name: /新品牌定位与故事/ }));
 
     expect(screen.getByRole("heading", { name: "新品牌定位与故事" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");

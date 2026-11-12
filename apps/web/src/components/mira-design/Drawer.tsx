@@ -1,9 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { IconButton } from "./Button";
 
 type DrawerWidth = number | string;
+export type DrawerSide = "left" | "right";
 
 export interface DrawerProps {
   open: boolean;
@@ -12,6 +13,7 @@ export interface DrawerProps {
   header?: ReactNode;
   footer?: ReactNode;
   width?: DrawerWidth;
+  side?: DrawerSide;
   closeLabel?: string;
   closeMaskLabel?: string;
   bodyClassName?: string;
@@ -31,6 +33,7 @@ export default function Drawer({
   header,
   footer,
   width = 560,
+  side = "right",
   closeLabel,
   closeMaskLabel,
   bodyClassName = "",
@@ -39,12 +42,18 @@ export default function Drawer({
 }: DrawerProps) {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (open) {
+      restoreFocusRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setMounted(true);
       const timer = window.setTimeout(() => {
         setVisible(true);
+        panelRef.current?.focus();
       }, enterFrameDelayMs);
 
       return () => window.clearTimeout(timer);
@@ -52,7 +61,16 @@ export default function Drawer({
 
     setVisible(false);
     const timer = window.setTimeout(() => {
+      const activeElement = document.activeElement;
+      const focusStillOwnedByDrawer =
+        activeElement instanceof HTMLElement &&
+        (activeElement === document.body || overlayRef.current?.contains(activeElement));
+
       setMounted(false);
+      if (focusStillOwnedByDrawer) {
+        restoreFocusRef.current?.focus();
+      }
+      restoreFocusRef.current = null;
     }, exitDurationMs);
 
     return () => window.clearTimeout(timer);
@@ -71,12 +89,32 @@ export default function Drawer({
     };
   }, [mounted]);
 
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mounted, onClose]);
+
   if (!mounted) {
     return null;
   }
 
+  const sideClass =
+    side === "left" ? "left-0 border-r border-border" : "right-0 border-l border-border";
+  const hiddenTransform = side === "left" ? "-translate-x-10" : "translate-x-10";
+
   return createPortal(
-    <div className="fixed inset-0 z-[90]">
+    <div ref={overlayRef} className="fixed inset-0 z-[90]">
       <button
         type="button"
         aria-label={closeMaskLabel ?? closeLabel ?? "Close drawer"}
@@ -88,8 +126,11 @@ export default function Drawer({
         onClick={onClose}
       />
       <aside
-        className={`absolute top-0 right-0 flex h-full w-full max-w-full flex-col border-l border-border bg-surface-primary shadow-shadow-xl transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-transform ${
-          visible ? "translate-x-0 opacity-100" : "translate-x-10 opacity-0"
+        ref={panelRef}
+        tabIndex={-1}
+        data-side={side}
+        className={`absolute top-0 flex h-full w-full max-w-full flex-col bg-surface-primary pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-shadow-xl transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] will-change-transform ${sideClass} ${
+          visible ? "translate-x-0 opacity-100" : `${hiddenTransform} opacity-0`
         } ${panelClassName}`}
         style={{ width: resolveWidth(width) }}
       >

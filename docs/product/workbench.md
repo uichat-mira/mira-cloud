@@ -366,6 +366,12 @@ AGT-061 用 `WorkspaceTabs` 替代当前 Work Shell 对肥厚 Card Tabs 的依�
 
 AGT-063 将 Task Detail 从「对象后台五栏目」收敛为**继续一件工作**：L2 只保留「概览 / 进展 / 成果」。概览首屏直接呈现当前状态与下一步，并且只有存在真实可行动 Attention 时才出现「需要你处理」；随后展示近期进展与已有成果。进展视图讲工作的连续变化，Run 仅作为可展开的执行证据；History 不再作为永久一级栏目。成果仍可独立查看并保留来源追溯。旧 `?view=runs` / `?view=history` 原型深链兼容映射到「进展」，旧 `?view=attention` 映射回包含 Attention 的「概览」，避免制造空页面。
 
+### 8.9 AGT-065 · Mobile 左侧空间语法与 Work 分层
+
+AGT-065 修正 Mobile / WebView 的空间语法：左上角「切换工作台」和「切换工作对象」都使用 MiraDesign `Drawer side="left"`，从触发器所在的左侧进入；Drawer 的默认 side 仍为 right，以保持设置、详情和其它既有右侧消费者兼容。
+
+移动 Work 对象导航不再直接复用 Desktop Sidebar 的平铺视觉结构。Shell 接受独立的 `mobileSidebarSections` 投影，但数据、路由和 Task 身份仍来自同一 Work 真相源。第一层只展示「工作」业务动作；具体 Task 下沉到「项目 / 置顶 / 最近」三个可独立折叠的组，默认折叠，用户展开后才进入 Task 列表。折叠组复用 MiraDesign `CollapsiblePanel`，保留 `aria-expanded / aria-controls`，并确保折叠内容不进入焦点顺序。
+
 ## 9. 设计来源和变更说明
 
 - 产品所有权与跨端架构：[v0.4](../architecture/v0.4.md)
