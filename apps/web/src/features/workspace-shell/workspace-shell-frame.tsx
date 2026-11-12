@@ -12,11 +12,7 @@ export type {
   WorkspaceShellLayoutMetrics,
   WorkspaceTopicTab,
 } from "./types";
-import type {
-  WorkspaceRailItem,
-  WorkspaceSidebarSection,
-  WorkspaceShellFrameProps,
-} from "./types";
+import type { WorkspaceRailItem, WorkspaceSidebarSection, WorkspaceShellFrameProps } from "./types";
 import { createWorkspaceShellStyleVars } from "./layout";
 import "./workspace-shell.css";
 

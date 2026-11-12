@@ -724,8 +724,6 @@
   color: rgb(var(--mira-color-warning-text));
 }
 
-
-
 @media (max-width: 980px) {
   .workbench-page-header {
     min-height: 88px;

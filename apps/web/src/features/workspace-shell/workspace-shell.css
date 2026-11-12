@@ -393,8 +393,6 @@
   text-transform: uppercase;
 }
 
-
-
 @media (max-width: 980px) {
   .workspace-shell {
     display: block;
