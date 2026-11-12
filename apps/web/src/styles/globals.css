@@ -1372,6 +1372,62 @@ button:disabled {
       max(16px, env(safe-area-inset-left));
   }
 
+  .workbench-overview-grid,
+  .workbench-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workbench-primary-zone {
+    padding-right: 0;
+  }
+
+  .workbench-attention-zone {
+    margin-top: 28px;
+    padding-left: 0;
+    border-top: 1px solid rgb(var(--mira-color-text-primary) / 0.25);
+    border-left: 0;
+  }
+
+  .workbench-work-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .workbench-work-side {
+    align-items: flex-start;
+  }
+
+  .workbench-run-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+    padding: 12px 0;
+  }
+
+  .workbench-history-row {
+    grid-template-columns: 18px 100px minmax(0, 1fr);
+  }
+
+  .workbench-history-row > :last-child {
+    grid-column: 2 / -1;
+  }
+
+  .workbench-artifact-time,
+  .workbench-fixture-hint {
+    display: none;
+  }
+
+  .workbench-composer-outline {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workbench-composer-outline section:nth-child(odd) {
+    border-right: 0;
+  }
+
+  .workbench-composer-outline section:nth-child(even) {
+    padding-left: 0;
+  }
+
   .workspace-bottom-nav {
     position: fixed;
     z-index: 40;
