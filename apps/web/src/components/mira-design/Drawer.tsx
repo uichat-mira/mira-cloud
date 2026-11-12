@@ -42,6 +42,7 @@ export default function Drawer({
 }: DrawerProps) {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
@@ -60,8 +61,15 @@ export default function Drawer({
 
     setVisible(false);
     const timer = window.setTimeout(() => {
+      const activeElement = document.activeElement;
+      const focusStillOwnedByDrawer =
+        activeElement instanceof HTMLElement &&
+        (activeElement === document.body || overlayRef.current?.contains(activeElement));
+
       setMounted(false);
-      restoreFocusRef.current?.focus();
+      if (focusStillOwnedByDrawer) {
+        restoreFocusRef.current?.focus();
+      }
       restoreFocusRef.current = null;
     }, exitDurationMs);
 
@@ -106,7 +114,7 @@ export default function Drawer({
   const hiddenTransform = side === "left" ? "-translate-x-10" : "translate-x-10";
 
   return createPortal(
-    <div className="fixed inset-0 z-[90]">
+    <div ref={overlayRef} className="fixed inset-0 z-[90]">
       <button
         type="button"
         aria-label={closeMaskLabel ?? closeLabel ?? "Close drawer"}
