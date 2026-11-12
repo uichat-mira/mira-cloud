@@ -86,7 +86,9 @@ describe("AGT-061 WorkspaceTabs", () => {
   );
 
   it("measures the container, renders a compact overflow menu and preserves selection", async () => {
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: HTMLElement,
+    ) {
       const element = this as HTMLElement;
       if (element.hasAttribute("data-workspace-tabs-list")) return rect(210);
       if (element.hasAttribute("data-workspace-tabs-measure-item")) return rect(92);
@@ -128,7 +130,9 @@ describe("AGT-061 WorkspaceTabs", () => {
   });
 
   it("opens the overflow menu by keyboard and can choose a hidden view", async () => {
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: HTMLElement,
+    ) {
       const element = this as HTMLElement;
       if (element.hasAttribute("data-workspace-tabs-list")) return rect(210);
       if (element.hasAttribute("data-workspace-tabs-measure-item")) return rect(92);
