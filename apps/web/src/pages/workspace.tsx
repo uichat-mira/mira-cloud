@@ -86,12 +86,7 @@ function withScenario(path: string, scenario: PreviewScenario): string {
 }
 
 function taskTopic(value: string | null): TaskTopic {
-  if (
-    value === "attention" ||
-    value === "runs" ||
-    value === "artifacts" ||
-    value === "history"
-  ) {
+  if (value === "attention" || value === "runs" || value === "artifacts" || value === "history") {
     return value;
   }
   return "overview";
@@ -290,7 +285,9 @@ function UnavailableWorkspace({ to }: { to: PreviewLink }) {
         <WifiOff size={22} aria-hidden="true" />
       </span>
       <h1>工作数据暂时无法更新</h1>
-      <p>当前状态未知，不代表没有工作，也不代表执行已完成。这是来源不可达情境，不会访问生产任务服务。</p>
+      <p>
+        当前状态未知，不代表没有工作，也不代表执行已完成。这是来源不可达情境，不会访问生产任务服务。
+      </p>
       <Link to={to("/diagnostics")} className="workbench-secondary-link">
         查看连接诊断 <ArrowRight size={15} aria-hidden="true" />
       </Link>
@@ -342,16 +339,13 @@ function WorkRow({ task, to }: { task: PreviewTask; to: PreviewLink }) {
   );
 }
 
-function AttentionRow({
-  attention,
-  to,
-}: {
-  attention: PreviewAttention;
-  to: PreviewLink;
-}) {
+function AttentionRow({ attention, to }: { attention: PreviewAttention; to: PreviewLink }) {
   const source = findPreviewTask(attention.taskId);
   return (
-    <Link to={to("/tasks/" + attention.taskId + "?view=attention")} className="workbench-attention-row">
+    <Link
+      to={to("/tasks/" + attention.taskId + "?view=attention")}
+      className="workbench-attention-row"
+    >
       <div className="workbench-attention-meta">
         <span className={attention.tone === "warning" ? "is-warning" : ""}>{attention.hint}</span>
         <span>Fixture</span>
@@ -366,13 +360,7 @@ function AttentionRow({
   );
 }
 
-function ArtifactRow({
-  artifact,
-  to,
-}: {
-  artifact: PreviewArtifact;
-  to: PreviewLink;
-}) {
+function ArtifactRow({ artifact, to }: { artifact: PreviewArtifact; to: PreviewLink }) {
   const source = findPreviewTask(artifact.taskId);
   return (
     <Link to={to("/artifacts/" + artifact.id)} className="workbench-artifact-row">
@@ -401,13 +389,7 @@ function WorkStack({ tasks, to }: { tasks: readonly PreviewTask[]; to: PreviewLi
   );
 }
 
-function AttentionQueue({
-  items,
-  to,
-}: {
-  items: readonly PreviewAttention[];
-  to: PreviewLink;
-}) {
+function AttentionQueue({ items, to }: { items: readonly PreviewAttention[]; to: PreviewLink }) {
   if (items.length === 0) {
     return <p className="workbench-inline-empty">当前没有需要你处理的事项。</p>;
   }
@@ -576,15 +558,7 @@ function TaskRunRow({ run }: { run: PreviewRun }) {
   );
 }
 
-function TaskDetail({
-  task,
-  view,
-  to,
-}: {
-  task: PreviewTask;
-  view: TaskTopic;
-  to: PreviewLink;
-}) {
+function TaskDetail({ task, view, to }: { task: PreviewTask; view: TaskTopic; to: PreviewLink }) {
   const attentions = findPreviewAttentions(task.id);
   const runs = findPreviewRuns(task.id);
   const artifacts = findPreviewArtifacts(task.id);
@@ -604,7 +578,9 @@ function TaskDetail({
             <div className="workbench-zone-heading">
               <span>下一步</span>
             </div>
-            <p className="workbench-next-step">{task.next}。真实执行动作尚未接入，本页只展示工作上下文。</p>
+            <p className="workbench-next-step">
+              {task.next}。真实执行动作尚未接入，本页只展示工作上下文。
+            </p>
           </section>
           <section aria-label="工作摘要">
             <div className="workbench-zone-heading">
@@ -613,7 +589,13 @@ function TaskDetail({
             <dl className="workbench-fact-list">
               <div>
                 <dt>状态</dt>
-                <dd>{task.status === "running" ? "进行中" : task.status === "requested" ? "等待开始" : "可继续"}</dd>
+                <dd>
+                  {task.status === "running"
+                    ? "进行中"
+                    : task.status === "requested"
+                      ? "等待开始"
+                      : "可继续"}
+                </dd>
               </div>
               <div>
                 <dt>执行位置</dt>
@@ -656,7 +638,8 @@ function TaskDetail({
             ))}
           </div>
           <p className="workbench-boundary-note">
-            Fixture Run 只演示 requested / running / completed 的阅读层级，不代表 Cloud Pi 或 Desktop 实际执行。
+            Fixture Run 只演示 requested / running / completed 的阅读层级，不代表 Cloud Pi 或
+            Desktop 实际执行。
           </p>
         </section>
       ) : null}
@@ -975,7 +958,12 @@ export function WorkspaceShell() {
   return (
     <WorkspaceShellFrame
       brand={
-        <Link to={to("/")} className="workspace-brand-mark" aria-label="Mira Cloud" title="Mira Cloud">
+        <Link
+          to={to("/")}
+          className="workspace-brand-mark"
+          aria-label="Mira Cloud"
+          title="Mira Cloud"
+        >
           M
         </Link>
       }

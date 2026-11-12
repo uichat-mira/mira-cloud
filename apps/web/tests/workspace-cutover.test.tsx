@@ -48,14 +48,18 @@ describe("AGT-054 Work workspace migration", () => {
 
     const main = document.getElementById("main-content");
     expect(main).not.toBeNull();
-    expect(within(main as HTMLElement).getByRole("heading", { name: "工作台" })).toBeInTheDocument();
+    expect(
+      within(main as HTMLElement).getByRole("heading", { name: "工作台" }),
+    ).toBeInTheDocument();
     const workZone = within(main as HTMLElement).getByRole("region", { name: "正在推进" });
     const attentionZone = within(main as HTMLElement).getByRole("complementary", {
       name: "等你决定",
     });
     expect(within(workZone).getByRole("link", { name: "东南亚市场进入研究" })).toBeInTheDocument();
     expect(within(workZone).getByRole("link", { name: "新品牌定位与故事" })).toBeInTheDocument();
-    expect(within(attentionZone).getByRole("link", { name: /研究摘要，等待你的确认/ })).toBeInTheDocument();
+    expect(
+      within(attentionZone).getByRole("link", { name: /研究摘要，等待你的确认/ }),
+    ).toBeInTheDocument();
     expect(within(workZone).getByRole("region", { name: "最近成果" })).toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
   });
@@ -91,7 +95,9 @@ describe("AGT-054 Work workspace migration", () => {
 
     await user.click(screen.getByRole("tab", { name: "成果" }));
     const artifactRegion = screen.getByRole("region", { name: "东南亚市场进入研究 的成果" });
-    expect(within(artifactRegion).getByRole("link", { name: /市场机会研究摘要/ })).toBeInTheDocument();
+    expect(
+      within(artifactRegion).getByRole("link", { name: /市场机会研究摘要/ }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "历史" }));
     expect(screen.getByRole("region", { name: "东南亚市场进入研究 的历史" })).toBeInTheDocument();
