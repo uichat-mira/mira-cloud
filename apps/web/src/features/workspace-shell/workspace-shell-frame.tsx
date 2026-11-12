@@ -184,6 +184,7 @@ function MobileObjectDrawer({
 
 export function WorkspaceShellFrame({
   brand,
+  mobileBrand,
   railItems,
   sidebarTitle,
   sidebarSubtitle,
@@ -278,7 +279,9 @@ export function WorkspaceShellFrame({
           aria-label="切换业务工作台"
           onClick={() => setMobilePanel("workspaces")}
         >
-          <span aria-hidden="true">{activeWorkspace?.icon ?? <Layers3 size={17} />}</span>
+          <span aria-hidden="true">
+            {mobileBrand ?? activeWorkspace?.icon ?? <Layers3 size={17} />}
+          </span>
           <span>{activeWorkspace?.label ?? "工作台"}</span>
           <ChevronDown size={13} aria-hidden="true" />
         </button>

@@ -352,6 +352,12 @@ AGT-055 不为手机创建第二套产品 IA。窄屏下 L0 Global Rail 与 L1 W
 
 旧的「首页 / 待处理 / 我的工作 / 成果」手机底栏已移除，因为它会把“工作”一期视图重新提升成系统级一级导航。360 / 390 / 430 / 600 / 820px 的 Topic Tabs 可达性由组件窗口算法测试覆盖；Drawer 导航和深链上下文由 React 路由测试覆盖。该折叠方案仍是 Web / WebView UI 合同，不代表原生 Mobile Session、Host Tool 或本地权限共享。
 
+### 8.7 AGT-062 · Shell 品牌、几何基线与设置归位
+
+AGT-062 将 Mira Cloud Shell 的品牌资产统一为 `https://assets.tomz.io/images/mira-logo.png`，Desktop Rail 与 Mobile Shell 使用同一 Logo 来源，不再由 Cloud 自造字母标记。Desktop 的 Rail brand、Workspace Sidebar header 与主区 Topbar 共享同一 `headerHeight`，关键 separator 共享同一 `separatorWidth`；Topicbar 只从该 header 基线继续布局，避免各区域用 `height / min-height / 硬编码 58px` 分别计算造成错线。
+
+主题预设与明暗模式不再占用工作上下文 Topbar。它们进入 L1 Sidebar 的「设置 → 通用」页面，继续调用现有 MiraDesign theme preference 与浏览器 localStorage，只表示**当前浏览器的视觉偏好**，不暗示账号、Desktop、Mobile 或其它运行时已经同步设置。连接诊断仍保持独立次级入口。
+
 ## 9. 设计来源和变更说明
 
 - 产品所有权与跨端架构：[v0.4](../architecture/v0.4.md)

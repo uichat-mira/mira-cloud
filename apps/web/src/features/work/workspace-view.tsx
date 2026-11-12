@@ -1,5 +1,4 @@
 import "./work.css";
-import { useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,12 +10,10 @@ import {
   Cloud,
   FileText,
   Layers3,
-  Moon,
   Plug,
   Plus,
   Settings2,
   Sparkles,
-  Sun,
   WifiOff,
   Workflow,
 } from "lucide-react";
@@ -29,8 +26,10 @@ import {
   useParams,
   useSearchParams,
 } from "react-router";
-import { Badge, IconButton } from "../../components/mira-design/index.ts";
+import { Badge } from "../../components/mira-design/index.ts";
 import { ConnectionPanel } from "../connection/connection-panel";
+import { GeneralSettingsPage } from "../settings/general-settings";
+import { MiraBrandLogo } from "../workspace-shell/mira-brand";
 import { WorkspaceShellFrame } from "../workspace-shell/workspace-shell-frame";
 import {
   findPreviewArtifact,
@@ -49,13 +48,6 @@ import {
   type PreviewScenario,
   type PreviewTask,
 } from "./fixture-data";
-import {
-  presetIds,
-  themePresetMap,
-  type Appearance,
-  type ThemePresetId,
-} from "../../theme/mira-design/index.ts";
-import { applyTheme, currentTheme } from "../../theme/mira-design/theme-preference.ts";
 
 type PreviewLink = (path: string) => string;
 type TaskTopic = "overview" | "attention" | "runs" | "artifacts" | "history";
@@ -134,53 +126,11 @@ function resolveShellTopics(
     return { tabs: [{ value: "diagnostics", label: "连接诊断" }], value: "diagnostics" };
   }
 
-  return { tabs: [{ value: "unknown", label: "工作" }], value: "unknown" };
-}
-
-function ThemeControls() {
-  const [theme, setTheme] = useState(currentTheme);
-
-  function change(preset: ThemePresetId, appearance: Appearance) {
-    const next = { preset, appearance };
-    applyTheme(next);
-    setTheme(next);
+  if (pathname === "/settings/general") {
+    return { tabs: [{ value: "general", label: "通用" }], value: "general" };
   }
 
-  return (
-    <div className="flex items-center gap-2" aria-label="外观偏好">
-      <label className="sr-only" htmlFor="mira-theme-preset">
-        主题预设
-      </label>
-      <select
-        id="mira-theme-preset"
-        className="min-h-9 max-w-[130px] rounded-ui-control border border-border bg-surface-primary px-2 text-xs text-text-primary"
-        value={theme.preset}
-        onChange={(event) => {
-          if (presetIds.some((preset) => preset === event.target.value)) {
-            change(event.target.value as ThemePresetId, theme.appearance);
-          }
-        }}
-      >
-        {presetIds.map((preset) => (
-          <option key={preset} value={preset}>
-            {themePresetMap[preset]?.label ?? preset}
-          </option>
-        ))}
-      </select>
-      <IconButton
-        styleType="ghost"
-        size="md"
-        ariaLabel={theme.appearance === "light" ? "切换深色模式" : "切换浅色模式"}
-        onClick={() => change(theme.preset, theme.appearance === "light" ? "dark" : "light")}
-      >
-        {theme.appearance === "light" ? (
-          <Moon size={17} aria-hidden="true" />
-        ) : (
-          <Sun size={17} aria-hidden="true" />
-        )}
-      </IconButton>
-    </div>
-  );
+  return { tabs: [{ value: "unknown", label: "工作" }], value: "unknown" };
 }
 
 function PreviewNotice() {
@@ -819,7 +769,14 @@ function getContextTitle(pathname: string): string {
   if (pathname === "/tasks") return "全部工作";
   if (pathname === "/new") return "交代工作";
   if (pathname === "/diagnostics") return "连接诊断";
+  if (pathname === "/settings/general") return "通用";
   return "概览";
+}
+
+function getContextGroup(pathname: string): string {
+  if (pathname.startsWith("/settings/")) return "设置";
+  if (pathname === "/diagnostics") return "系统";
+  return "工作";
 }
 
 export function WorkspaceShell() {
@@ -870,7 +827,7 @@ export function WorkspaceShell() {
     },
   ] as const;
 
-  const sidebarSections = [
+  const workSidebarSections = [
     {
       id: "actions",
       items: [
@@ -912,6 +869,24 @@ export function WorkspaceShell() {
     },
   ] as const;
 
+  const settingsSidebarSections = [
+    {
+      id: "settings",
+      items: [
+        {
+          id: "general-settings",
+          label: "通用",
+          to: to("/settings/general"),
+          icon: <Settings2 size={15} aria-hidden="true" />,
+          end: true,
+        },
+      ],
+    },
+  ] as const;
+
+  const isSettings = location.pathname.startsWith("/settings/");
+  const sidebarSections = isSettings ? settingsSidebarSections : workSidebarSections;
+
   return (
     <WorkspaceShellFrame
       brand={
@@ -921,17 +896,27 @@ export function WorkspaceShell() {
           aria-label="Mira Cloud"
           title="Mira Cloud"
         >
-          M
+          <MiraBrandLogo />
         </Link>
       }
+      mobileBrand={<MiraBrandLogo />}
       railItems={railItems}
-      sidebarTitle="工作"
-      sidebarSubtitle="Personal Workspace"
+      sidebarTitle={isSettings ? "设置" : "工作"}
+      sidebarSubtitle={isSettings ? "Preferences" : "Personal Workspace"}
       sidebarSections={sidebarSections}
       sidebarFooter={
         <div className="space-y-4">
+          {isSettings ? (
+            <Link to={to("/")} className="workspace-sidebar-utility">
+              <Briefcase size={15} aria-hidden="true" /> 返回工作
+            </Link>
+          ) : (
+            <Link to={to("/settings/general")} className="workspace-sidebar-utility">
+              <Settings2 size={15} aria-hidden="true" /> 设置
+            </Link>
+          )}
           <Link to={to("/diagnostics")} className="workspace-sidebar-utility">
-            <Settings2 size={15} aria-hidden="true" /> 连接诊断
+            <Cloud size={15} aria-hidden="true" /> 连接诊断
           </Link>
           <PreviewNotice />
         </div>
@@ -942,12 +927,11 @@ export function WorkspaceShell() {
       topbarLeading={
         <div className="flex min-w-0 items-center gap-2 text-sm text-text-secondary">
           <Cloud size={15} aria-hidden="true" />
-          <span className="truncate">工作</span>
+          <span className="truncate">{getContextGroup(location.pathname)}</span>
           <span className="text-text-tertiary">/</span>
           <span className="truncate text-text-primary">{getContextTitle(location.pathname)}</span>
         </div>
       }
-      topbarActions={<ThemeControls />}
       mobileContextTitle={getContextTitle(location.pathname)}
       mobileAction={
         <Link
@@ -986,6 +970,7 @@ export function WorkspaceShell() {
           element={<DetailPreview kind="artifact" scenario={scenario} to={to} />}
         />
         <Route path="/new" element={<ComposerPreview to={to} />} />
+        <Route path="/settings/general" element={<GeneralSettingsPage />} />
         <Route
           path="/diagnostics"
           element={
