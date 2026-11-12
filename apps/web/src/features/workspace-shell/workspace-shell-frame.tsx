@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { ChevronDown, Layers3 } from "lucide-react";
 import { Link, NavLink } from "react-router";
-import { Drawer, NavigationCardTabs } from "../../components/mira-design/index.ts";
+import { Drawer, WorkspaceTabs } from "../../components/mira-design/index.ts";
 
 export type {
   WorkspaceRailItem,
@@ -318,11 +318,11 @@ export function WorkspaceShellFrame({
         </div>
 
         <div className="workspace-topicbar" data-workspace-region="topicbar">
-          <NavigationCardTabs
+          <WorkspaceTabs
             tabs={topicTabs.map((tab) => ({ value: tab.value, label: tab.label }))}
             value={topicValue}
             onChange={onTopicChange}
-            activeTabStyle="plain"
+            ariaLabel="当前主题视图"
             className="min-w-0 flex-1"
           />
         </div>
