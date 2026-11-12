@@ -30,10 +30,15 @@ UI primitives must not import Cloud Pi/GitHub/OAuth adapters. Domain components 
 The current Cloud-owned MiraDesign source contains:
 
 1. **Foundation / Core:** Alert / Badge / Button / IconButton / Card / SectionCard / Divider / Input / TextArea / NumberInput / Skeleton / Switch / Slider / Tag / TagInput / Tooltip / NavItem / SegmentedTabs / TabCard / CollapsiblePanel / ExpandableSection / Drawer / DropdownMenu / ConfirmDialog / Message / Result / FullPageStatus / FileIcon / ImagePreviewOverlay / StepIndicator / TerminalPanel / WelcomePanel.
-2. **Advanced / Content:** Table, NavigationCardTabs, Select, Modal, SearchSelectModal / Chrome, CodeBlock, StreamingTextRenderer, CompactAudioPlayer, AvatarPicker, FileListItem, FileUploadDropzone, ErrorBoundary, ExternalLink and StatusIndicator. MarkdownText / MarkdownEditor are Cloud-owned but stay behind an explicit heavy-content entry / dynamic loader so ordinary MiraDesign imports do not eagerly pull their runtime.
+2. **Advanced / Content:** Table, NavigationCardTabs, WorkspaceTabs, Select, Modal, SearchSelectModal / Chrome, CodeBlock, StreamingTextRenderer, CompactAudioPlayer, AvatarPicker, FileListItem, FileUploadDropzone, ErrorBoundary, ExternalLink and StatusIndicator. MarkdownText / MarkdownEditor are Cloud-owned but stay behind an explicit heavy-content entry / dynamic loader so ordinary MiraDesign imports do not eagerly pull their runtime.
 3. **Domain journey remains separate:** TaskCard / RunStateIndicator / RuntimeBadge / ArtifactRow remain the first Cloud-domain component journey and are not implied by MiraDesign.
 
 Additional components such as DatePicker, charts, resource tree, command palette or a richer data grid are **not** P0 merely because a toolkit offers them.
+
+### WorkspaceTabs
+
+`WorkspaceTabs` is the compact page/workspace-view primitive for low-height topic navigation. It measures its **actual container and tab widths**, keeps the selected view visible, and moves excess views behind an explicit overflow menu instead of relying on viewport breakpoints or horizontal scrolling. The overflow menu exposes the complete view set with the current value selected. Work/Task surfaces may style through the component's typed density plus stable `data-mira-workspace-tabs` / `data-slot` hooks; they must not copy the measurement algorithm into feature code. The older `NavigationCardTabs` remains a separate retained primitive for card-like navigation and is not removed by this contract.
+
 
 ## 3. State semantics matter more than decoration
 
