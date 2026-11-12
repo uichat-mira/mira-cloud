@@ -279,10 +279,7 @@ function WorkRow({ task, to }: { task: PreviewTask; to: PreviewLink }) {
 function AttentionRow({ attention, to }: { attention: PreviewAttention; to: PreviewLink }) {
   const source = findPreviewTask(attention.taskId);
   return (
-    <Link
-      to={to("/tasks/" + attention.taskId)}
-      className="workbench-attention-row"
-    >
+    <Link to={to("/tasks/" + attention.taskId)} className="workbench-attention-row">
       <div className="workbench-attention-meta">
         <span className={attention.tone === "warning" ? "is-warning" : ""}>{attention.hint}</span>
         <span>Fixture</span>
