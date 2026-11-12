@@ -88,11 +88,7 @@ export type {
   NavigationCardTabsWindow,
 } from "./NavigationCardTabs.tsx";
 export { default as WorkspaceTabs, resolveWorkspaceTabsWindow } from "./WorkspaceTabs.tsx";
-export type {
-  WorkspaceTab,
-  WorkspaceTabsProps,
-  WorkspaceTabsWindow,
-} from "./WorkspaceTabs.tsx";
+export type { WorkspaceTab, WorkspaceTabsProps, WorkspaceTabsWindow } from "./WorkspaceTabs.tsx";
 export { default as Select, SelectInput } from "./Select.tsx";
 export type { SelectEndAction, SelectOption, SelectProps } from "./Select.tsx";
 export { Modal, ModalProvider, ModalShell, useModal } from "./Modal.tsx";

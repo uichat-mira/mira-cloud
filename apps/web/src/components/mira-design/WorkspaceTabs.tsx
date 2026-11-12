@@ -92,9 +92,7 @@ export function resolveWorkspaceTabsWindow({
       if (
         visibleCount > bestCount ||
         (visibleCount === bestCount && centerDistance < bestCenterDistance) ||
-        (visibleCount === bestCount &&
-          centerDistance === bestCenterDistance &&
-          start < bestStart)
+        (visibleCount === bestCount && centerDistance === bestCenterDistance && start < bestStart)
       ) {
         bestStart = start;
         bestEnd = end;
@@ -167,9 +165,9 @@ export default function WorkspaceTabs<T extends string>({
 
     const readLayout = () => {
       const availableWidth = list.getBoundingClientRect().width;
-      const tabWidths = Array.from(measure.querySelectorAll("[data-workspace-tabs-measure-item]")).map(
-        (node) => node.getBoundingClientRect().width,
-      );
+      const tabWidths = Array.from(
+        measure.querySelectorAll("[data-workspace-tabs-measure-item]"),
+      ).map((node) => node.getBoundingClientRect().width);
       const overflowWidth = overflowMeasure.getBoundingClientRect().width || DEFAULT_OVERFLOW_WIDTH;
 
       setMeasurement((current) => {
