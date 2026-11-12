@@ -34,7 +34,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router";
-import { Badge, Card, IconButton, NavItem } from "../components/mira-design/index.ts";
+import { Badge, IconButton, NavItem } from "../components/mira-design/index.ts";
 import { ConnectionPanel } from "../features/connection/connection-panel";
 import { WorkspaceShellFrame } from "../features/workspace/workspace-shell-frame";
 import {
