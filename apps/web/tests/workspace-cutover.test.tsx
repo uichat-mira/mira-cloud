@@ -73,6 +73,14 @@ describe("AGT-052 personal workspace preview", () => {
     fireEvent.click(screen.getByRole("link", { name: "返回我的工作" }));
     expect(screen.getByRole("heading", { name: "我的工作" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("link", { name: "成果" , exact: true }));
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "桌面主导航" })).getByRole("link", {
+        name: "成果",
+      }),
+    );
+    expect(screen.getByRole("heading", { name: "成果" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: /市场机会研究摘要/ }));
+    expect(screen.getByRole("heading", { name: "市场机会研究摘要" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看来源工作" })).toBeInTheDocument();
   });
 });
