@@ -106,6 +106,57 @@ describe("Drawer", () => {
     await userEvent.click(closeButtons[closeButtons.length - 1] as HTMLElement);
     expect(onClose).toHaveBeenCalledTimes(2);
   });
+
+  it("keeps right as the default side and supports an explicit left panel", () => {
+    const { rerender } = render(
+      <Drawer open onClose={() => {}}>
+        Right
+      </Drawer>,
+    );
+
+    const rightPanel = screen.getByRole("complementary");
+    expect(rightPanel).toHaveAttribute("data-side", "right");
+    expect(rightPanel).toHaveClass("right-0", "border-l");
+    expect(rightPanel).not.toHaveClass("left-0", "border-r");
+
+    rerender(
+      <Drawer open side="left" onClose={() => {}}>
+        Left
+      </Drawer>,
+    );
+
+    const leftPanel = screen.getByRole("complementary");
+    expect(leftPanel).toHaveAttribute("data-side", "left");
+    expect(leftPanel).toHaveClass("left-0", "border-r");
+    expect(leftPanel).not.toHaveClass("right-0", "border-l");
+  });
+
+  it("closes on Escape and restores focus to the opening control", async () => {
+    function Harness() {
+      const [open, setOpen] = React.useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open drawer
+          </button>
+          <Drawer open={open} onClose={() => setOpen(false)}>
+            Drawer body
+          </Drawer>
+        </>
+      );
+    }
+
+    render(<Harness />);
+    const trigger = screen.getByRole("button", { name: "Open drawer" });
+    await userEvent.click(trigger);
+
+    const panel = await screen.findByRole("complementary");
+    await waitFor(() => expect(panel).toHaveFocus());
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("complementary")).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+  });
 });
 
 describe("DropdownMenu", () => {
