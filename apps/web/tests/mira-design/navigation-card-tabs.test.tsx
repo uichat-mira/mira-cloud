@@ -130,6 +130,23 @@ describe("AGT-066 NavigationCardTabs overflow contract", () => {
     expect(screen.queryByRole("tab", { name: "Overview" })).toBeNull();
   });
 
+  it("represents the selected value in the overflow menu when no full tab can fit", async () => {
+    installLayout({ availableWidth: 96, tabWidth: 92 });
+    const user = userEvent.setup();
+
+    render(<Harness />);
+
+    expect(screen.queryByRole("tab")).toBeNull();
+    const trigger = screen.getByRole("button", { name: "More navigation tabs" });
+    await user.click(trigger);
+
+    expect(await screen.findByRole("menuitemradio", { name: "Overview" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getAllByRole("menuitemradio")).toHaveLength(4);
+  });
+
   it("opens the overflow menu by keyboard with accurate checked ARIA state", async () => {
     installLayout({ availableWidth: 210, tabWidth: 92 });
     const user = userEvent.setup();
