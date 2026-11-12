@@ -46,6 +46,7 @@ export default function CollapsiblePanel({
       <div
         id={contentId}
         aria-hidden={!expanded}
+        inert={!expanded}
         className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out ${
           expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         }`}
