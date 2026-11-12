@@ -4,6 +4,7 @@
   --workspace-sidebar-width: 252px;
   --workspace-header-height: 58px;
   --workspace-topicbar-height: 44px;
+  --workspace-separator-width: 1px;
   --workspace-mobile-header-height: 62px;
   --workspace-content-max-width: 1320px;
 }
@@ -25,30 +26,38 @@
   min-height: 100svh;
   flex-direction: column;
   align-items: center;
-  border-right: 1px solid rgb(var(--mira-color-border));
+  border-right: var(--workspace-separator-width) solid rgb(var(--mira-color-border));
   background: rgb(var(--mira-color-surface-secondary));
 }
 
 .workspace-rail-brand {
   display: grid;
-  height: var(--workspace-header-height);
   width: 100%;
+  height: var(--workspace-header-height);
+  flex: 0 0 var(--workspace-header-height);
+  box-sizing: border-box;
   place-items: center;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
+  border-bottom: var(--workspace-separator-width) solid rgb(var(--mira-color-border));
 }
 
 .workspace-brand-mark {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   place-items: center;
-  border: 1px solid rgb(var(--mira-color-border));
   border-radius: var(--mira-radius-ui-control);
-  background: rgb(var(--mira-color-surface-primary));
-  color: rgb(var(--mira-color-text-primary));
-  font-size: 15px;
-  font-weight: 700;
   text-decoration: none;
+}
+
+.workspace-brand-mark:hover {
+  background: rgb(var(--mira-color-surface-primary));
+}
+
+.workspace-brand-logo {
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 
 .workspace-rail-nav {
@@ -133,18 +142,20 @@
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid rgb(var(--mira-color-border));
+  border-right: var(--workspace-separator-width) solid rgb(var(--mira-color-border));
   background: rgb(var(--mira-color-surface-primary));
 }
 
 .workspace-sidebar-header {
   display: flex;
-  min-height: var(--workspace-header-height);
+  height: var(--workspace-header-height);
+  flex: 0 0 var(--workspace-header-height);
+  box-sizing: border-box;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 10px 14px 10px 16px;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
+  border-bottom: var(--workspace-separator-width) solid rgb(var(--mira-color-border));
 }
 
 .workspace-sidebar-create {
@@ -231,7 +242,7 @@
 
 .workspace-sidebar-footer {
   padding: 14px 16px max(16px, env(safe-area-inset-bottom));
-  border-top: 1px solid rgb(var(--mira-color-border));
+  border-top: var(--workspace-separator-width) solid rgb(var(--mira-color-border));
 }
 
 .workspace-sidebar-utility {
@@ -258,12 +269,13 @@
   top: 0;
   z-index: 20;
   display: flex;
-  min-height: 58px;
+  height: var(--workspace-header-height);
+  box-sizing: border-box;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
   padding: 8px 24px 8px 28px;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
+  border-bottom: var(--workspace-separator-width) solid rgb(var(--mira-color-border));
   background: rgb(var(--mira-color-surface-primary) / 0.94);
   backdrop-filter: blur(10px);
 }
@@ -273,10 +285,11 @@
   top: var(--workspace-header-height);
   z-index: 18;
   display: flex;
-  min-height: var(--workspace-topicbar-height);
+  height: var(--workspace-topicbar-height);
+  box-sizing: border-box;
   align-items: end;
   padding: 0 28px;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
+  border-bottom: var(--workspace-separator-width) solid rgb(var(--mira-color-border));
   background: rgb(var(--mira-color-surface-primary));
 }
 
@@ -413,13 +426,18 @@
     gap: 4px;
     padding: max(7px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 7px
       max(10px, env(safe-area-inset-left));
-    border-bottom: 1px solid rgb(var(--mira-color-border));
+    border-bottom: var(--workspace-separator-width) solid rgb(var(--mira-color-border));
     background: rgb(var(--mira-color-surface-primary) / 0.96);
     backdrop-filter: blur(10px);
   }
 
   .workspace-mobile-workspace-trigger {
     flex: 0 0 auto;
+  }
+
+  .workspace-mobile-workspace-trigger .workspace-brand-logo {
+    width: 22px;
+    height: 22px;
   }
 
   .workspace-mobile-context-trigger {
@@ -432,7 +450,7 @@
 
   .workspace-topicbar {
     top: max(var(--workspace-mobile-header-height), calc(52px + env(safe-area-inset-top)));
-    min-height: 42px;
+    height: var(--workspace-topicbar-height);
     padding: 0 max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
   }
 
