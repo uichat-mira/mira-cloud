@@ -9,9 +9,6 @@ import {
   Clock3,
   Cloud,
   FileText,
-  FolderOpen,
-  Home,
-  Inbox,
   Layers3,
   Moon,
   Plug,
@@ -24,7 +21,6 @@ import {
 } from "lucide-react";
 import {
   Link,
-  NavLink,
   Route,
   Routes,
   useLocation,
@@ -32,7 +28,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router";
-import { Badge, IconButton, NavItem } from "../components/mira-design/index.ts";
+import { Badge, IconButton } from "../components/mira-design/index.ts";
 import { ConnectionPanel } from "../features/connection/connection-panel";
 import { WorkspaceShellFrame } from "../features/workspace/workspace-shell-frame";
 import {
@@ -60,12 +56,6 @@ import {
 } from "../theme/mira-design/index.ts";
 import { applyTheme, currentTheme } from "../theme/mira-design/theme-preference.ts";
 
-const mobileNavigation = [
-  { to: "/", label: "首页", icon: Home, end: true },
-  { to: "/attention", label: "待处理", icon: Inbox, end: true },
-  { to: "/tasks", label: "我的工作", icon: Layers3, end: true },
-  { to: "/artifacts", label: "成果", icon: FolderOpen, end: true },
-] as const;
 
 type PreviewLink = (path: string) => string;
 type TaskTopic = "overview" | "attention" | "runs" | "artifacts" | "history";
@@ -922,39 +912,6 @@ export function WorkspaceShell() {
     },
   ] as const;
 
-  const mobileHeader = (
-    <>
-      <NavLink
-        to={to("/")}
-        className="flex items-center gap-2 text-sm font-semibold text-text-primary no-underline"
-        aria-label="Mira Cloud 首页"
-      >
-        <span className="flex h-9 w-9 items-center justify-center rounded-ui-control bg-primary font-bold text-text-inverted">
-          M
-        </span>
-        Mira Cloud
-      </NavLink>
-      <Link
-        to={to("/new")}
-        className="mira-touch-target inline-flex items-center gap-1 rounded-ui-control bg-primary px-3 py-2 text-xs font-medium text-text-inverted no-underline"
-      >
-        <Plus size={16} aria-hidden="true" /> 交代工作
-      </Link>
-    </>
-  );
-
-  const mobileNav = mobileNavigation.map(({ to: path, label, icon: Icon, end }) => (
-    <NavItem
-      key={path}
-      to={to(path)}
-      end={end}
-      icon={<Icon size={19} aria-hidden="true" />}
-      className="mira-workspace-nav-item mira-touch-target"
-    >
-      {label}
-    </NavItem>
-  ));
-
   return (
     <WorkspaceShellFrame
       brand={
@@ -991,8 +948,17 @@ export function WorkspaceShell() {
         </div>
       }
       topbarActions={<ThemeControls />}
-      mobileHeader={mobileHeader}
-      mobileNavigation={mobileNav}
+      mobileContextTitle={getContextTitle(location.pathname)}
+      mobileAction={
+        <Link
+          to={to("/new")}
+          className="workspace-mobile-create"
+          aria-label="交代工作"
+          title="交代工作"
+        >
+          <Plus size={16} aria-hidden="true" />
+        </Link>
+      }
     >
       <div className="mb-5 lg:hidden">
         <PreviewNotice />
