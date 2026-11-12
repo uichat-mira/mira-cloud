@@ -4,8 +4,9 @@ import {
   ArrowRight,
   BookOpen,
   Briefcase,
-  ChevronRight,
+  CheckCircle2,
   CircleHelp,
+  Clock3,
   Cloud,
   FileText,
   FolderOpen,
@@ -31,17 +32,23 @@ import {
   useParams,
   useSearchParams,
 } from "react-router";
-import { Badge, Card, IconButton, NavItem } from "../components/mira-design/index.ts";
+import { Badge, IconButton, NavItem } from "../components/mira-design/index.ts";
 import { ConnectionPanel } from "../features/connection/connection-panel";
 import { WorkspaceShellFrame } from "../features/workspace/workspace-shell-frame";
 import {
   findPreviewArtifact,
+  findPreviewArtifacts,
+  findPreviewAttentions,
+  findPreviewRuns,
   findPreviewTask,
   parsePreviewScenario,
   previewArtifacts,
   previewAttentions,
   previewScenarios,
   previewTasks,
+  type PreviewArtifact,
+  type PreviewAttention,
+  type PreviewRun,
   type PreviewScenario,
   type PreviewTask,
 } from "../features/workspace/fixture-data";
@@ -60,13 +67,40 @@ const mobileNavigation = [
   { to: "/artifacts", label: "成果", icon: FolderOpen, end: true },
 ] as const;
 
+type PreviewLink = (path: string) => string;
+type TaskTopic = "overview" | "attention" | "runs" | "artifacts" | "history";
+type ArtifactTopic = "preview" | "source" | "versions";
+
 interface ShellTopic {
   value: string;
   label: string;
   to?: string;
 }
 
-function resolveShellTopics(pathname: string): { tabs: readonly ShellTopic[]; value: string } {
+function withScenario(path: string, scenario: PreviewScenario): string {
+  if (scenario === "active") return path;
+  const [pathname, rawQuery = ""] = path.split("?");
+  const query = new URLSearchParams(rawQuery);
+  query.set("scenario", scenario);
+  return pathname + "?" + query.toString();
+}
+
+function taskTopic(value: string | null): TaskTopic {
+  if (value === "attention" || value === "runs" || value === "artifacts" || value === "history") {
+    return value;
+  }
+  return "overview";
+}
+
+function artifactTopic(value: string | null): ArtifactTopic {
+  if (value === "source" || value === "versions") return value;
+  return "preview";
+}
+
+function resolveShellTopics(
+  pathname: string,
+  searchParams: URLSearchParams,
+): { tabs: readonly ShellTopic[]; value: string } {
   if (pathname === "/" || pathname === "/attention" || pathname === "/artifacts") {
     const tabs = [
       { value: "overview", label: "概览", to: "/" },
@@ -81,25 +115,41 @@ function resolveShellTopics(pathname: string): { tabs: readonly ShellTopic[]; va
   if (pathname === "/tasks") {
     return { tabs: [{ value: "tasks", label: "全部工作" }], value: "tasks" };
   }
+
   if (pathname.startsWith("/tasks/")) {
-    return { tabs: [{ value: "task", label: "工作详情" }], value: "task" };
+    const tabs = [
+      { value: "overview", label: "概览", to: pathname },
+      { value: "attention", label: "待处理", to: pathname + "?view=attention" },
+      { value: "runs", label: "运行", to: pathname + "?view=runs" },
+      { value: "artifacts", label: "成果", to: pathname + "?view=artifacts" },
+      { value: "history", label: "历史", to: pathname + "?view=history" },
+    ] as const;
+    return { tabs, value: taskTopic(searchParams.get("view")) };
   }
+
   if (pathname.startsWith("/artifacts/")) {
-    return { tabs: [{ value: "artifact", label: "成果详情" }], value: "artifact" };
+    const tabs = [
+      { value: "preview", label: "预览", to: pathname },
+      { value: "source", label: "来源", to: pathname + "?view=source" },
+      { value: "versions", label: "版本", to: pathname + "?view=versions" },
+    ] as const;
+    return { tabs, value: artifactTopic(searchParams.get("view")) };
   }
+
   if (pathname === "/new") {
     return { tabs: [{ value: "new", label: "交代工作" }], value: "new" };
   }
+
   if (pathname === "/diagnostics") {
     return { tabs: [{ value: "diagnostics", label: "连接诊断" }], value: "diagnostics" };
   }
+
   return { tabs: [{ value: "unknown", label: "工作" }], value: "unknown" };
 }
 
-type PreviewLink = (path: string) => string;
-
 function ThemeControls() {
   const [theme, setTheme] = useState(currentTheme);
+
   function change(preset: ThemePresetId, appearance: Appearance) {
     const next = { preset, appearance };
     applyTheme(next);
@@ -113,7 +163,7 @@ function ThemeControls() {
       </label>
       <select
         id="mira-theme-preset"
-        className="min-h-11 max-w-[130px] rounded-ui-control border border-border bg-surface-primary px-2 text-xs text-text-primary"
+        className="min-h-9 max-w-[130px] rounded-ui-control border border-border bg-surface-primary px-2 text-xs text-text-primary"
         value={theme.preset}
         onChange={(event) => {
           if (presetIds.some((preset) => preset === event.target.value)) {
@@ -128,16 +178,15 @@ function ThemeControls() {
         ))}
       </select>
       <IconButton
-        styleType="outline"
-        size="lg"
-        className="h-11 w-11 shrink-0"
+        styleType="ghost"
+        size="md"
         ariaLabel={theme.appearance === "light" ? "切换深色模式" : "切换浅色模式"}
         onClick={() => change(theme.preset, theme.appearance === "light" ? "dark" : "light")}
       >
         {theme.appearance === "light" ? (
-          <Moon size={18} aria-hidden="true" />
+          <Moon size={17} aria-hidden="true" />
         ) : (
-          <Sun size={18} aria-hidden="true" />
+          <Sun size={17} aria-hidden="true" />
         )}
       </IconButton>
     </div>
@@ -148,21 +197,7 @@ function PreviewNotice() {
   return (
     <div className="flex items-center gap-2 text-xs text-text-secondary">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" aria-hidden="true" />
-      <span>UI 原型 · 工作、时间及成果均为 Fixture 示例</span>
-    </div>
-  );
-}
-
-function SectionHeading({ title, link, to }: { title: string; link: string; to: string }) {
-  return (
-    <div className="mb-4 flex items-center justify-between">
-      <h2 className="text-heading-1 font-semibold text-text-primary">{title}</h2>
-      <Link
-        to={to}
-        className="mira-touch-target inline-flex items-center gap-1 px-2 py-2 text-sm text-text-secondary no-underline hover:text-text-primary"
-      >
-        {link} <ChevronRight size={15} aria-hidden="true" />
-      </Link>
+      <span>UI 原型 · 工作、时间、运行及成果均为 Fixture 示例</span>
     </div>
   );
 }
@@ -173,126 +208,238 @@ function TaskStatus({ status }: { status: PreviewTask["status"] }) {
   return <Badge variant="success">可继续</Badge>;
 }
 
-function AttentionItem({ item, to }: { item: (typeof previewAttentions)[number]; to: string }) {
-  return (
-    <Link
-      to={to}
-      className="group flex min-h-44 flex-col justify-between rounded-ui-panel border border-border bg-surface-primary p-5 no-underline shadow-shadow-sm transition-colors hover:border-primary/30 hover:bg-surface-soft"
-    >
-      <div>
-        <Badge variant={item.tone === "warning" ? "warning" : "neutral"}>{item.hint}</Badge>
-        <h3 className="mt-4 text-base font-semibold text-text-primary">{item.title}</h3>
-        <p className="mt-2 text-sm leading-6 text-text-secondary">{item.context}</p>
-      </div>
-      <span className="mt-4 inline-flex items-center gap-1 self-end text-sm font-medium text-primary">
-        查看并处理 <ArrowRight size={16} aria-hidden="true" />
+function RunStatus({ status }: { status: PreviewRun["status"] }) {
+  if (status === "running") {
+    return (
+      <span className="workbench-run-state workbench-run-state-running">
+        <span aria-hidden="true" />
+        正在进行
       </span>
-    </Link>
+    );
+  }
+  if (status === "requested") {
+    return (
+      <span className="workbench-run-state">
+        <span aria-hidden="true" />
+        已交代 · 等待开始
+      </span>
+    );
+  }
+  return (
+    <span className="workbench-run-state">
+      <CheckCircle2 size={13} aria-hidden="true" />
+      本次执行完成
+    </span>
   );
 }
 
-function TaskItem({ task, to }: { task: PreviewTask; to: string }) {
+function FixtureScenarioBar({
+  scenario,
+  changeScenario,
+}: {
+  scenario: PreviewScenario;
+  changeScenario: (scenario: PreviewScenario) => void;
+}) {
   return (
-    <Link
-      to={to}
-      className="group flex min-h-48 flex-col rounded-ui-panel border border-border bg-surface-primary p-5 no-underline shadow-shadow-sm transition-colors hover:border-primary/30 hover:bg-surface-soft"
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <span className="flex h-10 w-10 items-center justify-center rounded-ui-control bg-surface-soft text-primary">
-          <Layers3 size={20} aria-hidden="true" />
-        </span>
-        <TaskStatus status={task.status} />
+    <div className="workbench-fixture-bar">
+      <span className="workbench-fixture-label">预览情境</span>
+      <div className="workbench-fixture-options" aria-label="选择原型情境">
+        {previewScenarios.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            aria-pressed={scenario === item.value}
+            onClick={() => changeScenario(item.value)}
+            className={scenario === item.value ? "is-active" : ""}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
-      <h3 className="text-base font-semibold text-text-primary">{task.title}</h3>
-      <p className="mt-2 flex-1 text-sm leading-6 text-text-secondary">{task.description}</p>
-      <div className="mt-5 border-t border-border pt-4">
-        <p className="text-xs text-text-tertiary">{task.location}</p>
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <span className="text-xs text-text-secondary">{task.update}</span>
-          <ArrowRight size={17} className="shrink-0 text-primary" aria-hidden="true" />
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function ArtifactItem({ item, to }: { item: (typeof previewArtifacts)[number]; to: string }) {
-  return (
-    <Link
-      to={to}
-      className="flex min-h-20 items-center gap-3 rounded-ui-control px-2 py-3 no-underline hover:bg-surface-soft sm:px-3"
-    >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-ui-control bg-surface-secondary text-primary">
-        <FileText size={20} aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-text-primary">{item.title}</span>
-        <span className="mt-1 block text-xs text-text-secondary">
-          {item.type} · {item.version} · {item.updated}
-        </span>
-      </span>
-      <ChevronRight size={17} className="shrink-0 text-icon-tertiary" aria-hidden="true" />
-    </Link>
+      <span className="workbench-fixture-hint">只改变 Fixture，不产生执行请求</span>
+    </div>
   );
 }
 
 function EmptyWorkspace({ to }: { to: PreviewLink }) {
   return (
-    <Card className="px-6 py-12 text-center sm:py-16">
-      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-ui-panel bg-surface-soft text-primary">
-        <Sparkles size={28} aria-hidden="true" />
+    <div className="workbench-empty">
+      <span className="workbench-empty-icon">
+        <Sparkles size={24} aria-hidden="true" />
       </span>
-      <h2 className="mt-6 text-xl font-semibold text-text-primary">从第一件工作开始</h2>
-      <p className="mx-auto mt-3 max-w-sm text-sm leading-7 text-text-secondary">
-        交代过的工作会在这里持续积累，未来的进展和成果也能接着用。
-      </p>
-      <Link
-        to={to("/new")}
-        className="mira-touch-target mx-auto mt-6 inline-flex items-center gap-2 rounded-ui-control bg-primary px-5 py-3 text-sm font-medium text-text-inverted no-underline hover:bg-primary-hover"
-      >
-        <Plus size={16} aria-hidden="true" /> 交代第一件工作
+      <h1>从第一件工作开始</h1>
+      <p>交代过的工作会在这里持续积累，未来的进展、决定和成果都会留在同一个上下文里。</p>
+      <Link to={to("/new")} className="workbench-primary-link">
+        <Plus size={15} aria-hidden="true" />
+        交代第一件工作
       </Link>
-      <p className="mt-5 text-xs text-text-tertiary">演示空态，暂未连接真实工作服务</p>
-    </Card>
+      <small>演示空态，暂未连接真实工作服务</small>
+    </div>
   );
 }
 
 function UnavailableWorkspace({ to }: { to: PreviewLink }) {
   return (
-    <Card className="px-6 py-10 sm:py-12">
-      <span className="flex h-12 w-12 items-center justify-center rounded-ui-panel bg-warning-soft text-warning-text">
-        <WifiOff size={23} aria-hidden="true" />
+    <div className="workbench-empty workbench-unavailable">
+      <span className="workbench-empty-icon">
+        <WifiOff size={22} aria-hidden="true" />
       </span>
-      <h2 className="mt-5 text-xl font-semibold text-text-primary">工作数据暂时无法更新</h2>
-      <p className="mt-3 max-w-lg text-sm leading-7 text-text-secondary">
-        当前状态未知，不代表没有工作，也不代表执行已完成。这是断连情境模拟，不会访问生产任务服务。
+      <h1>工作数据暂时无法更新</h1>
+      <p>
+        当前状态未知，不代表没有工作，也不代表执行已完成。这是来源不可达情境，不会访问生产任务服务。
       </p>
-      <Link
-        to={to("/diagnostics")}
-        className="mira-touch-target mt-6 inline-flex items-center gap-2 rounded-ui-control border border-border px-4 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-soft"
-      >
-        查看连接诊断 <ArrowRight size={16} aria-hidden="true" />
+      <Link to={to("/diagnostics")} className="workbench-secondary-link">
+        查看连接诊断 <ArrowRight size={15} aria-hidden="true" />
       </Link>
-    </Card>
+    </div>
   );
 }
 
-function PageHeading({
-  label,
-  title,
-  subtitle,
+function WorkRow({ task, to }: { task: PreviewTask; to: PreviewLink }) {
+  const artifacts = findPreviewArtifacts(task.id);
+  const runs = findPreviewRuns(task.id);
+  const activeRun = runs.find((run) => run.status === "running");
+  const statusClass =
+    task.status === "running"
+      ? "workbench-work-row-running"
+      : task.status === "requested"
+        ? "workbench-work-row-requested"
+        : "workbench-work-row-ready";
+
+  return (
+    <article className={"workbench-work-row " + statusClass}>
+      <div className="workbench-work-main">
+        <div className="workbench-work-kicker">
+          <TaskStatus status={task.status} />
+          <span>{task.location}</span>
+          <span>{task.update}</span>
+        </div>
+        <Link to={to("/tasks/" + task.id)} className="workbench-work-title">
+          {task.title}
+        </Link>
+        <p>{task.description}</p>
+        {artifacts.length > 0 ? (
+          <div className="workbench-work-artifacts" aria-label={task.title + " 的成果"}>
+            {artifacts.map((artifact) => (
+              <Link key={artifact.id} to={to("/artifacts/" + artifact.id)}>
+                <FileText size={12} aria-hidden="true" />
+                {artifact.title}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <div className="workbench-work-side">
+        {activeRun ? <RunStatus status={activeRun.status} /> : null}
+        <Link to={to("/tasks/" + task.id)} className="workbench-row-link">
+          {task.next} <ArrowRight size={14} aria-hidden="true" />
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function AttentionRow({ attention, to }: { attention: PreviewAttention; to: PreviewLink }) {
+  const source = findPreviewTask(attention.taskId);
+  return (
+    <Link
+      to={to("/tasks/" + attention.taskId + "?view=attention")}
+      className="workbench-attention-row"
+    >
+      <div className="workbench-attention-meta">
+        <span className={attention.tone === "warning" ? "is-warning" : ""}>{attention.hint}</span>
+        <span>Fixture</span>
+      </div>
+      <h3>{attention.title}</h3>
+      <p>{attention.context}</p>
+      <div className="workbench-attention-source">
+        <span>{source?.title ?? "来源工作不可用"}</span>
+        <ArrowRight size={14} aria-hidden="true" />
+      </div>
+    </Link>
+  );
+}
+
+function ArtifactRow({ artifact, to }: { artifact: PreviewArtifact; to: PreviewLink }) {
+  const source = findPreviewTask(artifact.taskId);
+  return (
+    <Link to={to("/artifacts/" + artifact.id)} className="workbench-artifact-row">
+      <span className="workbench-artifact-icon">
+        <FileText size={17} aria-hidden="true" />
+      </span>
+      <span className="workbench-artifact-copy">
+        <strong>{artifact.title}</strong>
+        <small>
+          {artifact.type} · {artifact.version} · 来源：{source?.title ?? "未知"}
+        </small>
+      </span>
+      <span className="workbench-artifact-time">{artifact.updated}</span>
+      <ArrowRight size={15} aria-hidden="true" />
+    </Link>
+  );
+}
+
+function WorkStack({ tasks, to }: { tasks: readonly PreviewTask[]; to: PreviewLink }) {
+  return (
+    <div className="workbench-work-stack">
+      {tasks.map((task) => (
+        <WorkRow key={task.id} task={task} to={to} />
+      ))}
+    </div>
+  );
+}
+
+function AttentionQueue({ items, to }: { items: readonly PreviewAttention[]; to: PreviewLink }) {
+  if (items.length === 0) {
+    return <p className="workbench-inline-empty">当前没有需要你处理的事项。</p>;
+  }
+  return (
+    <div className="workbench-attention-list">
+      {items.map((attention) => (
+        <AttentionRow key={attention.id} attention={attention} to={to} />
+      ))}
+    </div>
+  );
+}
+
+function ArtifactLedger({
+  artifacts,
+  to,
 }: {
-  label: string;
+  artifacts: readonly PreviewArtifact[];
+  to: PreviewLink;
+}) {
+  if (artifacts.length === 0) {
+    return <p className="workbench-inline-empty">当前没有可访问的示例成果。</p>;
+  }
+  return (
+    <div className="workbench-artifact-ledger">
+      {artifacts.map((artifact) => (
+        <ArtifactRow key={artifact.id} artifact={artifact} to={to} />
+      ))}
+    </div>
+  );
+}
+
+function WorkbenchHeader({
+  eyebrow,
+  title,
+  summary,
+  action,
+}: {
+  eyebrow: string;
   title: string;
-  subtitle: string;
+  summary: string;
+  action?: React.ReactNode;
 }) {
   return (
-    <header className="mb-8">
-      <p className="mb-2 text-xs font-medium tracking-widest text-text-tertiary uppercase">
-        {label}
-      </p>
-      <h1 className="text-display font-semibold tracking-tight text-text-primary">{title}</h1>
-      <p className="mt-2 text-sm leading-7 text-text-secondary">{subtitle}</p>
+    <header className="workbench-page-header">
+      <div>
+        <p>{eyebrow}</p>
+        <h1>{title}</h1>
+        <span>{summary}</span>
+      </div>
+      {action ? <div>{action}</div> : null}
     </header>
   );
 }
@@ -308,70 +455,48 @@ function HomePage({
 }) {
   return (
     <>
-      <div className="flex items-start justify-between gap-4">
-        <PageHeading
-          label="Personal Workspace"
-          title="你的工作"
-          subtitle="重要的事放在眼前，没做完的事接着做。"
-        />
-        <Link
-          to={to("/new")}
-          className="mira-touch-target hidden items-center gap-2 rounded-ui-control bg-primary px-4 py-2.5 text-sm font-medium text-text-inverted no-underline hover:bg-primary-hover lg:inline-flex"
-        >
-          <Plus size={17} aria-hidden="true" /> 交代工作
-        </Link>
-      </div>
-      <div className="mb-8 flex flex-col gap-2 rounded-ui-panel border border-border bg-surface-soft p-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-1" aria-label="选择原型情境">
-          {previewScenarios.map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              aria-pressed={scenario === item.value}
-              onClick={() => changeScenario(item.value)}
-              className={
-                "mira-touch-target rounded-ui-control px-3 py-2 text-xs font-medium " +
-                (scenario === item.value
-                  ? "bg-surface-primary text-text-primary shadow-shadow-sm"
-                  : "text-text-secondary hover:text-text-primary")
-              }
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-        <span className="px-2 text-xs text-text-tertiary">仅切换 UI 情境</span>
-      </div>
+      <WorkbenchHeader
+        eyebrow="Work / Overview"
+        title="工作台"
+        summary="两件事等你处理，三件工作在手边。"
+        action={
+          <Link to={to("/new")} className="workbench-primary-link">
+            <Plus size={15} aria-hidden="true" /> 交代工作
+          </Link>
+        }
+      />
+      <FixtureScenarioBar scenario={scenario} changeScenario={changeScenario} />
       {scenario === "empty" ? (
         <EmptyWorkspace to={to} />
       ) : scenario === "unavailable" ? (
         <UnavailableWorkspace to={to} />
       ) : (
-        <div className="space-y-9">
-          <section aria-label="需要你处理">
-            <SectionHeading title="需要你处理" link="查看全部" to={to("/attention")} />
-            <div className="grid gap-4 md:grid-cols-2">
-              {previewAttentions.map((item) => (
-                <AttentionItem key={item.id} item={item} to={to("/tasks/" + item.taskId)} />
-              ))}
+        <div className="workbench-overview-grid">
+          <section className="workbench-primary-zone" aria-label="正在推进">
+            <div className="workbench-zone-heading">
+              <span>正在推进</span>
+              <small>{previewTasks.length} 件 · 按活动排序</small>
             </div>
+            <WorkStack tasks={previewTasks} to={to} />
+            <section className="workbench-recent-output" aria-label="最近成果">
+              <div className="workbench-zone-heading">
+                <span>最近成果</span>
+                <Link to={to("/artifacts")}>全部成果</Link>
+              </div>
+              <ArtifactLedger artifacts={previewArtifacts} to={to} />
+            </section>
           </section>
-          <section aria-label="接着做">
-            <SectionHeading title="接着做" link="我的工作" to={to("/tasks")} />
-            <div className="grid gap-4 md:grid-cols-2">
-              {previewTasks.slice(0, 2).map((task) => (
-                <TaskItem key={task.id} task={task} to={to("/tasks/" + task.id)} />
-              ))}
+
+          <aside className="workbench-attention-zone" aria-label="等你决定">
+            <div className="workbench-zone-heading">
+              <span>等你决定</span>
+              <small>{previewAttentions.length} 项</small>
             </div>
-          </section>
-          <section aria-label="最近成果">
-            <SectionHeading title="最近成果" link="成果库" to={to("/artifacts")} />
-            <Card className="divide-y divide-border p-2 sm:p-3">
-              {previewArtifacts.map((item) => (
-                <ArtifactItem key={item.id} item={item} to={to("/artifacts/" + item.id)} />
-              ))}
-            </Card>
-          </section>
+            <AttentionQueue items={previewAttentions} to={to} />
+            <p className="workbench-attention-note">
+              这里只出现真正需要你决定、确认或补充的事情。处理后，对应工作继续。
+            </p>
+          </aside>
         </div>
       )}
     </>
@@ -390,37 +515,235 @@ function PreviewList({
   to: PreviewLink;
 }) {
   const headings = {
-    attention: ["Attention", "待处理", "需要你决定、补充或核对的事情。"],
-    tasks: ["Continuity", "我的工作", "以工作目标为中心，而不是运行记录列表。"],
-    artifacts: ["Artifacts", "成果", "每份成果都能追溯到它来自的工作。"],
+    attention: ["Work / Attention", "待处理", "需要你决定、补充或核对的事情。"],
+    tasks: ["Work / All", "全部工作", "工作目标是主对象；运行记录留在工作内部。"],
+    artifacts: ["Work / Artifacts", "成果", "独立查找成果，同时保留它来自哪项工作。"],
   } as const;
-  const [label, title, subtitle] = headings[view];
+  const [eyebrow, title, summary] = headings[view];
+
   return (
     <>
-      <PageHeading label={label} title={title} subtitle={subtitle} />
+      <WorkbenchHeader eyebrow={eyebrow} title={title} summary={summary} />
       {scenario === "unavailable" ? (
         <UnavailableWorkspace to={to} />
       ) : scenario === "empty" ? (
         <EmptyWorkspace to={to} />
       ) : view === "attention" ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {previewAttentions.map((item) => (
-            <AttentionItem key={item.id} item={item} to={to("/tasks/" + item.taskId)} />
-          ))}
-        </div>
+        <section className="workbench-full-ledger" aria-label="待处理列表">
+          <AttentionQueue items={previewAttentions} to={to} />
+        </section>
       ) : view === "tasks" ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {previewTasks.map((task) => (
-            <TaskItem key={task.id} task={task} to={to("/tasks/" + task.id)} />
-          ))}
-        </div>
+        <section className="workbench-full-ledger" aria-label="全部工作列表">
+          <WorkStack tasks={previewTasks} to={to} />
+        </section>
       ) : (
-        <Card className="divide-y divide-border p-3">
-          {previewArtifacts.map((item) => (
-            <ArtifactItem key={item.id} item={item} to={to("/artifacts/" + item.id)} />
-          ))}
-        </Card>
+        <section className="workbench-full-ledger" aria-label="成果列表">
+          <ArtifactLedger artifacts={previewArtifacts} to={to} />
+        </section>
       )}
+    </>
+  );
+}
+
+function TaskRunRow({ run }: { run: PreviewRun }) {
+  return (
+    <div className="workbench-run-row">
+      <div>
+        <strong>{run.label}</strong>
+        <RunStatus status={run.status} />
+      </div>
+      <p>{run.summary}</p>
+      <small>{run.updated}</small>
+    </div>
+  );
+}
+
+function TaskDetail({ task, view, to }: { task: PreviewTask; view: TaskTopic; to: PreviewLink }) {
+  const attentions = findPreviewAttentions(task.id);
+  const runs = findPreviewRuns(task.id);
+  const artifacts = findPreviewArtifacts(task.id);
+
+  return (
+    <>
+      <WorkbenchHeader
+        eyebrow="Work / Task"
+        title={task.title}
+        summary={task.description}
+        action={<TaskStatus status={task.status} />}
+      />
+
+      {view === "overview" ? (
+        <div className="workbench-detail-grid">
+          <section aria-label="下一步">
+            <div className="workbench-zone-heading">
+              <span>下一步</span>
+            </div>
+            <p className="workbench-next-step">
+              {task.next}。真实执行动作尚未接入，本页只展示工作上下文。
+            </p>
+          </section>
+          <section aria-label="工作摘要">
+            <div className="workbench-zone-heading">
+              <span>工作摘要</span>
+            </div>
+            <dl className="workbench-fact-list">
+              <div>
+                <dt>状态</dt>
+                <dd>
+                  {task.status === "running"
+                    ? "进行中"
+                    : task.status === "requested"
+                      ? "等待开始"
+                      : "可继续"}
+                </dd>
+              </div>
+              <div>
+                <dt>执行位置</dt>
+                <dd>{task.location}</dd>
+              </div>
+              <div>
+                <dt>最近更新</dt>
+                <dd>{task.update}</dd>
+              </div>
+              <div>
+                <dt>成果</dt>
+                <dd>{artifacts.length} 份 Fixture</dd>
+              </div>
+            </dl>
+          </section>
+          <section className="workbench-detail-span" aria-label="最近运行">
+            <div className="workbench-zone-heading">
+              <span>最近运行</span>
+            </div>
+            <div className="workbench-run-list">
+              {runs.slice(0, 2).map((run) => (
+                <TaskRunRow key={run.id} run={run} />
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {view === "attention" ? (
+        <section className="workbench-full-ledger" aria-label={task.title + " 的待处理"}>
+          <AttentionQueue items={attentions} to={to} />
+        </section>
+      ) : null}
+
+      {view === "runs" ? (
+        <section className="workbench-full-ledger" aria-label={task.title + " 的运行"}>
+          <div className="workbench-run-list">
+            {runs.map((run) => (
+              <TaskRunRow key={run.id} run={run} />
+            ))}
+          </div>
+          <p className="workbench-boundary-note">
+            Fixture Run 只演示 requested / running / completed 的阅读层级，不代表 Cloud Pi 或
+            Desktop 实际执行。
+          </p>
+        </section>
+      ) : null}
+
+      {view === "artifacts" ? (
+        <section className="workbench-full-ledger" aria-label={task.title + " 的成果"}>
+          <ArtifactLedger artifacts={artifacts} to={to} />
+        </section>
+      ) : null}
+
+      {view === "history" ? (
+        <section className="workbench-full-ledger" aria-label={task.title + " 的历史"}>
+          <div className="workbench-history-list">
+            {runs.map((run) => (
+              <div key={run.id} className="workbench-history-row">
+                <Clock3 size={14} aria-hidden="true" />
+                <span>{run.updated}</span>
+                <strong>{run.label}</strong>
+                <span>{run.summary}</span>
+              </div>
+            ))}
+            {artifacts.map((artifact) => (
+              <div key={artifact.id} className="workbench-history-row">
+                <FileText size={14} aria-hidden="true" />
+                <span>{artifact.updated}</span>
+                <strong>{artifact.version}</strong>
+                <Link to={to("/artifacts/" + artifact.id)}>{artifact.title}</Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </>
+  );
+}
+
+function ArtifactDetail({
+  artifact,
+  view,
+  to,
+}: {
+  artifact: PreviewArtifact;
+  view: ArtifactTopic;
+  to: PreviewLink;
+}) {
+  const source = findPreviewTask(artifact.taskId);
+  const sourceRun = findPreviewRuns(artifact.taskId).find((run) => run.id === artifact.runId);
+
+  return (
+    <>
+      <WorkbenchHeader
+        eyebrow="Work / Artifact"
+        title={artifact.title}
+        summary={artifact.type + " · " + artifact.version + " · " + artifact.updated}
+      />
+
+      {view === "preview" ? (
+        <section className="workbench-artifact-preview" aria-label="成果预览">
+          <div className="workbench-artifact-preview-mark">
+            <FileText size={24} aria-hidden="true" />
+          </div>
+          <div>
+            <small>Fixture 预览</small>
+            <h2>{artifact.title}</h2>
+            <p>这里保留真正的成果阅读区域。文件内容、下载权限与版本读取尚未接入。</p>
+          </div>
+        </section>
+      ) : null}
+
+      {view === "source" ? (
+        <section className="workbench-full-ledger" aria-label="成果来源">
+          <dl className="workbench-fact-list workbench-fact-list-wide">
+            <div>
+              <dt>来源工作</dt>
+              <dd>
+                {source ? <Link to={to("/tasks/" + source.id)}>{source.title}</Link> : "来源不可用"}
+              </dd>
+            </div>
+            <div>
+              <dt>来源运行</dt>
+              <dd>{sourceRun ? sourceRun.label + " · " + sourceRun.summary : "未提供来源运行"}</dd>
+            </div>
+            <div>
+              <dt>版本</dt>
+              <dd>{artifact.version}</dd>
+            </div>
+            <div>
+              <dt>访问状态</dt>
+              <dd>Fixture 可读；不代表真实 ACL</dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {view === "versions" ? (
+        <section className="workbench-full-ledger" aria-label="成果版本">
+          <div className="workbench-version-row">
+            <span>{artifact.version}</span>
+            <strong>当前示例版本</strong>
+            <small>{artifact.updated}</small>
+          </div>
+          <p className="workbench-boundary-note">本轮只演示版本入口，不制造不存在的历史版本。</p>
+        </section>
+      ) : null}
     </>
   );
 }
@@ -435,106 +758,78 @@ function DetailPreview({
   to: PreviewLink;
 }) {
   const { taskId, artifactId } = useParams();
+  const [params] = useSearchParams();
   const task = kind === "task" ? findPreviewTask(taskId) : undefined;
   const artifact = kind === "artifact" ? findPreviewArtifact(artifactId) : undefined;
+
   if (scenario !== "active") return <UnavailableWorkspace to={to} />;
+
   if (!task && !artifact) {
     return (
-      <Card className="p-8">
-        <h1 className="text-xl font-semibold text-text-primary">示例对象不存在</h1>
-        <Link to={to("/")} className="mt-4 inline-flex text-sm text-primary">
-          返回首页
+      <div className="workbench-empty">
+        <CircleHelp size={24} aria-hidden="true" />
+        <h1>示例对象不存在</h1>
+        <Link to={to("/")} className="workbench-secondary-link">
+          返回工作台
         </Link>
-      </Card>
+      </div>
     );
   }
 
-  const origin = artifact ? findPreviewTask(artifact.taskId) : undefined;
+  if (task) {
+    return <TaskDetail task={task} view={taskTopic(params.get("view"))} to={to} />;
+  }
+
   return (
-    <>
-      <Link
-        to={to(kind === "task" ? "/tasks" : "/artifacts")}
-        className="mira-touch-target mb-5 inline-flex items-center gap-2 text-sm text-text-secondary no-underline"
-      >
-        <ArrowLeft size={16} aria-hidden="true" /> 返回{kind === "task" ? "我的工作" : "成果"}
-      </Link>
-      <PageHeading
-        label={kind === "task" ? "Task · 示例详情" : "Artifact · 示例详情"}
-        title={task?.title ?? artifact?.title ?? ""}
-        subtitle={task?.description ?? "阅读成果、追溯来源和继续委托的入口。"}
-      />
-      <Card className="p-6">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-text-primary">
-            {task ? "当前工作摘要" : "成果信息"}
-          </h2>
-          {task ? <TaskStatus status={task.status} /> : <Badge>{artifact?.version}</Badge>}
-        </div>
-        <div className="mt-5 space-y-3 text-sm text-text-secondary">
-          {task ? (
-            <>
-              <p>{task.location}</p>
-              <p>{task.update}</p>
-              <p>查看只读示例；本页不会开始执行或批准。</p>
-            </>
-          ) : (
-            <>
-              <p>类型：{artifact?.type}</p>
-              <p>来源工作：{origin?.title ?? "来源不可用"}</p>
-              {origin ? (
-                <Link
-                  to={to("/tasks/" + origin.id)}
-                  className="inline-flex items-center gap-2 text-primary"
-                >
-                  查看来源工作 <ArrowRight size={15} aria-hidden="true" />
-                </Link>
-              ) : null}
-            </>
-          )}
-        </div>
-        <p className="mt-7 rounded-ui-control bg-surface-secondary p-4 text-xs leading-6 text-text-secondary">
-          只读 Fixture。真实 Task/Artifact 详情、权限、执行、批准与交接另行实现。
-        </p>
-      </Card>
-    </>
+    <ArtifactDetail
+      artifact={artifact as PreviewArtifact}
+      view={artifactTopic(params.get("view"))}
+      to={to}
+    />
   );
 }
 
 function ComposerPreview({ to }: { to: PreviewLink }) {
   return (
     <>
-      <PageHeading
-        label="Delegation"
+      <WorkbenchHeader
+        eyebrow="Work / Delegation"
         title="交代工作"
-        subtitle="先说清目标与边界，再决定交给谁做。"
+        summary="先说清目标与边界，再决定交给谁做。"
       />
-      <Card className="p-6 sm:p-8">
-        <div className="grid gap-6 sm:grid-cols-2">
-          {[
-            ["01", "目标", "希望完成什么，怎样才算有结果"],
-            ["02", "材料", "明确允许使用的上下文与附件"],
-            ["03", "执行", "执行方、时机与可能的费用"],
-            ["04", "边界", "工具权限、外部发送与必要确认"],
-          ].map(([number, title, description]) => (
-            <div key={number} className="border-b border-border pb-5">
-              <span className="text-xs font-medium text-primary">{number}</span>
-              <h2 className="mt-2 font-semibold text-text-primary">{title}</h2>
-              <p className="mt-2 text-sm leading-6 text-text-secondary">{description}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-7 rounded-ui-control bg-surface-secondary p-4 text-sm text-text-secondary">
-          Composer 结构预览，未接通任务提交或执行服务。
-        </p>
-        <Link
-          to={to("/")}
-          className="mira-touch-target mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary"
-        >
-          <ArrowLeft size={16} aria-hidden="true" /> 返回首页
-        </Link>
-      </Card>
+      <div className="workbench-composer-outline">
+        {[
+          ["01", "目标", "希望完成什么，怎样才算有结果"],
+          ["02", "材料", "明确允许使用的上下文与附件"],
+          ["03", "执行", "执行方、时机与可能的费用"],
+          ["04", "边界", "工具权限、外部发送与必要确认"],
+        ].map(([number, title, description]) => (
+          <section key={number}>
+            <small>{number}</small>
+            <h2>{title}</h2>
+            <p>{description}</p>
+          </section>
+        ))}
+      </div>
+      <p className="workbench-boundary-note">Composer 结构预览，未接通任务提交或执行服务。</p>
+      <Link to={to("/")} className="workbench-secondary-link">
+        <ArrowLeft size={15} aria-hidden="true" /> 返回工作台
+      </Link>
     </>
   );
+}
+
+function getContextTitle(pathname: string): string {
+  const taskMatch = pathname.match(/^\/tasks\/([^/]+)$/);
+  if (taskMatch) return findPreviewTask(taskMatch[1])?.title ?? "工作";
+  const artifactMatch = pathname.match(/^\/artifacts\/([^/]+)$/);
+  if (artifactMatch) return findPreviewArtifact(artifactMatch[1])?.title ?? "成果";
+  if (pathname === "/attention") return "待处理";
+  if (pathname === "/artifacts") return "成果";
+  if (pathname === "/tasks") return "全部工作";
+  if (pathname === "/new") return "交代工作";
+  if (pathname === "/diagnostics") return "连接诊断";
+  return "概览";
 }
 
 export function WorkspaceShell() {
@@ -542,7 +837,8 @@ export function WorkspaceShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const scenario = parsePreviewScenario(params.get("scenario"));
-  const to: PreviewLink = (path) => path + (scenario === "active" ? "" : "?scenario=" + scenario);
+  const to: PreviewLink = (path) => withScenario(path, scenario);
+
   const changeScenario = (next: PreviewScenario) => {
     const updated = new URLSearchParams(params);
     if (next === "active") updated.delete("scenario");
@@ -550,7 +846,7 @@ export function WorkspaceShell() {
     setParams(updated);
   };
 
-  const topics = resolveShellTopics(location.pathname);
+  const topics = resolveShellTopics(location.pathname, params);
   const changeTopic = (value: string) => {
     const target = topics.tabs.find((tab) => tab.value === value)?.to;
     if (target) navigate(to(target));
@@ -586,22 +882,38 @@ export function WorkspaceShell() {
 
   const sidebarSections = [
     {
-      id: "workspace",
-      label: "工作",
+      id: "actions",
       items: [
+        {
+          id: "new-work",
+          label: "交代工作",
+          to: to("/new"),
+          icon: <Plus size={15} aria-hidden="true" />,
+          end: true,
+        },
         {
           id: "all-work",
           label: "全部工作",
           to: to("/tasks"),
-          icon: <Layers3 size={16} aria-hidden="true" />,
+          icon: <Layers3 size={15} aria-hidden="true" />,
           end: true,
         },
       ],
     },
     {
+      id: "pinned",
+      label: "置顶",
+      items: previewTasks.slice(0, 2).map((task) => ({
+        id: task.id,
+        label: task.title,
+        to: to("/tasks/" + task.id),
+        meta: task.status === "running" ? "进行中" : "待续",
+      })),
+    },
+    {
       id: "recent",
       label: "最近",
-      items: previewTasks.map((task) => ({
+      items: previewTasks.slice(2).map((task) => ({
         id: task.id,
         label: task.title,
         to: to("/tasks/" + task.id),
@@ -658,16 +970,6 @@ export function WorkspaceShell() {
       railItems={railItems}
       sidebarTitle="工作"
       sidebarSubtitle="Personal Workspace"
-      sidebarAction={
-        <Link
-          to={to("/new")}
-          className="workspace-sidebar-create"
-          aria-label="交代工作"
-          title="交代工作"
-        >
-          <Plus size={16} aria-hidden="true" />
-        </Link>
-      }
       sidebarSections={sidebarSections}
       sidebarFooter={
         <div className="space-y-4">
@@ -682,15 +984,17 @@ export function WorkspaceShell() {
       onTopicChange={changeTopic}
       topbarLeading={
         <div className="flex min-w-0 items-center gap-2 text-sm text-text-secondary">
-          <Cloud size={16} aria-hidden="true" />
-          <span className="truncate">工作 / 个人持续工作空间</span>
+          <Cloud size={15} aria-hidden="true" />
+          <span className="truncate">工作</span>
+          <span className="text-text-tertiary">/</span>
+          <span className="truncate text-text-primary">{getContextTitle(location.pathname)}</span>
         </div>
       }
       topbarActions={<ThemeControls />}
       mobileHeader={mobileHeader}
       mobileNavigation={mobileNav}
     >
-      <div className="mb-6 lg:hidden">
+      <div className="mb-5 lg:hidden">
         <PreviewNotice />
       </div>
       <Routes>
@@ -720,17 +1024,14 @@ export function WorkspaceShell() {
           path="/diagnostics"
           element={
             <>
-              <PageHeading
-                label="System"
+              <WorkbenchHeader
+                eyebrow="System"
                 title="连接诊断"
-                subtitle="只检查真实基础服务，不代表账号登录和 Agent 执行。"
+                summary="只检查真实基础服务，不代表账号登录和 Agent 执行。"
               />
               <ConnectionPanel />
-              <Link
-                to={to("/")}
-                className="mira-touch-target mt-5 inline-flex gap-2 text-sm text-primary"
-              >
-                <ArrowLeft size={16} aria-hidden="true" /> 返回首页
+              <Link to={to("/")} className="workbench-secondary-link mt-5">
+                <ArrowLeft size={15} aria-hidden="true" /> 返回工作台
               </Link>
             </>
           }
@@ -738,13 +1039,13 @@ export function WorkspaceShell() {
         <Route
           path="*"
           element={
-            <Card className="p-8">
-              <CircleHelp size={26} className="mb-4 text-icon-secondary" aria-hidden="true" />
-              <h1 className="text-xl font-semibold text-text-primary">没有找到这个页面</h1>
-              <Link to={to("/")} className="mt-4 inline-flex text-sm text-primary">
-                返回首页
+            <div className="workbench-empty">
+              <CircleHelp size={24} aria-hidden="true" />
+              <h1>没有找到这个页面</h1>
+              <Link to={to("/")} className="workbench-secondary-link">
+                返回工作台
               </Link>
-            </Card>
+            </div>
           }
         />
       </Routes>
