@@ -1442,7 +1442,7 @@ button:disabled {
     z-index: 40;
     top: 0;
     display: flex;
-    min-height: 62px;
+    min-height: max(62px, calc(52px + env(safe-area-inset-top)));
     align-items: center;
     gap: 4px;
     padding: max(7px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 7px
@@ -1465,7 +1465,7 @@ button:disabled {
   }
 
   .workspace-topicbar {
-    top: calc(58px + env(safe-area-inset-top));
+    top: max(62px, calc(52px + env(safe-area-inset-top)));
     min-height: 42px;
     padding: 0 max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
   }
