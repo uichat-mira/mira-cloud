@@ -56,7 +56,6 @@ import {
 } from "../theme/mira-design/index.ts";
 import { applyTheme, currentTheme } from "../theme/mira-design/theme-preference.ts";
 
-
 type PreviewLink = (path: string) => string;
 type TaskTopic = "overview" | "attention" | "runs" | "artifacts" | "history";
 type ArtifactTopic = "preview" | "source" | "versions";

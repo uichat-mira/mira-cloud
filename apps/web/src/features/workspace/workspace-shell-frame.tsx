@@ -200,7 +200,11 @@ function MobileObjectDrawer({
                   onClick={onClose}
                   className={({ isActive }) => (isActive ? "is-active" : "")}
                 >
-                  {item.icon ? <span aria-hidden="true">{item.icon}</span> : <span aria-hidden="true" />}
+                  {item.icon ? (
+                    <span aria-hidden="true">{item.icon}</span>
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
                   <span>{item.label}</span>
                   {item.meta ? <small>{item.meta}</small> : null}
                 </NavLink>
@@ -259,17 +263,17 @@ export function WorkspaceShellFrame({
           {sidebarSections.map((section) => (
             <section key={section.id} className="workspace-sidebar-section">
               {section.label ? <h2 className="workspace-sidebar-label">{section.label}</h2> : null}
-              <nav className="workspace-sidebar-list" aria-label={section.label ?? sidebarTitle?.toString()}>
+              <nav
+                className="workspace-sidebar-list"
+                aria-label={section.label ?? sidebarTitle?.toString()}
+              >
                 {section.items.map((item) => (
                   <NavLink
                     key={item.id}
                     to={item.to}
                     {...(item.end !== undefined ? { end: item.end } : {})}
                     className={({ isActive }) =>
-                      [
-                        "workspace-sidebar-item",
-                        isActive ? "workspace-sidebar-item-active" : "",
-                      ]
+                      ["workspace-sidebar-item", isActive ? "workspace-sidebar-item-active" : ""]
                         .filter(Boolean)
                         .join(" ")
                     }
@@ -280,7 +284,9 @@ export function WorkspaceShellFrame({
                       </span>
                     ) : null}
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                    {item.meta ? <span className="workspace-sidebar-item-meta">{item.meta}</span> : null}
+                    {item.meta ? (
+                      <span className="workspace-sidebar-item-meta">{item.meta}</span>
+                    ) : null}
                   </NavLink>
                 ))}
               </nav>
@@ -288,7 +294,9 @@ export function WorkspaceShellFrame({
           ))}
         </div>
 
-        {sidebarFooter ? <footer className="workspace-sidebar-footer">{sidebarFooter}</footer> : null}
+        {sidebarFooter ? (
+          <footer className="workspace-sidebar-footer">{sidebarFooter}</footer>
+        ) : null}
       </aside>
 
       <header className="workspace-mobile-header">
