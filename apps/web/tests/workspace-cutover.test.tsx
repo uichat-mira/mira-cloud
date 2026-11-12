@@ -26,9 +26,7 @@ describe("AGT-052 personal workspace preview", () => {
       "aria-current",
       "page",
     );
-    expect(within(nav).getByRole("link", { name: "首页" })).not.toHaveAttribute(
-      "aria-current",
-    );
+    expect(within(nav).getByRole("link", { name: "首页" })).not.toHaveAttribute("aria-current");
     expect(screen.getByRole("heading", { name: "我的工作" })).toBeInTheDocument();
     expect(within(nav).getAllByRole("link")).toHaveLength(4);
     expect(screen.getByRole("navigation", { name: "手机主导航" })).toBeInTheDocument();

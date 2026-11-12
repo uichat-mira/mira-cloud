@@ -383,23 +383,21 @@ button:disabled {
     justify-content: space-between;
     min-height: 64px;
     gap: 12px;
-    padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
-      10px max(16px, env(safe-area-inset-left));
+    padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px
+      max(16px, env(safe-area-inset-left));
     border-bottom: 1px solid rgb(var(--mira-color-border));
     background: rgb(var(--mira-color-surface-primary));
   }
 
   .workspace-topbar {
     min-height: 66px;
-    padding: 10px max(16px, env(safe-area-inset-right)) 10px
-      max(16px, env(safe-area-inset-left));
+    padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
     border-bottom: 0;
     background: rgb(var(--mira-color-surface-secondary));
   }
 
   .workspace-content {
-    padding: 18px max(16px, env(safe-area-inset-right))
-      calc(106px + env(safe-area-inset-bottom))
+    padding: 18px max(16px, env(safe-area-inset-right)) calc(106px + env(safe-area-inset-bottom))
       max(16px, env(safe-area-inset-left));
   }
 
@@ -413,8 +411,7 @@ button:disabled {
     align-items: stretch;
     justify-content: space-around;
     gap: 1px;
-    padding: 6px max(6px, env(safe-area-inset-right))
-      max(6px, env(safe-area-inset-bottom))
+    padding: 6px max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom))
       max(6px, env(safe-area-inset-left));
     border-top: 1px solid rgb(var(--mira-color-border));
     background: rgb(var(--mira-color-surface-primary));

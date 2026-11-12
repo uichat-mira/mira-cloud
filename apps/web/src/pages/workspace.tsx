@@ -123,13 +123,7 @@ function TaskStatus({ status }: { status: PreviewTask["status"] }) {
   return <Badge variant="success">可继续</Badge>;
 }
 
-function AttentionItem({
-  item,
-  to,
-}: {
-  item: (typeof previewAttentions)[number];
-  to: string;
-}) {
+function AttentionItem({ item, to }: { item: (typeof previewAttentions)[number]; to: string }) {
   return (
     <Link
       to={to}
@@ -172,13 +166,7 @@ function TaskItem({ task, to }: { task: PreviewTask; to: string }) {
   );
 }
 
-function ArtifactItem({
-  item,
-  to,
-}: {
-  item: (typeof previewArtifacts)[number];
-  to: string;
-}) {
+function ArtifactItem({ item, to }: { item: (typeof previewArtifacts)[number]; to: string }) {
   return (
     <Link
       to={to}
@@ -239,10 +227,20 @@ function UnavailableWorkspace({ to }: { to: PreviewLink }) {
   );
 }
 
-function PageHeading({ label, title, subtitle }: { label: string; title: string; subtitle: string }) {
+function PageHeading({
+  label,
+  title,
+  subtitle,
+}: {
+  label: string;
+  title: string;
+  subtitle: string;
+}) {
   return (
     <header className="mb-8">
-      <p className="mb-2 text-xs font-medium tracking-widest text-text-tertiary uppercase">{label}</p>
+      <p className="mb-2 text-xs font-medium tracking-widest text-text-tertiary uppercase">
+        {label}
+      </p>
       <h1 className="text-display font-semibold tracking-tight text-text-primary">{title}</h1>
       <p className="mt-2 text-sm leading-7 text-text-secondary">{subtitle}</p>
     </header>
@@ -394,7 +392,9 @@ function DetailPreview({
     return (
       <Card className="p-8">
         <h1 className="text-xl font-semibold text-text-primary">示例对象不存在</h1>
-        <Link to={to("/")} className="mt-4 inline-flex text-sm text-primary">返回首页</Link>
+        <Link to={to("/")} className="mt-4 inline-flex text-sm text-primary">
+          返回首页
+        </Link>
       </Card>
     );
   }
@@ -432,7 +432,10 @@ function DetailPreview({
               <p>类型：{artifact?.type}</p>
               <p>来源工作：{origin?.title ?? "来源不可用"}</p>
               {origin ? (
-                <Link to={to("/tasks/" + origin.id)} className="inline-flex items-center gap-2 text-primary">
+                <Link
+                  to={to("/tasks/" + origin.id)}
+                  className="inline-flex items-center gap-2 text-primary"
+                >
                   查看来源工作 <ArrowRight size={15} aria-hidden="true" />
                 </Link>
               ) : null}
@@ -450,7 +453,11 @@ function DetailPreview({
 function ComposerPreview({ to }: { to: PreviewLink }) {
   return (
     <>
-      <PageHeading label="Delegation" title="交代工作" subtitle="先说清目标与边界，再决定交给谁做。" />
+      <PageHeading
+        label="Delegation"
+        title="交代工作"
+        subtitle="先说清目标与边界，再决定交给谁做。"
+      />
       <Card className="p-6 sm:p-8">
         <div className="grid gap-6 sm:grid-cols-2">
           {[
@@ -469,7 +476,10 @@ function ComposerPreview({ to }: { to: PreviewLink }) {
         <p className="mt-7 rounded-ui-control bg-surface-secondary p-4 text-sm text-text-secondary">
           Composer 结构预览，未接通任务提交或执行服务。
         </p>
-        <Link to={to("/")} className="mira-touch-target mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary">
+        <Link
+          to={to("/")}
+          className="mira-touch-target mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary"
+        >
           <ArrowLeft size={16} aria-hidden="true" /> 返回首页
         </Link>
       </Card>
@@ -491,13 +501,24 @@ export function WorkspaceShell() {
   return (
     <div className="workspace-shell">
       <aside className="workspace-sidebar" aria-label="Mira Cloud 侧边栏">
-        <NavLink to={to("/")} className="flex items-center gap-3 text-text-primary no-underline" aria-label="Mira Cloud 首页">
-          <span className="flex h-11 w-11 items-center justify-center rounded-ui-panel bg-primary text-lg font-bold text-text-inverted">M</span>
+        <NavLink
+          to={to("/")}
+          className="flex items-center gap-3 text-text-primary no-underline"
+          aria-label="Mira Cloud 首页"
+        >
+          <span className="flex h-11 w-11 items-center justify-center rounded-ui-panel bg-primary text-lg font-bold text-text-inverted">
+            M
+          </span>
           <span className="text-base font-semibold">Mira Cloud</span>
         </NavLink>
         <nav className="mt-9 flex flex-col gap-1" aria-label="桌面主导航">
           {nav.map(({ to: path, label, icon: Icon, end }) => (
-            <NavItem key={path} to={to(path)} end={end} icon={<Icon size={18} aria-hidden="true" />}>
+            <NavItem
+              key={path}
+              to={to(path)}
+              end={end}
+              icon={<Icon size={18} aria-hidden="true" />}
+            >
               {label}
             </NavItem>
           ))}
@@ -509,16 +530,27 @@ export function WorkspaceShell() {
           <Plus size={17} aria-hidden="true" /> 交代工作
         </Link>
         <div className="mt-auto space-y-4 pt-8">
-          <Link to={to("/diagnostics")} className="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary no-underline hover:text-text-primary">
+          <Link
+            to={to("/diagnostics")}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary no-underline hover:text-text-primary"
+          >
             <Settings2 size={16} aria-hidden="true" /> 连接诊断
           </Link>
-          <div className="border-t border-border pt-4"><PreviewNotice /></div>
+          <div className="border-t border-border pt-4">
+            <PreviewNotice />
+          </div>
         </div>
       </aside>
 
       <header className="workspace-mobile-header">
-        <NavLink to={to("/")} className="flex items-center gap-2 text-sm font-semibold text-text-primary no-underline" aria-label="Mira Cloud 首页">
-          <span className="flex h-9 w-9 items-center justify-center rounded-ui-control bg-primary font-bold text-text-inverted">M</span>
+        <NavLink
+          to={to("/")}
+          className="flex items-center gap-2 text-sm font-semibold text-text-primary no-underline"
+          aria-label="Mira Cloud 首页"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-ui-control bg-primary font-bold text-text-inverted">
+            M
+          </span>
           Mira Cloud
         </NavLink>
         <Link
@@ -539,22 +571,49 @@ export function WorkspaceShell() {
           <ThemeControls />
         </div>
         <main className="workspace-content" id="main-content">
-          <div className="mb-6 lg:hidden"><PreviewNotice /></div>
+          <div className="mb-6 lg:hidden">
+            <PreviewNotice />
+          </div>
           <Routes>
-            <Route path="/" element={<HomePage scenario={scenario} changeScenario={changeScenario} to={to} />} />
-            <Route path="/attention" element={<PreviewList view="attention" scenario={scenario} to={to} />} />
-            <Route path="/tasks" element={<PreviewList view="tasks" scenario={scenario} to={to} />} />
-            <Route path="/artifacts" element={<PreviewList view="artifacts" scenario={scenario} to={to} />} />
-            <Route path="/tasks/:taskId" element={<DetailPreview kind="task" scenario={scenario} to={to} />} />
-            <Route path="/artifacts/:artifactId" element={<DetailPreview kind="artifact" scenario={scenario} to={to} />} />
+            <Route
+              path="/"
+              element={<HomePage scenario={scenario} changeScenario={changeScenario} to={to} />}
+            />
+            <Route
+              path="/attention"
+              element={<PreviewList view="attention" scenario={scenario} to={to} />}
+            />
+            <Route
+              path="/tasks"
+              element={<PreviewList view="tasks" scenario={scenario} to={to} />}
+            />
+            <Route
+              path="/artifacts"
+              element={<PreviewList view="artifacts" scenario={scenario} to={to} />}
+            />
+            <Route
+              path="/tasks/:taskId"
+              element={<DetailPreview kind="task" scenario={scenario} to={to} />}
+            />
+            <Route
+              path="/artifacts/:artifactId"
+              element={<DetailPreview kind="artifact" scenario={scenario} to={to} />}
+            />
             <Route path="/new" element={<ComposerPreview to={to} />} />
             <Route
               path="/diagnostics"
               element={
                 <>
-                  <PageHeading label="System" title="连接诊断" subtitle="只检查真实基础服务，不代表账号登录和 Agent 执行。" />
+                  <PageHeading
+                    label="System"
+                    title="连接诊断"
+                    subtitle="只检查真实基础服务，不代表账号登录和 Agent 执行。"
+                  />
                   <ConnectionPanel />
-                  <Link to={to("/")} className="mira-touch-target mt-5 inline-flex gap-2 text-sm text-primary">
+                  <Link
+                    to={to("/")}
+                    className="mira-touch-target mt-5 inline-flex gap-2 text-sm text-primary"
+                  >
                     <ArrowLeft size={16} aria-hidden="true" /> 返回首页
                   </Link>
                 </>
@@ -566,7 +625,9 @@ export function WorkspaceShell() {
                 <Card className="p-8">
                   <CircleHelp size={26} className="mb-4 text-icon-secondary" aria-hidden="true" />
                   <h1 className="text-xl font-semibold text-text-primary">没有找到这个页面</h1>
-                  <Link to={to("/")} className="mt-4 inline-flex text-sm text-primary">返回首页</Link>
+                  <Link to={to("/")} className="mt-4 inline-flex text-sm text-primary">
+                    返回首页
+                  </Link>
                 </Card>
               }
             />
