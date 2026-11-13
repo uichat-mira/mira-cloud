@@ -426,3 +426,6 @@ Work 首页 / 在 active 演示情境使用 MiraDesign Card 组合四种业务�
 首页的「调整工作台」仅编辑浏览器本地的展示偏好：卡片顺序、通栏/半宽、显隐与恢复默认。数据保存在版本化的 localStorage 键中，经过 ID 白名单校验，最多可隐藏三张卡；从不发出业务 API 请求、不改变任务状态、不声称账户或跨设备同步。empty 与 unavailable 情境不显示这些虚构卡片。桌面两列、狭窄容器单列的变化由 CSS Container Query 决定，不新增 Shell 导航层。
 
 当前七天图不需要趋势图引擎：基于真实 Scheduler 时间和 Run 历史的趋势图另案接入时再评估 Recharts，避免为演示构建增加首屏包体积。实际数据接线须维持 Attention → Continuity → Artifacts 的有意义阅读优先级，明确区分无数据、未知与来源不可达，且不得从 Fixture 回填生产统计。
+
+
+在原型的 unavailable 数据来源不可用情境，Work 首页与待处理、全部工作、成果列表均直接展示统一诊断状态，省略页面装饰性的 eyebrow/标题/说明和顶部分隔线；错误状态标题与诊断动作仍保留。active/empty 情境的原有标题和导航不受影响。

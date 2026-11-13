@@ -303,6 +303,8 @@ function HomePage({
   to: PreviewLink;
   onCreate: () => void;
 }) {
+  if (scenario === "unavailable") return <UnavailableWorkspace to={to} />;
+
   const widgets: CockpitWidget[] = [
     {
       id: "attention",
@@ -335,15 +337,13 @@ function HomePage({
         eyebrow="Work / Overview"
         title="工作台"
         summary={
-          scenario === "active"
-            ? "有 " +
+          scenario === "empty"
+            ? "还没有交代过工作，从第一件开始。"
+            : "有 " +
               previewAttentions.length +
               " 件事需要你处理，" +
               previewTasks.length +
               " 件工作在手边。"
-            : scenario === "empty"
-              ? "还没有交代过工作，从第一件开始。"
-              : "工作数据暂时不可用，无法确认当前任务。"
         }
         action={
           <button type="button" className="workbench-primary-link" onClick={onCreate}>
@@ -353,8 +353,6 @@ function HomePage({
       />
       {scenario === "empty" ? (
         <EmptyWorkspace onCreate={onCreate} />
-      ) : scenario === "unavailable" ? (
-        <UnavailableWorkspace to={to} />
       ) : (
         <CockpitDashboard widgets={widgets} />
       )}
@@ -375,6 +373,8 @@ function PreviewList({
   to: PreviewLink;
   onCreate: () => void;
 }) {
+  if (scenario === "unavailable") return <UnavailableWorkspace to={to} />;
+
   const headings = {
     attention: ["Work / Attention", "待处理", "需要你决定、补充或核对的事情。"],
     tasks: ["Work / All", "全部工作", "工作目标是主对象；运行记录留在工作内部。"],
@@ -385,9 +385,7 @@ function PreviewList({
   return (
     <>
       <WorkbenchHeader eyebrow={eyebrow} title={title} summary={summary} />
-      {scenario === "unavailable" ? (
-        <UnavailableWorkspace to={to} />
-      ) : scenario === "empty" ? (
+      {scenario === "empty" ? (
         <EmptyWorkspace onCreate={onCreate} />
       ) : view === "attention" ? (
         <section className="workbench-full-ledger" aria-label="待处理列表">
