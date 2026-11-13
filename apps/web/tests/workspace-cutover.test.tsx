@@ -381,10 +381,11 @@ describe("AGT-054 Work workspace migration", () => {
 
     const toolbar = document.querySelector(".workbench-cockpit-toolbar") as HTMLElement;
     const actions = toolbar.querySelector(".workbench-cockpit-toolbar-actions") as HTMLElement;
-    expect(within(actions).getAllByRole("button").map((button) => button.textContent?.trim())).toEqual([
-      "交代工作",
-      "调整工作台",
-    ]);
+    expect(
+      within(actions)
+        .getAllByRole("button")
+        .map((button) => button.textContent?.trim()),
+    ).toEqual(["交代工作", "调整工作台"]);
     const attention = screen.getByRole("region", { name: "需要你关注" });
     const schedule = screen.getByRole("region", { name: "未来七天" });
     expect(
