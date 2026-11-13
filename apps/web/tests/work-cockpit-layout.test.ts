@@ -34,7 +34,9 @@ describe("Work cockpit card rhythm", () => {
     expect(declarations(".workbench-cockpit-card-inner")).toContain("flex: 1 1 auto;");
     expect(declarations(".workbench-cockpit-card-content")).toContain("flex: 1 1 auto;");
     expect(declarations(".workbench-schedule-preview")).toContain("flex: 1 1 auto;");
-    expect(declarations(".workbench-schedule-boundary")).toContain("margin-top: auto;");
+    expect(cockpitCss).toContain(
+      ".workbench-schedule-boundary {\n  margin-top: auto;\n  padding-top: 10px;",
+    );
     expect(cockpitCss).toContain("@container (max-width: 730px)");
   });
 });
