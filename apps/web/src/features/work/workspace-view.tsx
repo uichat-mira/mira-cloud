@@ -1,5 +1,5 @@
 import "./work.css";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -32,6 +32,7 @@ import { ConnectionPanel } from "../connection/connection-panel";
 import { GeneralSettingsPage } from "../settings/general-settings";
 import { MiraBrandLogo } from "../workspace-shell/mira-brand";
 import { WorkspaceShellFrame } from "../workspace-shell/workspace-shell-frame";
+import { PreviewDebugBall } from "../preview-debug/preview-debug-ball";
 import {
   findPreviewArtifact,
   findPreviewArtifacts,
@@ -41,7 +42,6 @@ import {
   parsePreviewScenario,
   previewArtifacts,
   previewAttentions,
-  previewScenarios,
   previewTasks,
   type PreviewArtifact,
   type PreviewAttention,
@@ -132,15 +132,6 @@ function resolveShellTopics(
   return { tabs: [{ value: "unknown", label: "工作" }], value: "unknown" };
 }
 
-function PreviewNotice() {
-  return (
-    <div className="flex items-center gap-2 text-xs text-text-secondary">
-      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" aria-hidden="true" />
-      <span>UI 原型 · 工作、时间、运行及成果均为 Fixture 示例</span>
-    </div>
-  );
-}
-
 function TaskStatus({ status }: { status: PreviewTask["status"] }) {
   if (status === "running") return <Badge variant="primary">正在进行</Badge>;
   if (status === "requested") return <Badge>等待开始</Badge>;
@@ -169,34 +160,6 @@ function RunStatus({ status }: { status: PreviewRun["status"] }) {
       <CheckCircle2 size={13} aria-hidden="true" />
       本次执行完成
     </span>
-  );
-}
-
-function FixtureScenarioBar({
-  scenario,
-  changeScenario,
-}: {
-  scenario: PreviewScenario;
-  changeScenario: (scenario: PreviewScenario) => void;
-}) {
-  return (
-    <div className="workbench-fixture-bar">
-      <span className="workbench-fixture-label">预览情境</span>
-      <div className="workbench-fixture-options" aria-label="选择原型情境">
-        {previewScenarios.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            aria-pressed={scenario === item.value}
-            onClick={() => changeScenario(item.value)}
-            className={scenario === item.value ? "is-active" : ""}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-      <span className="workbench-fixture-hint">只改变 Fixture，不产生执行请求</span>
-    </div>
   );
 }
 
@@ -382,12 +345,10 @@ function WorkbenchHeader({
 
 function HomePage({
   scenario,
-  changeScenario,
   to,
   onCreate,
 }: {
   scenario: PreviewScenario;
-  changeScenario: (next: PreviewScenario) => void;
   to: PreviewLink;
   onCreate: () => void;
 }) {
@@ -413,7 +374,6 @@ function HomePage({
           </button>
         }
       />
-      <FixtureScenarioBar scenario={scenario} changeScenario={changeScenario} />
       {scenario === "empty" ? (
         <EmptyWorkspace onCreate={onCreate} />
       ) : scenario === "unavailable" ? (
@@ -916,6 +876,16 @@ function getContextGroup(pathname: string): string {
   return "工作";
 }
 
+const WorkPreviewDebugPanel = lazy(() => import("./work-preview-debug-panel"));
+
+function hasWorkPreviewDebug(pathname: string): boolean {
+  const pathSegments = pathname.split("/").filter(Boolean);
+  return (
+    ["/", "/new", "/attention", "/tasks", "/artifacts"].includes(pathname) ||
+    (pathSegments.length === 2 && ["tasks", "artifacts"].includes(pathSegments[0] ?? ""))
+  );
+}
+
 export function WorkspaceShell() {
   const [params, setParams] = useSearchParams();
   const [composerOpen, setComposerOpen] = useState(false);
@@ -1132,7 +1102,6 @@ export function WorkspaceShell() {
           <Link to={to("/diagnostics")} className="workspace-sidebar-utility">
             <Cloud size={15} aria-hidden="true" /> 连接诊断
           </Link>
-          <PreviewNotice />
         </div>
       }
       topicTabs={topics.tabs}
@@ -1152,28 +1121,16 @@ export function WorkspaceShell() {
     >
       {!isSettings && location.pathname !== "/diagnostics" ? (
         <div className="workbench-mobile-utility">
-          <PreviewNotice />
           <button type="button" className="workbench-primary-link" onClick={openComposer}>
             <Plus size={15} aria-hidden="true" />
             交代工作
           </button>
         </div>
-      ) : (
-        <div className="mb-5 lg:hidden">
-          <PreviewNotice />
-        </div>
-      )}
+      ) : null}
       <Routes>
         <Route
           path="/"
-          element={
-            <HomePage
-              scenario={scenario}
-              changeScenario={changeScenario}
-              to={to}
-              onCreate={openComposer}
-            />
-          }
+          element={<HomePage scenario={scenario} to={to} onCreate={openComposer} />}
         />
         <Route
           path="/attention"
@@ -1201,14 +1158,7 @@ export function WorkspaceShell() {
         />
         <Route
           path="/new"
-          element={
-            <HomePage
-              scenario={scenario}
-              changeScenario={changeScenario}
-              to={to}
-              onCreate={openComposer}
-            />
-          }
+          element={<HomePage scenario={scenario} to={to} onCreate={openComposer} />}
         />
         <Route path="/settings/general" element={<GeneralSettingsPage />} />
         <Route
@@ -1240,6 +1190,17 @@ export function WorkspaceShell() {
           }
         />
       </Routes>
+      <PreviewDebugBall
+        scope={hasWorkPreviewDebug(location.pathname) ? "work-fixtures" : null}
+        contextKey={location.pathname}
+        title="工作原型调试"
+      >
+        {(close) => (
+          <Suspense fallback={<p className="preview-debug-help">正在加载调试项…</p>}>
+            <WorkPreviewDebugPanel scenario={scenario} onChange={changeScenario} onClose={close} />
+          </Suspense>
+        )}
+      </PreviewDebugBall>
       <ComposerModal open={composerOpen} onClose={closeComposer} />
     </WorkspaceShellFrame>
   );

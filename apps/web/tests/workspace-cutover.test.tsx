@@ -319,7 +319,10 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByText("当前示例版本")).toBeInTheDocument();
   });
 
-  it("keeps empty and unavailable fixture states distinct from real absence", () => {
+  it("keeps empty and unavailable fixture states distinct from real absence", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
     renderWorkspace("/?scenario=empty");
     expect(screen.getByRole("heading", { name: "从第一件工作开始" })).toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: "等你决定" })).toBeNull();
@@ -328,15 +331,73 @@ describe("AGT-054 Work workspace migration", () => {
     expect(within(sidebar).queryByRole("link", { name: /东南亚市场进入研究/ })).toBeNull();
     expect(within(sidebar).queryByRole("link", { name: /新品牌定位与故事/ })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "数据不可用" }));
+    expect(screen.queryByRole("group", { name: "选择原型情境" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "原型调试（拖动移动位置）" }));
+    const debugMenu = await screen.findByRole("group", { name: "选择原型情境" });
+    await user.click(within(debugMenu).getByRole("button", { name: "数据不可用" }));
     expect(screen.getByRole("heading", { name: "工作数据暂时无法更新" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "从第一件工作开始" })).toBeNull();
     expect(screen.getByText("工作数据暂时不可用，无法确认当前任务。")).toBeInTheDocument();
     expect(within(sidebar).queryByRole("link", { name: /东南亚市场进入研究/ })).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "工作进行中" }));
+    await user.click(screen.getByRole("button", { name: "原型调试（拖动移动位置）" }));
+    await user.click(await screen.findByRole("button", { name: "工作进行中" }));
     expect(screen.getByRole("heading", { name: "工作台" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: /东南亚市场进入研究/ })).toBeInTheDocument();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("opens a contextual lazy debug menu only on Work preview routes", async () => {
+    const user = userEvent.setup();
+    const work = renderWorkspace("/tasks/market-research");
+    const launcher = screen.getByRole("button", { name: "原型调试（拖动移动位置）" });
+    expect(launcher).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("group", { name: "选择原型情境" })).toBeNull();
+    expect(document.querySelector(".workbench-fixture-bar")).toBeNull();
+
+    await user.click(launcher);
+    expect(await screen.findByRole("group", { name: "选择原型情境" })).toBeInTheDocument();
+    expect(launcher).toHaveAttribute("aria-expanded", "true");
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("group", { name: "选择原型情境" })).toBeNull());
+    expect(launcher).toHaveFocus();
+    work.unmount();
+
+    renderWorkspace("/settings/general");
+    expect(screen.queryByRole("button", { name: "原型调试（拖动移动位置）" })).toBeNull();
+  });
+
+  it("drags the debug ball without opening its menu, and supports keyboard repositioning", async () => {
+    const user = userEvent.setup();
+    renderWorkspace("/");
+    const launcher = screen.getByRole("button", { name: "原型调试（拖动移动位置）" });
+    const rect = {
+      x: 800,
+      y: 600,
+      left: 800,
+      top: 600,
+      width: 48,
+      height: 48,
+      right: 848,
+      bottom: 648,
+      toJSON: () => ({}),
+    };
+    vi.spyOn(launcher, "getBoundingClientRect").mockReturnValue(rect);
+
+    fireEvent.pointerDown(launcher, { pointerId: 1, button: 0, clientX: 810, clientY: 610 });
+    fireEvent.pointerMove(launcher, { pointerId: 1, clientX: 690, clientY: 530 });
+    fireEvent.pointerUp(launcher, { pointerId: 1, clientX: 690, clientY: 530 });
+    fireEvent.click(launcher);
+    expect(launcher).toHaveAttribute("aria-expanded", "false");
+    expect(launcher.closest(".preview-debug-float")).toHaveAttribute("data-placed", "true");
+
+    launcher.focus();
+    fireEvent.keyDown(launcher, { key: "ArrowLeft" });
+    expect(launcher.closest(".preview-debug-float")).toHaveAttribute("data-placed", "true");
+
+    await user.click(launcher);
+    expect(await screen.findByRole("group", { name: "选择原型情境" })).toBeInTheDocument();
   });
 
   it("does not show stale demo object data on empty or unavailable deep links", () => {
