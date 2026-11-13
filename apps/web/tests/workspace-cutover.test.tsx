@@ -221,6 +221,16 @@ describe("AGT-054 Work workspace migration", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "消息中心" })).toBeInTheDocument();
     expect(screen.getByText("消息尚未接入")).toBeInTheDocument();
+    const inboxStatus = within(document.getElementById("main-content") as HTMLElement).getByRole(
+      "status",
+    );
+    expect(inboxStatus).toHaveTextContent("消息尚未接入");
+    expect(inboxStatus.querySelector(".bg-info-soft")).not.toBeNull();
+    expect(
+      within(document.getElementById("main-content") as HTMLElement).queryByRole("link", {
+        name: "查看送达记录入口",
+      }),
+    ).toBeNull();
     expect(screen.queryByRole("button", { name: "交代工作" })).toBeNull();
     expect(notifications).toHaveAttribute("aria-current", "page");
     expect(work).not.toHaveAttribute("aria-current");
@@ -233,6 +243,9 @@ describe("AGT-054 Work workspace migration", () => {
     await user.click(within(notificationSidebar).getByRole("link", { name: "送达记录" }));
     expect(screen.getByRole("heading", { level: 1, name: "送达记录" })).toBeInTheDocument();
     expect(screen.getByText("尚未接通送达记录")).toBeInTheDocument();
+    expect(
+      within(document.getElementById("main-content") as HTMLElement).getByRole("status"),
+    ).toHaveTextContent("尚未接通送达记录");
     expect(within(notificationSidebar).getByRole("link", { name: "送达记录" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -246,6 +259,9 @@ describe("AGT-054 Work workspace migration", () => {
     await user.click(within(settingsSidebar).getByRole("link", { name: "通知与送达" }));
     expect(screen.getByRole("heading", { level: 1, name: "通知与送达" })).toBeInTheDocument();
     expect(screen.getByText("渠道配置尚未开放")).toBeInTheDocument();
+    expect(
+      within(document.getElementById("main-content") as HTMLElement).getByRole("status"),
+    ).toHaveTextContent("渠道配置尚未开放");
     expect(screen.queryByRole("switch")).toBeNull();
     expect(fetcher).not.toHaveBeenCalled();
 
