@@ -168,7 +168,7 @@ export function CockpitDashboard({
   }
 
   return (
-    <div className="workbench-cockpit">
+    <div className="workbench-cockpit workspace-page-body">
       <div className="workbench-cockpit-toolbar">
         <p>演示数据 · 未接入云端任务服务</p>
         <div className="workbench-cockpit-toolbar-actions">
