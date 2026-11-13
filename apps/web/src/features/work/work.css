@@ -76,30 +76,6 @@ button.workbench-secondary-link {
   background: rgb(var(--mira-color-surface-secondary));
 }
 
-.workbench-overview-grid {
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid rgb(var(--mira-color-text-primary) / 0.35);
-}
-
-.workbench-primary-zone {
-  min-width: 0;
-}
-
-.workbench-attention-zone {
-  min-width: 0;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
-}
-
-/* Attention comes before the work stack at every width, not only in source order. */
-.workbench-attention-zone .workbench-attention-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 24px;
-}
-
 .workbench-zone-heading {
   display: flex;
   min-height: 44px;
@@ -331,11 +307,6 @@ button.workbench-secondary-link {
   color: rgb(var(--mira-color-text-tertiary));
   font-size: 10px;
   line-height: 1.65;
-}
-
-.workbench-recent-output {
-  margin-top: 32px;
-  border-top: 1px solid rgb(var(--mira-color-text-primary) / 0.2);
 }
 
 .workbench-artifact-ledger {
@@ -786,7 +757,6 @@ button.workbench-secondary-link {
     font-size: clamp(22px, 6vw, var(--mira-type-display-size));
   }
 
-  .workbench-overview-grid,
   .workbench-task-now {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -803,14 +773,6 @@ button.workbench-secondary-link {
     align-items: flex-start;
     flex-direction: column;
     gap: 3px;
-  }
-
-  .workbench-primary-zone {
-    padding-right: 0;
-  }
-
-  .workbench-attention-zone .workbench-attention-list {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .workbench-work-row {
@@ -887,4 +849,377 @@ button.workbench-secondary-link {
   color: rgb(var(--mira-color-text-secondary));
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* Card-based Work cockpit. Shell navigation geometry stays outside this scope. */
+.workbench-cockpit {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.workbench-cockpit-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.workbench-cockpit-toolbar p {
+  margin: 0;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.workbench-cockpit-customize,
+.workbench-cockpit-reset,
+.workbench-cockpit-card-edit button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+  padding: 6px 10px;
+  background: rgb(var(--mira-color-surface-primary));
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.workbench-cockpit-customize {
+  flex: 0 0 auto;
+}
+
+.workbench-cockpit-customize:hover,
+.workbench-cockpit-reset:hover,
+.workbench-cockpit-card-edit button:hover:not(:disabled) {
+  background: rgb(var(--mira-color-surface-secondary));
+  color: rgb(var(--mira-color-text-primary));
+}
+
+.workbench-cockpit-card-edit button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.workbench-cockpit-editor {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-bottom: 16px;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-panel);
+  padding: 12px 14px;
+  background: rgb(var(--mira-color-surface-secondary));
+}
+
+.workbench-cockpit-editor small {
+  flex: 1 1 100%;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+}
+
+.workbench-cockpit-visibility {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.workbench-cockpit-visibility label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.workbench-cockpit-visibility input {
+  accent-color: rgb(var(--mira-color-primary));
+}
+
+.workbench-cockpit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.workbench-cockpit-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workbench-cockpit-card[data-span="wide"] {
+  grid-column: 1 / -1;
+}
+
+.workbench-cockpit-card-inner {
+  min-width: 0;
+  padding: 20px 22px 14px;
+}
+
+.workbench-cockpit-card-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.workbench-cockpit-card-header h2 {
+  margin: 0;
+  color: rgb(var(--mira-color-text-primary));
+  font-size: var(--mira-type-heading-2-size);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.workbench-cockpit-card-header a {
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.workbench-cockpit-card-header a:hover {
+  color: rgb(var(--mira-color-primary));
+}
+
+.workbench-cockpit-card-edit {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.workbench-cockpit-card-edit button {
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.workbench-cockpit-card-content {
+  min-width: 0;
+}
+
+.workbench-cockpit-card .workbench-work-stack,
+.workbench-cockpit-card .workbench-attention-list,
+.workbench-cockpit-card .workbench-artifact-ledger {
+  border-top: 0;
+}
+
+.workbench-cockpit-card .workbench-work-row {
+  gap: 12px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.workbench-cockpit-card .workbench-work-row::before {
+  top: 14px;
+  bottom: 14px;
+}
+
+.workbench-cockpit-card[data-span="normal"] .workbench-work-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.workbench-cockpit-card[data-span="normal"] .workbench-work-side {
+  align-items: flex-start;
+}
+
+.workbench-cockpit-card[data-span="normal"] .workbench-artifact-row {
+  grid-template-columns: 30px minmax(0, 1fr) 16px;
+}
+
+.workbench-cockpit-card[data-span="normal"] .workbench-artifact-time {
+  display: none;
+}
+
+.workbench-cockpit-card .workbench-attention-row {
+  padding: 12px 0;
+}
+
+.workbench-cockpit-card .workbench-artifact-row {
+  min-height: 60px;
+}
+
+.workbench-schedule-intro,
+.workbench-schedule-boundary {
+  margin: 0;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.workbench-schedule-chart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(38px, 1fr));
+  gap: 4px;
+  overflow-x: auto;
+  margin: 12px 0 10px;
+  padding-bottom: 4px;
+}
+
+.workbench-schedule-chart button {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  gap: 5px;
+  border: 0;
+  border-radius: var(--mira-radius-ui-control);
+  padding: 7px 2px;
+  color: rgb(var(--mira-color-text-secondary));
+  background: transparent;
+  cursor: pointer;
+}
+
+.workbench-schedule-chart button:hover,
+.workbench-schedule-chart button.is-selected {
+  background: rgb(var(--mira-color-surface-secondary));
+}
+
+.workbench-schedule-count {
+  color: rgb(var(--mira-color-text-primary));
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.workbench-schedule-bar-track {
+  display: flex;
+  width: min(100%, 26px);
+  height: 64px;
+  align-items: end;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgb(var(--mira-color-surface-tertiary));
+}
+
+.workbench-schedule-bar {
+  display: block;
+  width: 100%;
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+  background: rgb(var(--mira-color-primary) / 0.55);
+}
+
+.workbench-schedule-chart button.is-selected .workbench-schedule-bar {
+  background: rgb(var(--mira-color-primary));
+}
+
+.workbench-schedule-day {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.workbench-schedule-chart small {
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.workbench-schedule-selected {
+  border-radius: var(--mira-radius-ui-control);
+  padding: 12px;
+  background: rgb(var(--mira-color-surface-secondary));
+}
+
+.workbench-schedule-selected-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.workbench-schedule-selected-heading strong {
+  color: rgb(var(--mira-color-text-primary));
+}
+
+.workbench-schedule-selected-heading small {
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+}
+
+.workbench-schedule-selected ul {
+  margin: 7px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workbench-schedule-selected li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.workbench-schedule-selected li > span {
+  flex: 0 0 auto;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-variant-numeric: tabular-nums;
+}
+
+.workbench-schedule-selected a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgb(var(--mira-color-text-primary));
+  text-decoration: none;
+}
+
+.workbench-schedule-selected a:hover {
+  color: rgb(var(--mira-color-primary));
+}
+
+.workbench-schedule-selected > p {
+  margin: 6px 0 0;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+}
+
+.workbench-schedule-boundary {
+  margin-top: 10px;
+  font-size: 10px;
+}
+
+@container (max-width: 730px) {
+  .workbench-cockpit-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workbench-cockpit-card[data-span="wide"] {
+    grid-column: auto;
+  }
+
+  .workbench-cockpit-card-inner {
+    padding: 16px 14px 12px;
+  }
+
+  .workbench-cockpit-toolbar {
+    align-items: flex-start;
+  }
+}
+
+@media (pointer: coarse) {
+  .workbench-cockpit-customize,
+  .workbench-cockpit-reset,
+  .workbench-cockpit-card-edit button {
+    min-height: 44px;
+  }
+
+  .workbench-schedule-chart button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .workbench-cockpit-visibility label {
+    min-height: 44px;
+  }
 }

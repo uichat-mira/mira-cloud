@@ -31,6 +31,8 @@ import {
   useSearchParams,
 } from "react-router";
 import { Badge, ExpandableSection, ModalShell } from "../../components/mira-design/index.ts";
+import { CockpitDashboard, type CockpitWidget } from "./cockpit-dashboard";
+import { SchedulePreview } from "./schedule-preview";
 import { ConnectionPanel } from "../connection/connection-panel";
 import { GeneralSettingsPage } from "../settings/general-settings";
 import { NotificationSettingsPage } from "../settings/notification-settings";
@@ -301,6 +303,32 @@ function HomePage({
   to: PreviewLink;
   onCreate: () => void;
 }) {
+  const widgets: CockpitWidget[] = [
+    {
+      id: "attention",
+      title: "需要你关注",
+      action: <Link to={to("/attention")}>全部待处理 · {previewAttentions.length} 项</Link>,
+      content: <AttentionQueue items={previewAttentions} to={to} />,
+    },
+    {
+      id: "schedule",
+      title: "未来七天",
+      content: <SchedulePreview to={to} />,
+    },
+    {
+      id: "managed",
+      title: "持续中的工作",
+      action: <Link to={to("/tasks")}>全部工作</Link>,
+      content: <WorkStack tasks={previewTasks} to={to} />,
+    },
+    {
+      id: "artifacts",
+      title: "最近交付",
+      action: <Link to={to("/artifacts")}>全部成果</Link>,
+      content: <ArtifactLedger artifacts={previewArtifacts} to={to} />,
+    },
+  ];
+
   return (
     <>
       <WorkbenchHeader
@@ -328,31 +356,7 @@ function HomePage({
       ) : scenario === "unavailable" ? (
         <UnavailableWorkspace to={to} />
       ) : (
-        <div className="workbench-overview-grid">
-          {previewAttentions.length > 0 ? (
-            <aside className="workbench-attention-zone" aria-label="等你决定">
-              <div className="workbench-zone-heading">
-                <span>等你决定</span>
-                <Link to={to("/attention")}>全部待处理 · {previewAttentions.length} 项</Link>
-              </div>
-              <AttentionQueue items={previewAttentions} to={to} />
-            </aside>
-          ) : null}
-          <section className="workbench-primary-zone" aria-label="正在推进">
-            <div className="workbench-zone-heading">
-              <span>正在推进</span>
-              <small>{previewTasks.length} 件 · 按活动排序</small>
-            </div>
-            <WorkStack tasks={previewTasks} to={to} />
-            <section className="workbench-recent-output" aria-label="最近成果">
-              <div className="workbench-zone-heading">
-                <span>最近成果</span>
-                <Link to={to("/artifacts")}>全部成果</Link>
-              </div>
-              <ArtifactLedger artifacts={previewArtifacts} to={to} />
-            </section>
-          </section>
-        </div>
+        <CockpitDashboard widgets={widgets} />
       )}
     </>
   );

@@ -147,6 +147,23 @@ export const previewRuns: readonly PreviewRun[] = [
   },
 ];
 
+/** Only illustrates a schedule-shaped UI; never implies a real trigger or delivery. */
+export interface PreviewScheduleItem {
+  dayOffset: number;
+  taskId: string;
+  title: string;
+  time: string;
+}
+
+export const previewScheduleItems: readonly PreviewScheduleItem[] = [
+  { dayOffset: 0, taskId: "market-research", title: "更新市场资料线索", time: "09:00" },
+  { dayOffset: 1, taskId: "market-research", title: "核对重点市场准入资料", time: "10:30" },
+  { dayOffset: 1, taskId: "research-followup", title: "整理访谈问题", time: "16:00" },
+  { dayOffset: 2, taskId: "market-research", title: "复核研究来源", time: "11:00" },
+  { dayOffset: 4, taskId: "market-research", title: "整理本周市场发现", time: "15:00" },
+  { dayOffset: 6, taskId: "brand-direction", title: "回顾品牌方向", time: "09:30" },
+];
+
 export const previewScenarios: readonly {
   value: PreviewScenario;
   label: string;
