@@ -45,6 +45,55 @@ describe("AGT-054 Work workspace migration", () => {
     expect(within(allWork).getByRole("button", { name: "交代工作" })).toBeInTheDocument();
   });
 
+  it("gives the Work cockpit an explicit sidebar home selection and preserves root-only activation", async () => {
+    const user = userEvent.setup();
+    renderWorkspace("/?scenario=empty");
+
+    const sidebar = screen.getByRole("complementary", { name: "当前业务" });
+    const home = within(sidebar).getByRole("link", { name: "工作台" });
+    const all = within(sidebar).getByRole("link", { name: "全部工作" });
+    expect(home).toHaveAttribute("aria-current", "page");
+    expect(home).toHaveClass("workspace-sidebar-item-active");
+    expect(home).toHaveAttribute("href", "/?scenario=empty");
+    expect(all).not.toHaveAttribute("aria-current");
+
+    await user.click(all);
+    expect(home).not.toHaveAttribute("aria-current");
+    expect(all).toHaveAttribute("aria-current", "page");
+    await user.click(home);
+    expect(home).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).toBeNull();
+  });
+
+  it("exposes the same Work home selection in the mobile object drawer", async () => {
+    const user = userEvent.setup();
+    renderWorkspace("/");
+    await user.click(screen.getByRole("button", { name: "切换工作对象" }));
+    const drawer = screen
+      .getAllByRole("button", { name: "关闭工作对象导航" })
+      .find((button) => button.closest("aside"))
+      ?.closest("aside");
+    expect(drawer).not.toBeNull();
+    const nav = within(drawer as HTMLElement).getByRole("navigation", { name: "工作" });
+    const home = within(nav).getByRole("link", { name: "工作台" });
+    expect(home).toHaveAttribute("aria-current", "page");
+    await user.click(within(nav).getByRole("link", { name: "全部工作" }));
+    expect(screen.getByRole("heading", { level: 1, name: "全部工作" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "切换工作对象" }));
+    const nextDrawer = screen
+      .getAllByRole("button", { name: "关闭工作对象导航" })
+      .find((button) => button.closest("aside"))
+      ?.closest("aside");
+    expect(nextDrawer).not.toBeNull();
+    const nextNav = within(nextDrawer as HTMLElement).getByRole("navigation", { name: "工作" });
+    expect(within(nextNav).getByRole("link", { name: "工作台" })).not.toHaveAttribute(
+      "aria-current",
+    );
+    await user.click(within(nextNav).getByRole("link", { name: "工作台" }));
+    expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
+  });
+
   it("opens the Composer as a modal without leaving the current Task route", async () => {
     const user = userEvent.setup();
     const fetcher = vi.fn();
