@@ -17,11 +17,7 @@ export interface CockpitWidget {
   content: ReactNode;
 }
 
-function moveWidget(
-  layout: CockpitLayout,
-  id: CockpitWidgetId,
-  direction: -1 | 1,
-): CockpitLayout {
+function moveWidget(layout: CockpitLayout, id: CockpitWidgetId, direction: -1 | 1): CockpitLayout {
   const visible = layout.order.filter((item) => !layout.hidden.includes(item));
   const index = visible.indexOf(id);
   const neighbor = visible[index + direction];
