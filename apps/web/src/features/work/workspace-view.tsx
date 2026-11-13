@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  Bell,
   BookOpen,
   Briefcase,
   CheckCircle2,
@@ -14,6 +15,7 @@ import {
   Plug,
   Plus,
   Settings2,
+  Send,
   Sparkles,
   WifiOff,
   Workflow,
@@ -30,6 +32,11 @@ import {
 import { Badge, ExpandableSection, ModalShell } from "../../components/mira-design/index.ts";
 import { ConnectionPanel } from "../connection/connection-panel";
 import { GeneralSettingsPage } from "../settings/general-settings";
+import { NotificationSettingsPage } from "../settings/notification-settings";
+import {
+  NotificationsInboxPage,
+  NotificationDeliveriesPage,
+} from "../notifications/notification-pages";
 import { MiraBrandLogo } from "../workspace-shell/mira-brand";
 import { WorkspaceShellFrame } from "../workspace-shell/workspace-shell-frame";
 import { PreviewDebugBall } from "../preview-debug/preview-debug-ball";
@@ -831,13 +838,16 @@ function getContextTitle(pathname: string, scenario: PreviewScenario): string {
   if (pathname === "/artifacts") return "成果";
   if (pathname === "/tasks") return "全部工作";
   if (pathname === "/diagnostics") return "连接诊断";
+  if (pathname === "/notifications") return "全部消息";
+  if (pathname === "/notifications/deliveries") return "送达记录";
   if (pathname === "/settings/general") return "通用";
+  if (pathname === "/settings/notifications") return "通知与送达";
   return "概览";
 }
 
 function getContextGroup(pathname: string): string {
-  if (pathname.startsWith("/settings/")) return "设置";
-  if (pathname === "/diagnostics") return "系统";
+  if (pathname.startsWith("/settings/") || pathname === "/diagnostics") return "设置";
+  if (pathname.startsWith("/notifications")) return "消息中心";
   return "工作";
 }
 
@@ -877,13 +887,17 @@ export function WorkspaceShell() {
   };
 
   const visibleTasks = scenario === "active" ? previewTasks : [];
+  const isSettings =
+    location.pathname.startsWith("/settings/") || location.pathname === "/diagnostics";
+  const isNotifications = location.pathname.startsWith("/notifications");
+  const isWork = !isSettings && !isNotifications;
 
   const railItems = [
     {
       id: "work",
       label: "工作",
       icon: <Briefcase size={19} aria-hidden="true" />,
-      active: true,
+      active: isWork,
       to: to("/"),
     },
     {
@@ -903,6 +917,23 @@ export function WorkspaceShell() {
       label: "连接",
       icon: <Plug size={19} aria-hidden="true" />,
       disabled: true,
+    },
+  ] as const;
+
+  const globalItems = [
+    {
+      id: "notifications",
+      label: "消息中心",
+      icon: <Bell size={19} aria-hidden="true" />,
+      active: isNotifications,
+      to: "/notifications",
+    },
+    {
+      id: "settings",
+      label: "设置",
+      icon: <Settings2 size={19} aria-hidden="true" />,
+      active: isSettings,
+      to: "/settings/general",
     },
   ] as const;
 
@@ -1038,17 +1069,60 @@ export function WorkspaceShell() {
         {
           id: "general-settings",
           label: "通用",
-          to: to("/settings/general"),
+          to: "/settings/general",
           icon: <Settings2 size={15} aria-hidden="true" />,
+          end: true,
+        },
+        {
+          id: "notification-preferences",
+          label: "通知与送达",
+          to: "/settings/notifications",
+          icon: <Bell size={15} aria-hidden="true" />,
+          end: true,
+        },
+        {
+          id: "diagnostics",
+          label: "连接诊断",
+          to: "/diagnostics",
+          icon: <Cloud size={15} aria-hidden="true" />,
           end: true,
         },
       ],
     },
   ] as const;
 
-  const isSettings = location.pathname.startsWith("/settings/");
-  const sidebarSections = isSettings ? settingsSidebarSections : workSidebarSections;
-  const mobileSidebarSections = isSettings ? settingsSidebarSections : mobileWorkSidebarSections;
+  const notificationSidebarSections = [
+    {
+      id: "notifications",
+      items: [
+        {
+          id: "notifications-inbox",
+          label: "全部消息",
+          to: "/notifications",
+          icon: <Bell size={15} aria-hidden="true" />,
+          end: true,
+        },
+        {
+          id: "delivery-records",
+          label: "送达记录",
+          to: "/notifications/deliveries",
+          icon: <Send size={15} aria-hidden="true" />,
+          end: true,
+        },
+      ],
+    },
+  ] as const;
+
+  const sidebarSections = isSettings
+    ? settingsSidebarSections
+    : isNotifications
+      ? notificationSidebarSections
+      : workSidebarSections;
+  const mobileSidebarSections = isSettings
+    ? settingsSidebarSections
+    : isNotifications
+      ? notificationSidebarSections
+      : mobileWorkSidebarSections;
 
   return (
     <WorkspaceShellFrame
@@ -1064,26 +1138,13 @@ export function WorkspaceShell() {
       }
       mobileBrand={<MiraBrandLogo />}
       railItems={railItems}
-      sidebarTitle={isSettings ? "设置" : "工作"}
-      sidebarSubtitle={isSettings ? "Preferences" : "Personal Workspace"}
+      globalItems={globalItems}
+      sidebarTitle={isSettings ? "设置" : isNotifications ? "消息中心" : "工作"}
+      sidebarSubtitle={
+        isSettings ? "Preferences" : isNotifications ? "Notifications" : "Personal Workspace"
+      }
       sidebarSections={sidebarSections}
       mobileSidebarSections={mobileSidebarSections}
-      sidebarFooter={
-        <div className="space-y-4">
-          {isSettings ? (
-            <Link to={to("/")} className="workspace-sidebar-utility">
-              <Briefcase size={15} aria-hidden="true" /> 返回工作
-            </Link>
-          ) : (
-            <Link to={to("/settings/general")} className="workspace-sidebar-utility">
-              <Settings2 size={15} aria-hidden="true" /> 设置
-            </Link>
-          )}
-          <Link to={to("/diagnostics")} className="workspace-sidebar-utility">
-            <Cloud size={15} aria-hidden="true" /> 连接诊断
-          </Link>
-        </div>
-      }
       topbarLeading={
         <div className="flex min-w-0 items-center gap-2 text-sm text-text-secondary">
           <Cloud size={15} aria-hidden="true" />
@@ -1096,7 +1157,7 @@ export function WorkspaceShell() {
       }
       mobileContextTitle={getContextTitle(location.pathname, scenario)}
     >
-      {!isSettings && location.pathname !== "/diagnostics" ? (
+      {isWork ? (
         <div className="workbench-mobile-utility">
           <button type="button" className="workbench-primary-link" onClick={openComposer}>
             <Plus size={15} aria-hidden="true" />
@@ -1137,7 +1198,10 @@ export function WorkspaceShell() {
           path="/new"
           element={<HomePage scenario={scenario} to={to} onCreate={openComposer} />}
         />
+        <Route path="/notifications" element={<NotificationsInboxPage />} />
+        <Route path="/notifications/deliveries" element={<NotificationDeliveriesPage />} />
         <Route path="/settings/general" element={<GeneralSettingsPage />} />
+        <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
         <Route
           path="/diagnostics"
           element={

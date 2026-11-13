@@ -80,10 +80,12 @@ function MobileWorkspaceDrawer({
   open,
   onClose,
   items,
+  globalItems,
 }: {
   open: boolean;
   onClose: () => void;
   items: readonly WorkspaceRailItem[];
+  globalItems: readonly WorkspaceRailItem[];
 }) {
   return (
     <Drawer
@@ -94,7 +96,7 @@ function MobileWorkspaceDrawer({
       header={
         <div>
           <div className="text-sm font-semibold text-text-primary">切换工作台</div>
-          <div className="mt-1 text-xs text-text-tertiary">选择 Mira Cloud 的业务面向</div>
+          <div className="mt-1 text-xs text-text-tertiary">工作空间与全局入口</div>
         </div>
       }
       closeLabel="关闭工作台导航"
@@ -123,6 +125,24 @@ function MobileWorkspaceDrawer({
           ),
         )}
       </nav>
+      <section className="mt-5" aria-label="全局入口">
+        <p className="mb-2 px-3 text-xs font-medium text-text-tertiary">全局</p>
+        <nav className="workspace-mobile-drawer-list" aria-label="移动全局入口">
+          {globalItems.map((item) => (
+            <Link
+              key={item.id}
+              to={item.to ?? "/"}
+              onClick={onClose}
+              aria-current={item.active ? "page" : undefined}
+              className={item.active ? "is-active" : ""}
+            >
+              <span aria-hidden="true">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.active ? <small>当前</small> : null}
+            </Link>
+          ))}
+        </nav>
+      </section>
     </Drawer>
   );
 }
@@ -251,6 +271,7 @@ export function WorkspaceShellFrame({
   brand,
   mobileBrand,
   railItems,
+  globalItems = [],
   sidebarTitle,
   sidebarSubtitle,
   sidebarAction,
@@ -265,7 +286,8 @@ export function WorkspaceShellFrame({
   children,
 }: WorkspaceShellFrameProps) {
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null);
-  const activeWorkspace = railItems.find((item) => item.active) ?? railItems[0];
+  const activeWorkspace =
+    [...railItems, ...globalItems].find((item) => item.active) ?? railItems[0];
 
   return (
     <div
@@ -278,6 +300,11 @@ export function WorkspaceShellFrame({
         <div className="workspace-rail-brand">{brand}</div>
         <nav className="workspace-rail-nav" aria-label="业务工作台">
           {railItems.map((item) => (
+            <RailItem key={item.id} item={item} />
+          ))}
+        </nav>
+        <nav className="workspace-rail-utilities" aria-label="全局入口">
+          {globalItems.map((item) => (
             <RailItem key={item.id} item={item} />
           ))}
         </nav>
@@ -366,6 +393,7 @@ export function WorkspaceShellFrame({
         open={mobilePanel === "workspaces"}
         onClose={() => setMobilePanel(null)}
         items={railItems}
+        globalItems={globalItems}
       />
       <MobileObjectDrawer
         open={mobilePanel === "objects"}
