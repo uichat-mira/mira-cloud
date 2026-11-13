@@ -3,7 +3,6 @@ import { ArrowDown, ArrowUp, Plus, RotateCcw, SlidersHorizontal } from "lucide-r
 
 import { Button, Card, ModalShell } from "../../components/mira-design/index.ts";
 import {
-  cockpitWidgetIds,
   defaultCockpitLayout,
   persistCockpitLayout,
   readCockpitLayout,
