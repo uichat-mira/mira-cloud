@@ -52,6 +52,7 @@ describe("AGT-062 Workspace shell geometry", () => {
     expect(shellCss).not.toContain(".workspace-topicbar");
     expect(shellCss).not.toContain("--workspace-topicbar-height");
   });
+
   it("gives every page the Home-sized canvas without feature-local outer width caps", () => {
     expect(defaultWorkspaceShellLayout.contentMaxWidth).toBe(1320);
     const vars = createWorkspaceShellStyleVars({ contentMaxWidth: 1440 });
@@ -68,10 +69,9 @@ describe("AGT-062 Workspace shell geometry", () => {
       ".workbench-task-overview,\n.workbench-task-progress",
       ".workbench-artifact-preview",
     ]) {
-      expect(cssRule(workCss, selector)).not.toMatch(/(?:max-)?width:\\s*min\\(100%,\\s*\\d+px\\)/);
+      expect(cssRule(workCss, selector)).not.toMatch(/(?:max-)?width:\s*min\(100%,\s*\d+px\)/);
     }
     // Text-column limits are allowed; they do not constrain the page surface.
     expect(workCss).toContain(".workbench-artifact-preview p {");
   });
-
 });
