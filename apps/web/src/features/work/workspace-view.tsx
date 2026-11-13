@@ -383,15 +383,15 @@ function PreviewList({
       {scenario === "empty" ? (
         <EmptyWorkspace onCreate={onCreate} />
       ) : view === "attention" ? (
-        <section className="workbench-full-ledger" aria-label="待处理列表">
+        <section className="workbench-full-ledger workspace-page-body" aria-label="待处理列表">
           <AttentionQueue items={previewAttentions} to={to} />
         </section>
       ) : view === "tasks" ? (
-        <section className="workbench-full-ledger" aria-label="全部工作列表">
+        <section className="workbench-full-ledger workspace-page-body" aria-label="全部工作列表">
           <WorkStack tasks={previewTasks} to={to} />
         </section>
       ) : (
-        <section className="workbench-full-ledger" aria-label="成果列表">
+        <section className="workbench-full-ledger workspace-page-body" aria-label="成果列表">
           <ArtifactLedger artifacts={previewArtifacts} to={to} />
         </section>
       )}
@@ -492,7 +492,7 @@ function TaskOverview({
   to: PreviewLink;
 }) {
   return (
-    <div className="workbench-task-overview">
+    <div className="workbench-task-overview workspace-page-body">
       <section className="workbench-task-now" aria-label="当前状态与下一步">
         <div className="workbench-task-now-main">
           <div className="workbench-zone-heading">
@@ -566,7 +566,7 @@ function TaskProgress({
   to: PreviewLink;
 }) {
   return (
-    <div className="workbench-task-progress">
+    <div className="workbench-task-progress workspace-page-body">
       <section aria-label={task.title + " 的进展"}>
         <div className="workbench-zone-heading">
           <span>工作进展</span>
@@ -632,7 +632,7 @@ function TaskDetail({ task, view, to }: { task: PreviewTask; view: TaskTopic; to
       ) : null}
 
       {view === "artifacts" ? (
-        <section className="workbench-full-ledger" aria-label={task.title + " 的成果"}>
+        <section className="workbench-full-ledger workspace-page-body" aria-label={task.title + " 的成果"}>
           <ArtifactLedger artifacts={artifacts} to={to} />
         </section>
       ) : null}
@@ -661,7 +661,7 @@ function ArtifactDetail({
       />
 
       {view === "preview" ? (
-        <section className="workbench-artifact-preview" aria-label="成果预览">
+        <section className="workbench-artifact-preview workspace-page-body" aria-label="成果预览">
           <div className="workbench-artifact-preview-mark">
             <FileText size={24} aria-hidden="true" />
           </div>
@@ -685,7 +685,7 @@ function ArtifactDetail({
       ) : null}
 
       {view === "source" ? (
-        <section className="workbench-full-ledger" aria-label="成果来源">
+        <section className="workbench-full-ledger workspace-page-body" aria-label="成果来源">
           <dl className="workbench-fact-list workbench-fact-list-wide">
             <div>
               <dt>来源工作</dt>
@@ -714,7 +714,7 @@ function ArtifactDetail({
       ) : null}
 
       {view === "versions" ? (
-        <section className="workbench-full-ledger" aria-label="成果版本">
+        <section className="workbench-full-ledger workspace-page-body" aria-label="成果版本">
           <div className="workbench-version-row">
             <span>{artifact.version}</span>
             <strong>当前示例版本</strong>
