@@ -212,6 +212,10 @@ describe("AGT-054 Work workspace migration", () => {
       within(attentionZone).getByRole("link", { name: /研究摘要，等待你的确认/ }),
     ).toBeInTheDocument();
     expect(within(workZone).getByRole("region", { name: "最近成果" })).toBeInTheDocument();
+    expect(
+      attentionZone.compareDocumentPosition(workZone) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByText("有 2 件事需要你处理，3 件工作在手边。")).toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
   });
 
@@ -244,7 +248,7 @@ describe("AGT-054 Work workspace migration", () => {
 
     const now = screen.getByRole("region", { name: "当前状态与下一步" });
     expect(within(now).getAllByText("正在进行")).toHaveLength(2);
-    expect(within(now).getByText("查看工作进展")).toBeInTheDocument();
+    expect(within(now).getByText("继续核对重点市场的准入条件与资料来源")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "需要你处理" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "近期进展" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "相关成果" })).toBeInTheDocument();
@@ -319,13 +323,44 @@ describe("AGT-054 Work workspace migration", () => {
     renderWorkspace("/?scenario=empty");
     expect(screen.getByRole("heading", { name: "从第一件工作开始" })).toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: "等你决定" })).toBeNull();
+    expect(screen.getByText("还没有交代过工作，从第一件开始。")).toBeInTheDocument();
+    const sidebar = screen.getByRole("complementary", { name: "当前业务" });
+    expect(within(sidebar).queryByRole("link", { name: /东南亚市场进入研究/ })).toBeNull();
+    expect(within(sidebar).queryByRole("link", { name: /新品牌定位与故事/ })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "数据不可用" }));
     expect(screen.getByRole("heading", { name: "工作数据暂时无法更新" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "从第一件工作开始" })).toBeNull();
+    expect(screen.getByText("工作数据暂时不可用，无法确认当前任务。")).toBeInTheDocument();
+    expect(within(sidebar).queryByRole("link", { name: /东南亚市场进入研究/ })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "工作进行中" }));
     expect(screen.getByRole("heading", { name: "工作台" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("link", { name: /东南亚市场进入研究/ })).toBeInTheDocument();
+  });
+
+  it("does not show stale demo object data on empty or unavailable deep links", () => {
+    const empty = renderWorkspace("/tasks/brand-direction?scenario=empty");
+    expect(screen.getByRole("heading", { name: "这个情境还没有工作" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "工作数据暂时无法更新" })).toBeNull();
+    expect(screen.queryByText("新品牌定位与故事")).toBeNull();
+    expect(screen.queryByRole("tab", { name: "进展" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "尚无工作" })).toBeInTheDocument();
+    empty.unmount();
+
+    renderWorkspace("/tasks/brand-direction?scenario=unavailable");
+    expect(screen.getByRole("heading", { name: "工作数据暂时无法更新" })).toBeInTheDocument();
+    expect(screen.queryByText("新品牌定位与故事")).toBeNull();
+    expect(screen.queryByRole("tab", { name: "进展" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "数据不可用" })).toBeInTheDocument();
+  });
+
+  it("labels waiting-for-input work honestly instead of implying it can proceed", () => {
+    renderWorkspace("/tasks/brand-direction");
+    const now = screen.getByRole("region", { name: "当前状态与下一步" });
+    expect(now).toHaveTextContent("等待补充材料");
+    expect(now).toHaveTextContent("补充目标受众参考资料后继续");
+    expect(now).not.toHaveTextContent("可继续");
   });
 
   it("opens the workspace switcher from the left without mixing in Work tasks", async () => {
@@ -351,7 +386,7 @@ describe("AGT-054 Work workspace migration", () => {
     expect(workspaceCloseButtons.some((button) => button.closest("aside") !== null)).toBe(true);
   });
 
-  it("nests Work tasks under independent collapsible groups in the left object drawer", async () => {
+  it("nests each Work task once under one collapsible mobile project group", async () => {
     const user = userEvent.setup();
     renderWorkspace("/tasks/market-research?view=runs");
 
@@ -374,21 +409,25 @@ describe("AGT-054 Work workspace migration", () => {
     expect(within(workNavigation).getByRole("link", { name: "全部工作" })).toBeInTheDocument();
 
     const projects = within(objectDrawer as HTMLElement).getByRole("button", { name: /项目/ });
-    const pinned = within(objectDrawer as HTMLElement).getByRole("button", { name: /置顶/ });
-    const recent = within(objectDrawer as HTMLElement).getByRole("button", { name: /最近/ });
     expect(projects).toHaveAttribute("aria-expanded", "false");
-    expect(pinned).toHaveAttribute("aria-expanded", "false");
-    expect(recent).toHaveAttribute("aria-expanded", "false");
+    expect(within(objectDrawer as HTMLElement).queryByRole("button", { name: /置顶/ })).toBeNull();
+    expect(within(objectDrawer as HTMLElement).queryByRole("button", { name: /最近/ })).toBeNull();
     expect(
       within(objectDrawer as HTMLElement).queryByRole("link", { name: "新品牌定位与故事" }),
     ).toBeNull();
 
     await user.click(projects);
     expect(projects).toHaveAttribute("aria-expanded", "true");
-    expect(pinned).toHaveAttribute("aria-expanded", "false");
     const projectNavigation = within(objectDrawer as HTMLElement).getByRole("navigation", {
       name: "项目",
     });
+    expect(within(projectNavigation).getAllByRole("link")).toHaveLength(3);
+    expect(
+      within(projectNavigation).getByRole("link", { name: /东南亚市场进入研究/ }),
+    ).toHaveTextContent("置顶");
+    expect(
+      within(projectNavigation).getByRole("link", { name: /新品牌定位与故事/ }),
+    ).toHaveTextContent("待补充");
     await user.click(within(projectNavigation).getByRole("link", { name: /新品牌定位与故事/ }));
 
     expect(screen.getByRole("heading", { name: "新品牌定位与故事" })).toBeInTheDocument();

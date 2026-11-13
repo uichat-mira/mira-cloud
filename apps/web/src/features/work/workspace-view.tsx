@@ -144,7 +144,7 @@ function PreviewNotice() {
 function TaskStatus({ status }: { status: PreviewTask["status"] }) {
   if (status === "running") return <Badge variant="primary">正在进行</Badge>;
   if (status === "requested") return <Badge>等待开始</Badge>;
-  return <Badge variant="success">可继续</Badge>;
+  return <Badge variant="warning">等待补充材料</Badge>;
 }
 
 function RunStatus({ status }: { status: PreviewRun["status"] }) {
@@ -243,7 +243,7 @@ function WorkRow({ task, to }: { task: PreviewTask; to: PreviewLink }) {
       ? "workbench-work-row-running"
       : task.status === "requested"
         ? "workbench-work-row-requested"
-        : "workbench-work-row-ready";
+        : "workbench-work-row-waiting-input";
 
   return (
     <article className={"workbench-work-row " + statusClass}>
@@ -271,7 +271,7 @@ function WorkRow({ task, to }: { task: PreviewTask; to: PreviewLink }) {
       <div className="workbench-work-side">
         {activeRun ? <RunStatus status={activeRun.status} /> : null}
         <Link to={to("/tasks/" + task.id)} className="workbench-row-link">
-          {task.next} <ArrowRight size={14} aria-hidden="true" />
+          查看工作 <ArrowRight size={14} aria-hidden="true" />
         </Link>
       </div>
     </article>
@@ -396,7 +396,17 @@ function HomePage({
       <WorkbenchHeader
         eyebrow="Work / Overview"
         title="工作台"
-        summary="两件事等你处理，三件工作在手边。"
+        summary={
+          scenario === "active"
+            ? "有 " +
+              previewAttentions.length +
+              " 件事需要你处理，" +
+              previewTasks.length +
+              " 件工作在手边。"
+            : scenario === "empty"
+              ? "还没有交代过工作，从第一件开始。"
+              : "工作数据暂时不可用，无法确认当前任务。"
+        }
         action={
           <button type="button" className="workbench-primary-link" onClick={onCreate}>
             <Plus size={15} aria-hidden="true" /> 交代工作
@@ -410,6 +420,15 @@ function HomePage({
         <UnavailableWorkspace to={to} />
       ) : (
         <div className="workbench-overview-grid">
+          {previewAttentions.length > 0 ? (
+            <aside className="workbench-attention-zone" aria-label="等你决定">
+              <div className="workbench-zone-heading">
+                <span>等你决定</span>
+                <Link to={to("/attention")}>全部待处理 · {previewAttentions.length} 项</Link>
+              </div>
+              <AttentionQueue items={previewAttentions} to={to} />
+            </aside>
+          ) : null}
           <section className="workbench-primary-zone" aria-label="正在推进">
             <div className="workbench-zone-heading">
               <span>正在推进</span>
@@ -424,17 +443,6 @@ function HomePage({
               <ArtifactLedger artifacts={previewArtifacts} to={to} />
             </section>
           </section>
-
-          <aside className="workbench-attention-zone" aria-label="等你决定">
-            <div className="workbench-zone-heading">
-              <span>等你决定</span>
-              <small>{previewAttentions.length} 项</small>
-            </div>
-            <AttentionQueue items={previewAttentions} to={to} />
-            <p className="workbench-attention-note">
-              这里只出现真正需要你决定、确认或补充的事情。处理后，对应工作继续。
-            </p>
-          </aside>
         </div>
       )}
     </>
@@ -501,7 +509,7 @@ function TaskRunRow({ run }: { run: PreviewRun }) {
 function taskStatusLabel(status: PreviewTask["status"]): string {
   if (status === "running") return "正在进行";
   if (status === "requested") return "已交代 · 等待开始";
-  return "可继续";
+  return "等待补充材料";
 }
 
 function progressLabel(status: PreviewRun["status"]): string {
@@ -806,7 +814,18 @@ function DetailPreview({
   const task = kind === "task" ? findPreviewTask(taskId) : undefined;
   const artifact = kind === "artifact" ? findPreviewArtifact(artifactId) : undefined;
 
-  if (scenario !== "active") return <UnavailableWorkspace to={to} />;
+  if (scenario === "unavailable") return <UnavailableWorkspace to={to} />;
+  if (scenario === "empty") {
+    return (
+      <div className="workbench-empty">
+        <h1>这个情境还没有工作</h1>
+        <p>当前正在预览首次使用的空账户，不包含任何示例任务或成果。</p>
+        <Link to={to("/")} className="workbench-secondary-link">
+          返回工作台
+        </Link>
+      </div>
+    );
+  }
 
   if (!task && !artifact) {
     return (
@@ -872,7 +891,13 @@ function ComposerModal({ open, onClose }: { open: boolean; onClose: () => void }
   );
 }
 
-function getContextTitle(pathname: string): string {
+function getContextTitle(pathname: string, scenario: PreviewScenario): string {
+  if (
+    scenario !== "active" &&
+    (pathname.startsWith("/tasks/") || pathname.startsWith("/artifacts/"))
+  ) {
+    return scenario === "empty" ? "尚无工作" : "工作数据不可用";
+  }
   const taskMatch = pathname.match(/^\/tasks\/([^/]+)$/);
   if (taskMatch) return findPreviewTask(taskMatch[1])?.title ?? "工作";
   const artifactMatch = pathname.match(/^\/artifacts\/([^/]+)$/);
@@ -916,11 +941,20 @@ export function WorkspaceShell() {
     setParams(updated);
   };
 
-  const topics = resolveShellTopics(location.pathname, params);
+  const isUnavailableDetail =
+    scenario !== "active" && /^\/(tasks|artifacts)\/[^/]+$/.test(location.pathname);
+  const topics = isUnavailableDetail
+    ? {
+        tabs: [{ value: "state", label: scenario === "empty" ? "尚无工作" : "数据不可用" }],
+        value: "state",
+      }
+    : resolveShellTopics(location.pathname, params);
   const changeTopic = (value: string) => {
     const target = topics.tabs.find((tab) => tab.value === value)?.to;
     if (target) navigate(to(target));
   };
+
+  const visibleTasks = scenario === "active" ? previewTasks : [];
 
   const railItems = [
     {
@@ -969,28 +1003,39 @@ export function WorkspaceShell() {
         },
       ],
     },
-    {
-      id: "pinned",
-      label: "置顶",
-      items: previewTasks.slice(0, 2).map((task) => ({
-        id: task.id,
-        label: task.title,
-        to: to("/tasks/" + task.id),
-        meta: task.status === "running" ? "进行中" : "待续",
-      })),
-    },
-    {
-      id: "recent",
-      label: "最近",
-      items: previewTasks.slice(2).map((task) => ({
-        id: task.id,
-        label: task.title,
-        to: to("/tasks/" + task.id),
-        meta: "示例",
-      })),
-    },
-  ] as const;
+    ...(visibleTasks.length > 0
+      ? [
+          {
+            id: "pinned",
+            label: "置顶",
+            items: visibleTasks.slice(0, 2).map((task) => ({
+              id: task.id,
+              label: task.title,
+              to: to("/tasks/" + task.id),
+              meta:
+                task.status === "running"
+                  ? "进行中"
+                  : task.status === "requested"
+                    ? "等待开始"
+                    : "待补充",
+            })),
+          },
+          {
+            id: "recent",
+            label: "最近",
+            items: visibleTasks.slice(2).map((task) => ({
+              id: task.id,
+              label: task.title,
+              to: to("/tasks/" + task.id),
+              meta: "示例",
+            })),
+          },
+        ]
+      : []),
+  ];
 
+  // Mobile uses one collapsible object index instead of repeating each Task
+  // in three separate focus/navigation lists.
   const mobileWorkSidebarSections = [
     {
       id: "work",
@@ -1011,44 +1056,30 @@ export function WorkspaceShell() {
         },
       ],
     },
-    {
-      id: "projects",
-      label: "项目",
-      meta: previewTasks.length + " 项",
-      collapsible: true,
-      items: previewTasks.map((task) => ({
-        id: "project-" + task.id,
-        label: task.title,
-        to: to("/tasks/" + task.id),
-        meta:
-          task.status === "running" ? "进行中" : task.status === "requested" ? "等待开始" : "待续",
-      })),
-    },
-    {
-      id: "pinned",
-      label: "置顶",
-      meta: previewTasks.slice(0, 2).length + " 项",
-      collapsible: true,
-      items: previewTasks.slice(0, 2).map((task) => ({
-        id: "pinned-" + task.id,
-        label: task.title,
-        to: to("/tasks/" + task.id),
-        meta: task.status === "running" ? "进行中" : "待续",
-      })),
-    },
-    {
-      id: "recent",
-      label: "最近",
-      meta: previewTasks.slice(2).length + " 项",
-      collapsible: true,
-      items: previewTasks.slice(2).map((task) => ({
-        id: "recent-" + task.id,
-        label: task.title,
-        to: to("/tasks/" + task.id),
-        meta: "示例",
-      })),
-    },
-  ] as const;
+    ...(visibleTasks.length > 0
+      ? [
+          {
+            id: "projects",
+            label: "项目",
+            meta: visibleTasks.length + " 项",
+            collapsible: true as const,
+            items: visibleTasks.map((task, index) => ({
+              id: "project-" + task.id,
+              label: task.title,
+              to: to("/tasks/" + task.id),
+              meta:
+                (index < 2 ? "置顶" : "最近") +
+                " · " +
+                (task.status === "running"
+                  ? "进行中"
+                  : task.status === "requested"
+                    ? "等待开始"
+                    : "待补充"),
+            })),
+          },
+        ]
+      : []),
+  ];
 
   const settingsSidebarSections = [
     {
@@ -1112,10 +1143,12 @@ export function WorkspaceShell() {
           <Cloud size={15} aria-hidden="true" />
           <span className="truncate">{getContextGroup(location.pathname)}</span>
           <span className="text-text-tertiary">/</span>
-          <span className="truncate text-text-primary">{getContextTitle(location.pathname)}</span>
+          <span className="truncate text-text-primary">
+            {getContextTitle(location.pathname, scenario)}
+          </span>
         </div>
       }
-      mobileContextTitle={getContextTitle(location.pathname)}
+      mobileContextTitle={getContextTitle(location.pathname, scenario)}
     >
       {!isSettings && location.pathname !== "/diagnostics" ? (
         <div className="workbench-mobile-utility">

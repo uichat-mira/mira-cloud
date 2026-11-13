@@ -17,7 +17,7 @@ export interface PreviewTask {
   id: string;
   title: string;
   description: string;
-  status: "running" | "ready" | "requested";
+  status: "running" | "waiting_input" | "requested";
   location: string;
   update: string;
   next: string;
@@ -69,16 +69,16 @@ export const previewTasks: readonly PreviewTask[] = [
     status: "running",
     location: "Cloud · 演示执行位置",
     update: "最近进展 · 14 分钟前（示例）",
-    next: "查看工作进展",
+    next: "继续核对重点市场的准入条件与资料来源",
   },
   {
     id: "brand-direction",
     title: "新品牌定位与故事",
     description: "首版方向已经形成，等待补充参考资料再继续。",
-    status: "ready",
+    status: "waiting_input",
     location: "Cloud · 演示执行位置",
     update: "最近进展 · 昨天（示例）",
-    next: "继续查看",
+    next: "补充目标受众参考资料后继续",
   },
   {
     id: "research-followup",
@@ -87,7 +87,7 @@ export const previewTasks: readonly PreviewTask[] = [
     status: "requested",
     location: "Cloud · 执行尚未开始",
     update: "已交代 · 今天（示例）",
-    next: "查看委托内容",
+    next: "等待执行方开始处理",
   },
 ];
 

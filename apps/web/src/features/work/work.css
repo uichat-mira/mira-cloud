@@ -129,20 +129,27 @@ button.workbench-secondary-link {
 }
 
 .workbench-overview-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 32%);
+  display: flex;
+  flex-direction: column;
   border-top: 1px solid rgb(var(--mira-color-text-primary) / 0.35);
 }
 
 .workbench-primary-zone {
   min-width: 0;
-  padding: 0 34px 0 0;
 }
 
 .workbench-attention-zone {
   min-width: 0;
-  padding: 0 0 0 28px;
-  border-left: 1px solid rgb(var(--mira-color-border));
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgb(var(--mira-color-border));
+}
+
+/* Attention comes before the work stack at every width, not only in source order. */
+.workbench-attention-zone .workbench-attention-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 24px;
 }
 
 .workbench-zone-heading {
@@ -200,8 +207,8 @@ button.workbench-secondary-link {
   background: rgb(var(--mira-color-primary));
 }
 
-.workbench-work-row-ready::before {
-  background: rgb(var(--mira-color-success));
+.workbench-work-row-waiting-input::before {
+  background: rgb(var(--mira-color-warning));
 }
 
 .workbench-work-row-requested::before {
@@ -858,11 +865,8 @@ button.workbench-secondary-link {
     padding-right: 0;
   }
 
-  .workbench-attention-zone {
-    margin-top: 28px;
-    padding-left: 0;
-    border-top: 1px solid rgb(var(--mira-color-text-primary) / 0.25);
-    border-left: 0;
+  .workbench-attention-zone .workbench-attention-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .workbench-work-row {
