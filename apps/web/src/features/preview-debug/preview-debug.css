@@ -1,0 +1,119 @@
+/* Development overlay: isolated from the product canvas and MiraDesign tokens. */
+.preview-debug-float {
+  position: fixed;
+  z-index: 90;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+.preview-debug-float[data-placed="true"] {
+  right: auto;
+  bottom: auto;
+}
+
+.preview-debug-trigger {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: 50%;
+  background: rgb(var(--mira-color-text-primary));
+  color: rgb(var(--mira-color-text-inverted));
+  box-shadow: 0 8px 22px rgb(var(--mira-color-text-primary) / 0.15);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.preview-debug-trigger:active {
+  cursor: grabbing;
+}
+
+.preview-debug-trigger:focus-visible,
+.preview-debug-choice:focus-visible {
+  outline: 2px solid rgb(var(--mira-color-primary));
+  outline-offset: 3px;
+}
+
+.preview-debug-panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  width: min(284px, calc(100vw - 24px));
+  max-height: min(380px, 65vh);
+  overflow-y: auto;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-overlay);
+  background: rgb(var(--mira-color-surface-elevated));
+  color: rgb(var(--mira-color-text-primary));
+  box-shadow: 0 14px 36px rgb(var(--mira-color-text-primary) / 0.14);
+  padding: 18px;
+}
+
+.preview-debug-float[data-horizontal="left"] .preview-debug-panel {
+  left: 0;
+  right: auto;
+}
+
+.preview-debug-float[data-vertical="below"] .preview-debug-panel {
+  top: calc(100% + 12px);
+  bottom: auto;
+}
+
+.preview-debug-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.preview-debug-heading strong {
+  font-size: 13px;
+}
+
+.preview-debug-heading span,
+.preview-debug-help {
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.preview-debug-group {
+  display: grid;
+  gap: 8px;
+}
+
+.preview-debug-group-label {
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.preview-debug-choice-list {
+  display: grid;
+  gap: 6px;
+}
+
+.preview-debug-choice {
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: var(--mira-radius-ui-control);
+  padding: 9px 11px;
+  background: rgb(var(--mira-color-surface-secondary));
+  color: rgb(var(--mira-color-text-primary));
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.preview-debug-choice[aria-pressed="true"] {
+  border-color: rgb(var(--mira-color-primary));
+  background: rgb(var(--mira-color-surface-soft));
+  font-weight: 600;
+}
+
+.preview-debug-help {
+  margin: 12px 0 0;
+}

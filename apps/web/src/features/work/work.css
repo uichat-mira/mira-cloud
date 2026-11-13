@@ -76,58 +76,6 @@ button.workbench-secondary-link {
   background: rgb(var(--mira-color-surface-secondary));
 }
 
-.workbench-fixture-bar {
-  display: flex;
-  min-height: 38px;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 26px;
-  padding: 6px 0;
-  border-top: 1px solid rgb(var(--mira-color-border));
-  border-bottom: 1px solid rgb(var(--mira-color-border));
-}
-
-.workbench-fixture-label {
-  flex: 0 0 auto;
-  color: rgb(var(--mira-color-text-tertiary));
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.workbench-fixture-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-}
-
-.workbench-fixture-options button {
-  border: 0;
-  border-radius: var(--mira-radius-ui-control);
-  background: transparent;
-  color: rgb(var(--mira-color-text-secondary));
-  padding: 5px 8px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.workbench-fixture-options button:hover {
-  background: rgb(var(--mira-color-surface-secondary));
-  color: rgb(var(--mira-color-text-primary));
-}
-
-.workbench-fixture-options button.is-active {
-  background: rgb(var(--mira-color-surface-soft));
-  color: rgb(var(--mira-color-text-primary));
-}
-
-.workbench-fixture-hint {
-  margin-left: auto;
-  color: rgb(var(--mira-color-text-tertiary));
-  font-size: 11px;
-}
-
 .workbench-overview-grid {
   display: flex;
   flex-direction: column;
@@ -814,13 +762,9 @@ button.workbench-secondary-link {
   .workbench-mobile-utility {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 12px;
     margin-bottom: 18px;
-  }
-
-  .workbench-mobile-utility > :first-child {
-    min-width: 0;
   }
 
   .workbench-mobile-utility .workbench-primary-link {
@@ -888,8 +832,7 @@ button.workbench-secondary-link {
     grid-template-columns: 32px minmax(0, 1fr) 16px;
   }
 
-  .workbench-artifact-time,
-  .workbench-fixture-hint {
+  .workbench-artifact-time {
     display: none;
   }
 
@@ -913,13 +856,5 @@ button.workbench-secondary-link {
 
   .workbench-page-header > div:last-child {
     flex: 0 0 auto;
-  }
-
-  .workbench-fixture-bar {
-    align-items: flex-start;
-  }
-
-  .workbench-fixture-label {
-    display: none;
   }
 }
