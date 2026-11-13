@@ -44,6 +44,7 @@ export interface WorkspaceShellFrameProps {
   brand: ReactNode;
   mobileBrand?: ReactNode;
   railItems: readonly WorkspaceRailItem[];
+  globalItems?: readonly WorkspaceRailItem[];
   sidebarTitle: ReactNode;
   sidebarSubtitle?: ReactNode;
   sidebarAction?: ReactNode;

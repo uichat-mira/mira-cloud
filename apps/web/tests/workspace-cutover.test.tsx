@@ -167,7 +167,13 @@ describe("AGT-054 Work workspace migration", () => {
 
     expect(screen.queryByLabelText("外观偏好")).toBeNull();
     const workSidebar = screen.getByRole("complementary", { name: "当前业务" });
-    await user.click(within(workSidebar).getByRole("link", { name: "设置" }));
+    expect(within(workSidebar).queryByRole("link", { name: "设置" })).toBeNull();
+    const globalRail = screen.getByRole("navigation", { name: "全局入口" });
+    await user.click(within(globalRail).getByRole("link", { name: "设置" }));
+    expect(within(globalRail).getByRole("link", { name: "设置" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
 
     expect(screen.getByRole("heading", { level: 1, name: "通用" })).toBeInTheDocument();
     const settingsSidebar = screen.getByRole("complementary", { name: "当前业务" });
@@ -189,6 +195,81 @@ describe("AGT-054 Work workspace migration", () => {
     await user.click(screen.getByRole("switch", { name: "深色模式" }));
     expect(document.documentElement.dataset["miraThemeMode"]).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
+  });
+
+  it("places notifications and settings in the global rail, not the Work sidebar", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    renderWorkspace("/?scenario=empty");
+
+    const workRail = screen.getByRole("navigation", { name: "业务工作台" });
+    const globalRail = screen.getByRole("navigation", { name: "全局入口" });
+    const work = within(workRail).getByRole("link", { name: "工作" });
+    const notifications = within(globalRail).getByRole("link", { name: "消息中心" });
+    const settings = within(globalRail).getByRole("link", { name: "设置" });
+    expect(work).toHaveAttribute("aria-current", "page");
+    expect(notifications).not.toHaveAttribute("aria-current");
+    expect(settings).not.toHaveAttribute("aria-current");
+    expect(notifications).toHaveAttribute("href", "/notifications");
+    expect(settings).toHaveAttribute("href", "/settings/general");
+
+    const workSidebar = screen.getByRole("complementary", { name: "当前业务" });
+    expect(within(workSidebar).queryByRole("link", { name: "消息中心" })).toBeNull();
+    expect(within(workSidebar).queryByRole("link", { name: "设置" })).toBeNull();
+    await user.click(notifications);
+
+    expect(screen.getByRole("heading", { level: 1, name: "消息中心" })).toBeInTheDocument();
+    expect(screen.getByText("消息尚未接入")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "交代工作" })).toBeNull();
+    expect(notifications).toHaveAttribute("aria-current", "page");
+    expect(work).not.toHaveAttribute("aria-current");
+    expect(document.querySelector('[data-workspace-region="topicbar"]')).toBeNull();
+    const notificationSidebar = screen.getByRole("complementary", { name: "当前业务" });
+    expect(within(notificationSidebar).getByRole("link", { name: "全部消息" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await user.click(within(notificationSidebar).getByRole("link", { name: "送达记录" }));
+    expect(screen.getByRole("heading", { level: 1, name: "送达记录" })).toBeInTheDocument();
+    expect(screen.getByText("尚未接通送达记录")).toBeInTheDocument();
+    expect(within(notificationSidebar).getByRole("link", { name: "送达记录" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+
+    await user.click(settings);
+    expect(settings).toHaveAttribute("aria-current", "page");
+    expect(notifications).not.toHaveAttribute("aria-current");
+    const settingsSidebar = screen.getByRole("complementary", { name: "当前业务" });
+    expect(within(settingsSidebar).getByRole("link", { name: "通用" })).toBeInTheDocument();
+    await user.click(within(settingsSidebar).getByRole("link", { name: "通知与送达" }));
+    expect(screen.getByRole("heading", { level: 1, name: "通知与送达" })).toBeInTheDocument();
+    expect(screen.getByText("渠道配置尚未开放")).toBeInTheDocument();
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(fetcher).not.toHaveBeenCalled();
+
+    await user.click(work);
+    expect(work).toHaveAttribute("aria-current", "page");
+    expect(settings).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
+  });
+
+  it("retains diagnostics in global settings and does not imply Cloud services are connected", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    renderWorkspace("/settings/notifications");
+    const settingsSidebar = screen.getByRole("complementary", { name: "当前业务" });
+    const globalRail = screen.getByRole("navigation", { name: "全局入口" });
+    await user.click(within(settingsSidebar).getByRole("link", { name: "连接诊断" }));
+    expect(screen.getByRole("heading", { name: "连接诊断" })).toBeInTheDocument();
+    expect(within(globalRail).getByRole("link", { name: "设置" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.queryByRole("button", { name: "交代工作" })).toBeNull();
+    expect(fetcher).toHaveBeenCalledWith("/api/v1/health", expect.any(Object));
   });
 
   it("renders Home as a continuous work stack plus Attention queue without fetching APIs", () => {
@@ -460,10 +541,35 @@ describe("AGT-054 Work workspace migration", () => {
     );
     expect(within(drawer).getByRole("button", { name: "知识（尚未开放）" })).toBeDisabled();
     expect(within(drawer).queryByRole("link", { name: "东南亚市场进入研究" })).toBeNull();
+    const globalNav = screen.getByRole("navigation", { name: "移动全局入口" });
+    expect(within(globalNav).getByRole("link", { name: "消息中心" })).toBeInTheDocument();
+    expect(within(globalNav).getByRole("link", { name: "设置" })).toBeInTheDocument();
+    expect(within(globalNav).queryByRole("link", { name: "待处理" })).toBeNull();
 
     const workspaceCloseButtons = screen.getAllByRole("button", { name: "关闭工作台导航" });
     expect(workspaceCloseButtons).toHaveLength(2);
     expect(workspaceCloseButtons.some((button) => button.closest("aside") !== null)).toBe(true);
+  });
+
+  it("switches mobile global context without duplicating Work objects", async () => {
+    const user = userEvent.setup();
+    renderWorkspace("/notifications/deliveries");
+    const trigger = screen.getByRole("button", { name: "切换业务工作台" });
+    expect(trigger).toHaveTextContent("消息中心");
+    await user.click(trigger);
+    const globalNav = screen.getByRole("navigation", { name: "移动全局入口" });
+    expect(within(globalNav).getByRole("link", { name: /消息中心/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await user.click(within(globalNav).getByRole("link", { name: "设置" }));
+    expect(screen.getByRole("heading", { level: 1, name: "通用" })).toBeInTheDocument();
+    expect(trigger).toHaveTextContent("设置");
+    await user.click(screen.getByRole("button", { name: "切换工作对象" }));
+    const drawer = screen.getByRole("navigation", { name: "移动工作对象" });
+    expect(within(drawer).getByRole("link", { name: "通用" })).toBeInTheDocument();
+    expect(within(drawer).queryByRole("button", { name: "交代工作" })).toBeNull();
+    expect(within(drawer).queryByRole("link", { name: "全部工作" })).toBeNull();
   });
 
   it("nests each Work task once under one collapsible mobile project group", async () => {
@@ -521,7 +627,10 @@ describe("AGT-054 Work workspace migration", () => {
     "/artifacts",
     "/tasks/market-research",
     "/artifacts/market-note",
+    "/notifications",
+    "/notifications/deliveries",
     "/settings/general",
+    "/settings/notifications",
     "/diagnostics",
   ])("keeps route %s free of the extra Shell tab layer", (path) => {
     renderWorkspace(path);
