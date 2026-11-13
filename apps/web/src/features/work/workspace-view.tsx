@@ -1217,7 +1217,7 @@ export function WorkspaceShell() {
         <Route
           path="/diagnostics"
           element={
-            <>
+            <div className="workspace-page-body">
               <WorkbenchHeader
                 eyebrow="System"
                 title="连接诊断"
@@ -1227,7 +1227,7 @@ export function WorkspaceShell() {
               <Link to={to("/")} className="workbench-secondary-link mt-5">
                 <ArrowLeft size={15} aria-hidden="true" /> 返回工作台
               </Link>
-            </>
+            </div>
           }
         />
         <Route
