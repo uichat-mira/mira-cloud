@@ -1,10 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const cockpitCss = readFileSync(
-  new URL("../src/features/work/work.css", import.meta.url),
-  "utf8",
-);
+const cockpitCss = readFileSync(new URL("../src/features/work/work.css", import.meta.url), "utf8");
 
 function declarations(selector: string): string {
   const marker = selector + " {";
