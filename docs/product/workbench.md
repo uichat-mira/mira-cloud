@@ -35,7 +35,7 @@ Mira Cloud 是一个用户能长期交代、接续与复用工作的**个人工�
 Mira Cloud 不再把「首页 / 待处理 / 我的工作 / 成果」冻结为系统永久一级导航。它们只代表当前 **工作（Work）** 业务面向的一期视图与对象入口。**当前系统级 Layout 只有三层**，不提供统一的 Topic Tab 栏：
 
 1. **L0 · Global Rail** — 上方切换业务工作台（当前仅「工作」开放；知识、自动化、连接仍禁用），下方固定「消息中心」「设置」两个全局入口。它们不是「工作」的子模块，切换时对应的 L1 导航和当前选中态一起变化。
-2. **L1 · Workspace Sidebar** — 只提供当前模块内部的导航：「工作」含全部工作/待处理/成果、Task 与交代工作；「消息中心」含全部消息/送达记录；「设置」含通用/通知与送达/连接诊断。Mobile 使用对应的左侧 Drawer 投影。
+2. **L1 · Workspace Sidebar** — 只提供当前模块内部的导航：「工作」含工作台（首页 /）、全部工作/待处理/成果、Task 与交代工作；「消息中心」含全部消息/送达记录；「设置」含通用/通知与送达/连接诊断。Mobile 使用对应的左侧 Drawer 投影。
 3. **L2 · Content Canvas** — 当前主题的主内容。打开 Task、Artifact 或其它对象时保持 Rail、Sidebar 和上下文标题稳定，切换内容由该内容附近的明确链接承担，不另设全局 Topic Tabs / 占位导航条。
 
 当前「工作」业务的已知入口仍保留以下路由，但它们不再等价于系统级产品导航：
@@ -49,7 +49,7 @@ Mira Cloud 不再把「首页 / 待处理 / 我的工作 / 成果」冻结为系
 | **交代工作** | 当前 route + Composer Modal（legacy `/new` 兼容） | 提交目标与边界 | 当前上下文内的 Delegation Composer；结构化目标/材料/能力/权限预览 | 独立页面切换、直接执行的聊天输入框 |
 
 - 「交代工作」是当前「工作」业务的高可达主操作，但不意味着未来所有业务工作台都必须复用同一种创建动作。
-- 「全部工作」「待处理」「成果」均由当前 Work 的 L1 Sidebar 担任可达入口；「概览」由工作台入口承担，不以全局 Tab 展示。
+- 「全部工作」「待处理」「成果」均由当前 Work 的 L1 Sidebar 担任可达入口；「工作台」由 Work Sidebar 与 Mobile 对象 Drawer 的首页入口承担，指向根路径 `/`，只在根路径激活。点击 L0「工作」也进入同一个驾驶舱，不增加全局 Tab。
 - 任务详情：`/tasks/:taskId`；任务下的一次执行：`/tasks/:taskId/runs/:runId`；成果详情：`/artifacts/:artifactId`。打开详情时不得另起一套全局 Shell。
 - Attention 列表是聚合入口，处理地点优先指向其**源 Task / Artifact / Handoff 的受控操作上下文**，而非复制一份可编辑 Decision。具体 URL 可在后续领域卡内落定；不得猜测 `/attention/:id` 已有后端资源。
 - Schedule / Trigger、Runs、Memory、Skills / MCP、GitHub、连接及诊断、权限设置是否成为未来业务工作台、Sidebar 对象或内容级入口，由各自稳定产品身份决定；不得仅按当前功能数量塞入 Global Rail。
@@ -389,7 +389,7 @@ Mira Cloud 的 Fixture 情境切换属于原型调试，不是首页产品内容
 
 本轮删除系统级的 Topic Tabs 层：WorkspaceShellFrame 不再接受 topicTabs/topicValue/onTopicChange，不渲染 workspace-topicbar，布局指标也不再声明 topicbarHeight。这是**产品层级调整**，不是用 CSS 隐藏某一页的“全部工作”标签；Home、列表、Task、Artifact、设置和诊断均适用。
 
-- 当前 Work 的「待处理 / 全部工作 / 成果」入口直接位于 Sidebar 和 Mobile 对象 Drawer，保留独立路由与页面标题。
+- 当前 Work 的「工作台 / 待处理 / 全部工作 / 成果」入口直接位于 Sidebar 和 Mobile 对象 Drawer，保留独立路由与页面标题。
 - Task 的「近期进展 → 查看全部」「相关成果 → 全部成果」是内容级链接；进展 / 成果深链有清晰的「返回工作概览」。兼容既有 view=progress/artifacts/runs/history 查询参数。
 - Artifact 在阅读区域提供「查看来源信息 / 查看版本记录」，来源与版本视图提供返回预览及必要的相互链接；既有 view=source/versions 深链仍能打开。
 - WorkspaceTabs 作为 MiraDesign 可复用组件继续保留、独立测试，但**不再属于 Shell 的结构性控件**；不允许在 Canvas 再补一条等价的横向伪导航。
@@ -403,7 +403,7 @@ Mira Cloud 的 Fixture 情境切换属于原型调试，不是首页产品内容
 
 | L0 全局入口 | L1 侧栏 | 路由 | 现阶段页面能力 |
 | --- | --- | --- | --- |
-| 工作 | 点击 Rail「工作」进入驾驶舱；全部工作、待处理、成果、具体 Task | /、/tasks、/attention、/artifacts、/tasks/:taskId、/artifacts/:artifactId | 保留既有 Fixture 页面，后续按定时/监测/提醒的 Cloud 定位另行评审 |
+| 工作 | 点击 Rail「工作」进入驾驶舱；L1 提供「工作台」首页、全部工作、待处理、成果、具体 Task | /、/tasks、/attention、/artifacts、/tasks/:taskId、/artifacts/:artifactId | 保留既有 Fixture 页面，后续按定时/监测/提醒的 Cloud 定位另行评审 |
 | 消息中心 | 全部消息、送达记录 | /notifications、/notifications/deliveries | 先提供可达页面与明确未接入状态，不伪造未读数、实际通知、投递尝试或后端连接 |
 | 设置 | 通用、通知与送达、连接诊断 | /settings/general、/settings/notifications、/diagnostics | 通用保留当前浏览器本地主题偏好；通知授权/渠道仅保留边界占位；诊断保留实际可执行的服务健康探测 |
 

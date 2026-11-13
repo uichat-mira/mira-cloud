@@ -12,6 +12,7 @@ import {
   Cloud,
   FileText,
   Layers3,
+  LayoutDashboard,
   Plug,
   Plus,
   Settings2,
@@ -942,6 +943,13 @@ export function WorkspaceShell() {
       id: "actions",
       items: [
         {
+          id: "work-home",
+          label: "工作台",
+          to: to("/"),
+          icon: <LayoutDashboard size={15} aria-hidden="true" />,
+          end: true,
+        },
+        {
           id: "new-work",
           label: "交代工作",
           onSelect: openComposer,
@@ -1008,6 +1016,13 @@ export function WorkspaceShell() {
       id: "work",
       label: "工作",
       items: [
+        {
+          id: "work-home",
+          label: "工作台",
+          to: to("/"),
+          icon: <LayoutDashboard size={15} aria-hidden="true" />,
+          end: true,
+        },
         {
           id: "new-work",
           label: "交代工作",
