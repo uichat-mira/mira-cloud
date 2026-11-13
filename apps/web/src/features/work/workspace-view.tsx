@@ -632,7 +632,10 @@ function TaskDetail({ task, view, to }: { task: PreviewTask; view: TaskTopic; to
       ) : null}
 
       {view === "artifacts" ? (
-        <section className="workbench-full-ledger workspace-page-body" aria-label={task.title + " 的成果"}>
+        <section
+          className="workbench-full-ledger workspace-page-body"
+          aria-label={task.title + " 的成果"}
+        >
           <ArtifactLedger artifacts={artifacts} to={to} />
         </section>
       ) : null}
