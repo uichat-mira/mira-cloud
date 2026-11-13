@@ -24,6 +24,37 @@ function renderWorkspace(path = "/") {
 }
 
 describe("AGT-054 Work workspace migration", () => {
+  it("shares the Work cockpit page width across main business and global routes", () => {
+    const fetcher = vi.fn().mockRejectedValue(new Error("test fixture offline"));
+    vi.stubGlobal("fetch", fetcher);
+    const paths = [
+      "/",
+      "/attention",
+      "/tasks",
+      "/artifacts",
+      "/tasks/market-research",
+      "/tasks/market-research?view=progress",
+      "/tasks/market-research?view=artifacts",
+      "/artifacts/market-note",
+      "/artifacts/market-note?view=source",
+      "/artifacts/market-note?view=versions",
+      "/settings/general",
+      "/settings/notifications",
+      "/notifications",
+      "/notifications/deliveries",
+      "/diagnostics",
+    ];
+
+    for (const path of paths) {
+      const page = renderWorkspace(path);
+      const canvas = document.getElementById("main-content");
+      expect(canvas, path).toHaveClass("workspace-content");
+      expect(canvas?.querySelector(".workspace-page-body"), path).not.toBeNull();
+      expect(canvas?.querySelector(".max-w-3xl"), path).toBeNull();
+      page.unmount();
+    }
+  });
+
   it("keeps durable business workspaces in the rail and Work objects in the sidebar", () => {
     renderWorkspace("/tasks");
 
