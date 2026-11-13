@@ -423,6 +423,8 @@ Mira Cloud 的 Fixture 情境切换属于原型调试，不是首页产品内容
 
 Work 首页 / 在 active 演示情境使用 MiraDesign Card 组合四种业务卡片：**需要你关注、未来七天、持续中的工作、最近交付**。它们仍引用 apps/web/src/features/work/fixture-data.ts 的虚构数据，不代表已接通 Cloud Pi Scheduler 或 Cloud Task API。图表仅是可选择日期的七天计划示意，点击可查看对应示例工作；不能据此推断任何实际任务会在所示时间执行、运行或送达。
 
+工作台卡片采用弹性网格：同一行并列卡片等高，不写死高度；列表仅在相邻条目之间画分隔线，最后一项无收尾横线；七天计划的演示说明贴底，单列窄屏仍按内容自然排布。
+
 首页的「调整工作台」仅编辑浏览器本地的展示偏好：卡片顺序、通栏/半宽、显隐与恢复默认。数据保存在版本化的 localStorage 键中，经过 ID 白名单校验，最多可隐藏三张卡；从不发出业务 API 请求、不改变任务状态、不声称账户或跨设备同步。empty 与 unavailable 情境不显示这些虚构卡片。桌面两列、狭窄容器单列的变化由 CSS Container Query 决定，不新增 Shell 导航层。
 
 当前七天图不需要趋势图引擎：基于真实 Scheduler 时间和 Run 历史的趋势图另案接入时再评估 Recharts，避免为演示构建增加首屏包体积。实际数据接线须维持 Attention → Continuity → Artifacts 的有意义阅读优先级，明确区分无数据、未知与来源不可达，且不得从 Fixture 回填生产统计。

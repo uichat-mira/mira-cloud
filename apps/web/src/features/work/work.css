@@ -113,7 +113,6 @@ button.workbench-secondary-link {
   grid-template-columns: minmax(0, 1fr) 164px;
   gap: 28px;
   padding: 20px 0 20px 18px;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
 }
 
 .workbench-work-row::before {
@@ -256,7 +255,6 @@ button.workbench-secondary-link {
 .workbench-attention-row {
   display: block;
   padding: 18px 0;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
   color: inherit;
   text-decoration: none;
 }
@@ -319,9 +317,15 @@ button.workbench-secondary-link {
   align-items: center;
   gap: 12px;
   min-height: 66px;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
   color: inherit;
   text-decoration: none;
+}
+
+/* Separators belong between list items, never after the final item. */
+.workbench-work-row:not(:last-child),
+.workbench-attention-row:not(:last-child),
+.workbench-artifact-row:not(:last-child) {
+  border-bottom: 1px solid rgb(var(--mira-color-border));
 }
 
 .workbench-artifact-row:hover {
@@ -952,11 +956,13 @@ button.workbench-secondary-link {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .workbench-cockpit-card {
+  display: flex;
   min-width: 0;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -965,7 +971,10 @@ button.workbench-secondary-link {
 }
 
 .workbench-cockpit-card-inner {
+  display: flex;
+  flex: 1 1 auto;
   min-width: 0;
+  flex-direction: column;
   padding: 20px 22px 14px;
 }
 
@@ -1009,7 +1018,10 @@ button.workbench-secondary-link {
 }
 
 .workbench-cockpit-card-content {
+  display: flex;
+  flex: 1 1 auto;
   min-width: 0;
+  flex-direction: column;
 }
 
 .workbench-cockpit-card .workbench-work-stack,
@@ -1051,6 +1063,13 @@ button.workbench-secondary-link {
 
 .workbench-cockpit-card .workbench-artifact-row {
   min-height: 60px;
+}
+
+.workbench-schedule-preview {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .workbench-schedule-intro,
@@ -1190,7 +1209,8 @@ button.workbench-secondary-link {
 }
 
 .workbench-schedule-boundary {
-  margin-top: 10px;
+  margin-top: auto;
+  padding-top: 10px;
   font-size: 10px;
 }
 
