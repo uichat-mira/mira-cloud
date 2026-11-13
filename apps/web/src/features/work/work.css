@@ -858,3 +858,33 @@ button.workbench-secondary-link {
     flex: 0 0 auto;
   }
 }
+
+/* Contextual journeys live with their content, never in a fixed Shell tab layer. */
+.workbench-inline-return {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.workbench-inline-return:hover,
+.workbench-artifact-context-links a:hover {
+  color: rgb(var(--mira-color-primary));
+  text-decoration: underline;
+}
+
+.workbench-artifact-context-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workbench-artifact-context-links a {
+  color: rgb(var(--mira-color-text-secondary));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

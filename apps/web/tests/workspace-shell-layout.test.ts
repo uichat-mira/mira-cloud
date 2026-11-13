@@ -16,7 +16,6 @@ const shellCss = readFileSync(
 describe("AGT-062 Workspace shell geometry", () => {
   it("publishes one typed geometry source for desktop header and separators", () => {
     expect(defaultWorkspaceShellLayout.headerHeight).toBe(58);
-    expect(defaultWorkspaceShellLayout.topicbarHeight).toBe(44);
     expect(defaultWorkspaceShellLayout.separatorWidth).toBe(1);
 
     const vars = createWorkspaceShellStyleVars({
@@ -39,7 +38,8 @@ describe("AGT-062 Workspace shell geometry", () => {
         /border-bottom: var\(--workspace-separator-width\) solid rgb\(var\(--mira-color-border\)\);/g,
       )?.length ?? 0,
     ).toBeGreaterThanOrEqual(3);
-    expect(shellCss).toContain("top: var(--workspace-header-height);");
-    expect(shellCss).toContain("height: var(--workspace-topicbar-height);");
+    expect(shellCss).toContain(".workspace-topbar {");
+    expect(shellCss).not.toContain(".workspace-topicbar");
+    expect(shellCss).not.toContain("--workspace-topicbar-height");
   });
 });

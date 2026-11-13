@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 
-import { resolveWorkspaceTabsWindow } from "../src/components/mira-design/index.ts";
 import { WorkspaceShell } from "../src/pages/workspace";
 
 afterEach(() => {
@@ -64,7 +63,7 @@ describe("AGT-054 Work workspace migration", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "东南亚市场进入研究" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab")).toBeNull();
     expect(screen.queryByRole("button", { name: "提交委托" })).toBeNull();
 
     await user.keyboard("{Escape}");
@@ -109,7 +108,7 @@ describe("AGT-054 Work workspace migration", () => {
     );
     expect(artifactTrigger).toHaveFocus();
     expect(screen.getByRole("heading", { level: 1, name: "市场机会研究摘要" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "预览" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 
   it("maps the legacy /new entry to the Composer modal instead of a page", async () => {
@@ -219,17 +218,22 @@ describe("AGT-054 Work workspace migration", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it("keeps overview, Attention and Artifacts as topic views instead of global destinations", async () => {
+  it("reaches Work pages through the business sidebar without a Shell topic bar", async () => {
     const user = userEvent.setup();
     renderWorkspace();
 
-    await user.click(screen.getByRole("tab", { name: "待处理" }));
+    const sidebar = screen.getByRole("complementary", { name: "当前业务" });
+    expect(document.querySelector('[data-workspace-region="topicbar"]')).toBeNull();
+    expect(screen.queryByRole("tab")).toBeNull();
+
+    await user.click(within(sidebar).getByRole("link", { name: "待处理" }));
     expect(screen.getByRole("heading", { name: "待处理" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "待处理列表" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: "成果" }));
+    await user.click(within(sidebar).getByRole("link", { name: "成果" }));
     expect(screen.getByRole("heading", { name: "成果" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "成果列表" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 
   it("keeps the Shell stable while Task Detail tells a continuous-work story", async () => {
@@ -240,11 +244,8 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("navigation", { name: "业务工作台" })).toBeInTheDocument();
     expect(screen.getByRole("complementary", { name: "当前业务" })).toBeInTheDocument();
 
-    expect(screen.getAllByRole("tab")).toHaveLength(3);
-    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.queryByRole("tab", { name: "待处理" })).toBeNull();
-    expect(screen.queryByRole("tab", { name: "运行" })).toBeNull();
-    expect(screen.queryByRole("tab", { name: "历史" })).toBeNull();
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(document.querySelector(".workspace-topicbar")).toBeNull();
 
     const now = screen.getByRole("region", { name: "当前状态与下一步" });
     expect(within(now).getAllByText("正在进行")).toHaveLength(2);
@@ -254,8 +255,13 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("region", { name: "相关成果" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "市场机会研究摘要" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: "进展" }));
+    await user.click(
+      within(screen.getByRole("region", { name: "近期进展" })).getByRole("link", {
+        name: "查看全部",
+      }),
+    );
     expect(screen.getByRole("region", { name: "东南亚市场进入研究 的进展" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "返回工作概览" })).toBeInTheDocument();
     const executionDetails = screen.getByRole("button", { name: "查看执行详情（2 次）" });
     expect(executionDetails).toHaveAttribute("aria-expanded", "false");
     await user.click(executionDetails);
@@ -266,7 +272,12 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByText("R04")).toBeInTheDocument();
     expect(screen.getByText("本次执行完成")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: "成果" }));
+    await user.click(screen.getByRole("link", { name: "返回工作概览" }));
+    await user.click(
+      within(screen.getByRole("region", { name: "相关成果" })).getByRole("link", {
+        name: "全部成果",
+      }),
+    );
     const artifactRegion = screen.getByRole("region", { name: "东南亚市场进入研究 的成果" });
     expect(
       within(artifactRegion).getByRole("link", { name: /市场机会研究摘要/ }),
@@ -276,7 +287,7 @@ describe("AGT-054 Work workspace migration", () => {
   it("does not manufacture Attention or Artifact sections when a Task has none", () => {
     renderWorkspace("/tasks/research-followup");
 
-    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab")).toBeNull();
     expect(screen.getByRole("region", { name: "当前状态与下一步" })).toHaveTextContent(
       "已交代 · 等待开始",
     );
@@ -287,36 +298,39 @@ describe("AGT-054 Work workspace migration", () => {
     );
   });
 
-  it("maps legacy Task view links into the smaller narrative without blank states", () => {
+  it("preserves legacy Task deep links as content journeys without Shell tabs", async () => {
     const runsView = renderWorkspace("/tasks/market-research?view=runs");
-    expect(screen.getByRole("tab", { name: "进展" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(screen.getByRole("region", { name: "东南亚市场进入研究 的进展" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "返回工作概览" })).toBeInTheDocument();
     runsView.unmount();
 
     const historyView = renderWorkspace("/tasks/market-research?view=history");
-    expect(screen.getByRole("tab", { name: "进展" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("region", { name: "东南亚市场进入研究 的进展" })).toBeInTheDocument();
     historyView.unmount();
 
     renderWorkspace("/tasks/market-research?view=attention");
-    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("region", { name: "需要你处理" })).toBeInTheDocument();
   });
 
-  it("gives an Artifact stable preview, source and version topic views", async () => {
+  it("keeps Artifact preview, source and version journeys reachable through content links", async () => {
     const user = userEvent.setup();
     renderWorkspace("/artifacts/market-note");
 
     expect(screen.getByRole("heading", { level: 1, name: "市场机会研究摘要" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "预览" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("region", { name: "成果预览" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).toBeNull();
+    const preview = screen.getByRole("region", { name: "成果预览" });
+    await user.click(within(preview).getByRole("link", { name: "查看来源信息" }));
 
-    await user.click(screen.getByRole("tab", { name: "来源" }));
     const source = screen.getByRole("region", { name: "成果来源" });
     expect(within(source).getByRole("link", { name: "东南亚市场进入研究" })).toBeInTheDocument();
     expect(within(source).getByText(/R04/)).toBeInTheDocument();
-
-    await user.click(screen.getByRole("tab", { name: "版本" }));
+    await user.click(within(source).getByRole("link", { name: /查看版本记录/ }));
     expect(screen.getByRole("region", { name: "成果版本" })).toBeInTheDocument();
     expect(screen.getByText("当前示例版本")).toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: "返回成果预览" }));
+    expect(screen.getByRole("region", { name: "成果预览" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 
   it("keeps empty and unavailable fixture states distinct from real absence", async () => {
@@ -410,15 +424,15 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("heading", { name: "这个情境还没有工作" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "工作数据暂时无法更新" })).toBeNull();
     expect(screen.queryByText("新品牌定位与故事")).toBeNull();
-    expect(screen.queryByRole("tab", { name: "进展" })).toBeNull();
-    expect(screen.getByRole("tab", { name: "尚无工作" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(document.querySelector(".workspace-topicbar")).toBeNull();
     empty.unmount();
 
     renderWorkspace("/tasks/brand-direction?scenario=unavailable");
     expect(screen.getByRole("heading", { name: "工作数据暂时无法更新" })).toBeInTheDocument();
     expect(screen.queryByText("新品牌定位与故事")).toBeNull();
-    expect(screen.queryByRole("tab", { name: "进展" })).toBeNull();
-    expect(screen.getByRole("tab", { name: "数据不可用" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(document.querySelector(".workspace-topicbar")).toBeNull();
   });
 
   it("labels waiting-for-input work honestly instead of implying it can proceed", () => {
@@ -458,7 +472,7 @@ describe("AGT-054 Work workspace migration", () => {
 
     const objectTrigger = screen.getByRole("button", { name: "切换工作对象" });
     expect(objectTrigger).toHaveTextContent("东南亚市场进入研究");
-    expect(screen.getByRole("tab", { name: "进展" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("region", { name: "东南亚市场进入研究 的进展" })).toBeInTheDocument();
 
     await user.click(objectTrigger);
     const objectCloseButtons = await screen.findAllByRole("button", { name: "关闭工作对象导航" });
@@ -497,25 +511,22 @@ describe("AGT-054 Work workspace migration", () => {
     await user.click(within(projectNavigation).getByRole("link", { name: /新品牌定位与故事/ }));
 
     expect(screen.getByRole("heading", { name: "新品牌定位与故事" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "概览" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 
-  it.each([360, 390, 430, 600, 820])(
-    "keeps the selected topic reachable without horizontal navigation at %ipx",
-    (viewportWidth) => {
-      const availableWidth = viewportWidth - 32;
-      const tabWidths = [92, 92, 92, 92, 92];
-      const window = resolveWorkspaceTabsWindow({
-        availableWidth,
-        tabWidths,
-        selectedIndex: 4,
-      });
-
-      expect(window.start).toBeLessThanOrEqual(4);
-      expect(window.end).toBeGreaterThan(4);
-      const fullWidth =
-        tabWidths.reduce((total, width) => total + width, 0) + (tabWidths.length - 1) * 2;
-      expect(window.hasOverflow).toBe(fullWidth > availableWidth);
-    },
-  );
+  it.each([
+    "/",
+    "/attention",
+    "/tasks",
+    "/artifacts",
+    "/tasks/market-research",
+    "/artifacts/market-note",
+    "/settings/general",
+    "/diagnostics",
+  ])("keeps route %s free of the extra Shell tab layer", (path) => {
+    renderWorkspace(path);
+    expect(document.querySelector('[data-workspace-region="topicbar"]')).toBeNull();
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(document.getElementById("main-content")).not.toBeNull();
+  });
 });

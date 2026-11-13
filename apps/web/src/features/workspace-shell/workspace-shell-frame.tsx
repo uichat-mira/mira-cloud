@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { ChevronDown, Layers3 } from "lucide-react";
 import { Link, NavLink } from "react-router";
-import { CollapsiblePanel, Drawer, WorkspaceTabs } from "../../components/mira-design/index.ts";
+import { CollapsiblePanel, Drawer } from "../../components/mira-design/index.ts";
 
 export type {
   WorkspaceRailItem,
@@ -10,7 +10,6 @@ export type {
   WorkspaceShellDensity,
   WorkspaceShellFrameProps,
   WorkspaceShellLayoutMetrics,
-  WorkspaceTopicTab,
 } from "./types";
 import type { WorkspaceRailItem, WorkspaceSidebarSection, WorkspaceShellFrameProps } from "./types";
 import { createWorkspaceShellStyleVars } from "./layout";
@@ -258,9 +257,6 @@ export function WorkspaceShellFrame({
   sidebarSections,
   mobileSidebarSections,
   sidebarFooter,
-  topicTabs,
-  topicValue,
-  onTopicChange,
   topbarLeading,
   topbarActions,
   mobileContextTitle,
@@ -385,16 +381,6 @@ export function WorkspaceShellFrame({
         <div className="workspace-topbar" data-workspace-region="topbar">
           <div className="min-w-0">{topbarLeading}</div>
           <div className="shrink-0">{topbarActions}</div>
-        </div>
-
-        <div className="workspace-topicbar" data-workspace-region="topicbar">
-          <WorkspaceTabs
-            tabs={topicTabs.map((tab) => ({ value: tab.value, label: tab.label }))}
-            value={topicValue}
-            onChange={onTopicChange}
-            ariaLabel="当前主题视图"
-            className="min-w-0 flex-1"
-          />
         </div>
 
         <main className="workspace-content" id="main-content" data-workspace-region="canvas">
