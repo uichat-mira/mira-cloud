@@ -870,20 +870,32 @@ button.workbench-secondary-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 14px;
 }
 
 .workbench-cockpit-toolbar p {
+  flex: 1 1 auto;
   margin: 0;
   color: rgb(var(--mira-color-text-tertiary));
   font-size: 11px;
   line-height: 1.5;
 }
 
+.workbench-cockpit-toolbar-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
 .workbench-cockpit-customize,
 .workbench-cockpit-reset,
-.workbench-cockpit-card-edit button {
+.workbench-cockpit-modal-row-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -898,58 +910,84 @@ button.workbench-secondary-link {
   cursor: pointer;
 }
 
-.workbench-cockpit-customize {
-  flex: 0 0 auto;
-}
-
 .workbench-cockpit-customize:hover,
 .workbench-cockpit-reset:hover,
-.workbench-cockpit-card-edit button:hover:not(:disabled) {
+.workbench-cockpit-modal-row-actions button:hover:not(:disabled) {
   background: rgb(var(--mira-color-surface-secondary));
   color: rgb(var(--mira-color-text-primary));
 }
 
-.workbench-cockpit-card-edit button:disabled {
+.workbench-cockpit-modal-row-actions button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.workbench-cockpit-editor {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px 18px;
-  margin-bottom: 16px;
-  border: 1px solid rgb(var(--mira-color-border));
-  border-radius: var(--mira-radius-ui-panel);
-  padding: 12px 14px;
-  background: rgb(var(--mira-color-surface-secondary));
+.workbench-cockpit-modal-intro {
+  margin: 0 0 12px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+  line-height: 1.6;
 }
 
-.workbench-cockpit-editor small {
-  flex: 1 1 100%;
+.workbench-cockpit-modal-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.workbench-cockpit-modal-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.workbench-cockpit-modal-row + .workbench-cockpit-modal-row {
+  border-top: 1px solid rgb(var(--mira-color-border));
+}
+
+.workbench-cockpit-modal-label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workbench-cockpit-modal-label strong {
+  color: rgb(var(--mira-color-text-primary));
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.workbench-cockpit-modal-label small {
   color: rgb(var(--mira-color-text-tertiary));
   font-size: 11px;
 }
 
-.workbench-cockpit-visibility {
+.workbench-cockpit-modal-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.workbench-cockpit-modal-row-actions button {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+.workbench-cockpit-modal-footnote {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 18px;
+  gap: 12px;
+  margin-top: 16px;
 }
 
-.workbench-cockpit-visibility label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: rgb(var(--mira-color-text-secondary));
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.workbench-cockpit-visibility input {
-  accent-color: rgb(var(--mira-color-primary));
+.workbench-cockpit-modal-footnote small {
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
 }
 
 .workbench-cockpit-grid {
@@ -1235,7 +1273,7 @@ button.workbench-secondary-link {
 @media (pointer: coarse) {
   .workbench-cockpit-customize,
   .workbench-cockpit-reset,
-  .workbench-cockpit-card-edit button {
+  .workbench-cockpit-modal-row-actions button {
     min-height: 44px;
   }
 
@@ -1244,7 +1282,14 @@ button.workbench-secondary-link {
     min-height: 44px;
   }
 
-  .workbench-cockpit-visibility label {
-    min-height: 44px;
+}
+
+@media (max-width: 560px) {
+  .workbench-cockpit-modal-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workbench-cockpit-modal-row-actions {
+    justify-content: flex-start;
   }
 }
