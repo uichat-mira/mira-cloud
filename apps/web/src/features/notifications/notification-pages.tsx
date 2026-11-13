@@ -15,7 +15,7 @@ function EmptyNotificationPage({
   description: string;
 }) {
   return (
-    <div className="flex min-h-[min(64dvh,560px)] w-full items-center justify-center">
+    <div className="workspace-page-body flex min-h-[min(64dvh,560px)] items-center justify-center">
       <h1 className="sr-only">{heading}</h1>
       <Result size="lg" title={title} description={description} icon={icon} />
     </div>

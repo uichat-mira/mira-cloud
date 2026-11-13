@@ -71,6 +71,16 @@ Wide screens use Desktop-derived workbench density:
 Mobile guidance does **not** globally increase desktop control size or force a mobile layout
 onto wide screens.
 
+**Shared page width contract:** The Workspace Shell's `contentMaxWidth` (currently `1320px`)
+and `.workspace-content` are the single source of truth for the maximum Canvas width
+and its responsive padding. Page-level surfaces use the reusable `.workspace-page-body`
+class to fill the available Canvas width without introducing a second `max-width`.
+Work cockpit, lists, Task and Artifact views, global Settings, Notifications, and
+Diagnostics share the same horizontal frame. Constrain **inner reading content**
+(paragraphs, metadata, text previews) separately when necessary; those narrower
+text lines must not determine the page header or main content body's width.
+Do not add feature-local 960px/820px page caps or duplicate Shell dimensions.
+
 Narrow screens:
 
 - use one primary column;

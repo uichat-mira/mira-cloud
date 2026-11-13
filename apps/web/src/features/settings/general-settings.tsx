@@ -22,7 +22,7 @@ export function GeneralSettingsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className="workspace-page-body">
       <header className="mb-8 border-b border-border pb-5">
         <p className="mb-1 text-xs font-medium text-text-tertiary">设置</p>
         <h1 className="text-heading-1 font-semibold text-text-primary">通用</h1>
