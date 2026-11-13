@@ -132,9 +132,12 @@ describe("AGT-054 Work workspace migration", () => {
     const homeView = renderWorkspace("/");
     const homeHeader = screen.getByRole("heading", { name: "工作台" }).closest("header");
     expect(homeHeader).not.toBeNull();
-    const homeTrigger = within(homeHeader as HTMLElement).getByRole("button", {
-      name: "交代工作",
-    });
+    expect(
+      within(homeHeader as HTMLElement).queryByRole("button", { name: "交代工作" }),
+    ).toBeNull();
+    const toolbar = document.querySelector(".workbench-cockpit-toolbar") as HTMLElement;
+    const homeTrigger = within(toolbar).getByRole("button", { name: "交代工作" });
+    expect(within(toolbar).getByRole("button", { name: "调整工作台" })).toBeInTheDocument();
     await user.click(homeTrigger);
     await screen.findByRole("dialog", { name: "交代工作" });
     await user.click(screen.getByRole("button", { name: "取消" }));
@@ -370,44 +373,54 @@ describe("AGT-054 Work workspace migration", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it("supports local-only Work card order, width, visibility and reset without API calls", async () => {
+  it("moves Home actions beside each other and edits layout only within a modal", async () => {
     const user = userEvent.setup();
     const fetcher = vi.fn();
     vi.stubGlobal("fetch", fetcher);
     const first = renderWorkspace();
 
+    const toolbar = document.querySelector(".workbench-cockpit-toolbar") as HTMLElement;
+    const actions = toolbar.querySelector(".workbench-cockpit-toolbar-actions") as HTMLElement;
+    expect(
+      within(actions)
+        .getAllByRole("button")
+        .map((button) => button.textContent?.trim()),
+    ).toEqual(["交代工作", "调整工作台"]);
     const attention = screen.getByRole("region", { name: "需要你关注" });
     const schedule = screen.getByRole("region", { name: "未来七天" });
     expect(
       attention.compareDocumentPosition(schedule) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
 
-    await user.click(screen.getByRole("button", { name: "调整工作台" }));
-    expect(screen.getByText(/只保存在当前浏览器/)).toBeInTheDocument();
+    const trigger = within(actions).getByRole("button", { name: "调整工作台" });
+    await user.click(trigger);
+    const dialog = await screen.findByRole("dialog", { name: "调整工作台" });
+    expect(within(dialog).getByText(/只保存在当前浏览器/)).toBeInTheDocument();
+    expect(document.querySelector(".workbench-cockpit-editor")).toBeNull();
+    expect(document.querySelector(".workbench-cockpit-card-edit")).toBeNull();
 
-    await user.click(within(attention).getByRole("button", { name: "下移需要你关注" }));
-    expect(
-      schedule.compareDocumentPosition(attention) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    await user.click(within(dialog).getByRole("button", { name: "下移需要你关注" }));
+    await user.click(within(dialog).getByRole("button", { name: "改为通栏需要你关注" }));
+    await user.click(within(dialog).getByRole("button", { name: "隐藏需要你关注" }));
+    expect(within(dialog).getByRole("button", { name: "显示需要你关注" })).toBeInTheDocument();
+    // The modal changes are drafts; neither the visible cards nor storage move yet.
+    expect(screen.getByRole("region", { name: "需要你关注" })).toBeInTheDocument();
+    expect(localStorage.getItem("mira:work-cockpit-layout:v1")).toBeNull();
 
-    await user.click(within(attention).getByRole("button", { name: "改为通栏" }));
-    expect(attention.closest(".workbench-cockpit-card")).toHaveAttribute("data-span", "wide");
-
-    await user.click(within(attention).getByRole("button", { name: "隐藏" }));
+    await user.click(within(dialog).getByRole("button", { name: "完成" }));
+    expect(screen.queryByRole("dialog", { name: "调整工作台" })).toBeNull();
     expect(screen.queryByRole("region", { name: "需要你关注" })).toBeNull();
-    expect(screen.getByRole("checkbox", { name: "需要你关注" })).not.toBeChecked();
     expect(localStorage.getItem("mira:work-cockpit-layout:v1")).toContain('"attention"');
-
-    await user.click(screen.getByRole("button", { name: "完成调整" }));
+    expect(trigger).toHaveFocus();
     first.unmount();
 
     renderWorkspace();
     expect(screen.queryByRole("region", { name: "需要你关注" })).toBeNull();
     await user.click(screen.getByRole("button", { name: "调整工作台" }));
-    await user.click(screen.getByRole("checkbox", { name: "需要你关注" }));
-    expect(screen.getByRole("region", { name: "需要你关注" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "恢复默认" }));
+    const reopened = screen.getByRole("dialog", { name: "调整工作台" });
+    await user.click(within(reopened).getByRole("button", { name: "显示需要你关注" }));
+    await user.click(within(reopened).getByRole("button", { name: "恢复默认" }));
+    await user.click(within(reopened).getByRole("button", { name: "完成" }));
     const restoredAttention = screen.getByRole("region", { name: "需要你关注" });
     const restoredSchedule = screen.getByRole("region", { name: "未来七天" });
     expect(
@@ -419,6 +432,31 @@ describe("AGT-054 Work workspace migration", () => {
       "normal",
     );
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("discards unapplied layout edits on Cancel and Escape and restores focus", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    const trigger = screen.getByRole("button", { name: "调整工作台" });
+
+    await user.click(trigger);
+    let dialog = screen.getByRole("dialog", { name: "调整工作台" });
+    await user.click(within(dialog).getByRole("button", { name: "隐藏需要你关注" }));
+    await user.click(within(dialog).getByRole("button", { name: "取消" }));
+    expect(screen.queryByRole("dialog", { name: "调整工作台" })).toBeNull();
+    expect(trigger).toHaveFocus();
+    expect(screen.getByRole("region", { name: "需要你关注" })).toBeInTheDocument();
+    expect(localStorage.getItem("mira:work-cockpit-layout:v1")).toBeNull();
+
+    await user.click(trigger);
+    dialog = screen.getByRole("dialog", { name: "调整工作台" });
+    expect(within(dialog).getByRole("button", { name: "隐藏需要你关注" })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "隐藏需要你关注" }));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "调整工作台" })).toBeNull();
+    expect(trigger).toHaveFocus();
+    expect(screen.getByRole("region", { name: "需要你关注" })).toBeInTheDocument();
+    expect(localStorage.getItem("mira:work-cockpit-layout:v1")).toBeNull();
   });
 
   it("explores explicitly fictional schedule days without creating any real work", async () => {

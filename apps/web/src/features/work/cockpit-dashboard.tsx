@@ -1,9 +1,8 @@
-import { useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, Check, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { useCallback, useState, type ReactNode } from "react";
+import { ArrowDown, ArrowUp, Plus, RotateCcw, SlidersHorizontal } from "lucide-react";
 
-import { Card } from "../../components/mira-design/index.ts";
+import { Button, Card, ModalShell } from "../../components/mira-design/index.ts";
 import {
-  cockpitWidgetIds,
   defaultCockpitLayout,
   persistCockpitLayout,
   readCockpitLayout,
@@ -18,98 +17,174 @@ export interface CockpitWidget {
   content: ReactNode;
 }
 
-export function CockpitDashboard({ widgets }: { widgets: readonly CockpitWidget[] }) {
-  const [layout, setLayout] = useState(readCockpitLayout);
-  const [editing, setEditing] = useState(false);
-  const available = widgets.filter((widget) => cockpitWidgetIds.includes(widget.id));
-  const visible = layout.order
-    .filter((id) => !layout.hidden.includes(id))
-    .map((id) => available.find((widget) => widget.id === id))
-    .filter((widget): widget is CockpitWidget => Boolean(widget));
+function moveWidget(layout: CockpitLayout, id: CockpitWidgetId, direction: -1 | 1): CockpitLayout {
+  const visible = layout.order.filter((item) => !layout.hidden.includes(item));
+  const index = visible.indexOf(id);
+  const neighbor = visible[index + direction];
+  if (!neighbor) return layout;
 
-  function applyLayout(next: CockpitLayout) {
-    setLayout(next);
-    persistCockpitLayout(next);
-  }
+  const order = [...layout.order];
+  const from = order.indexOf(id);
+  const to = order.indexOf(neighbor);
+  [order[from], order[to]] = [order[to]!, order[from]!];
+  return { ...layout, order };
+}
 
-  function move(id: CockpitWidgetId, direction: -1 | 1) {
-    const index = visible.findIndex((widget) => widget.id === id);
-    const neighbor = visible[index + direction];
-    if (!neighbor) return;
-    const nextOrder = [...layout.order];
-    const from = nextOrder.indexOf(id);
-    const to = nextOrder.indexOf(neighbor.id);
-    [nextOrder[from], nextOrder[to]] = [nextOrder[to]!, nextOrder[from]!];
-    applyLayout({ ...layout, order: nextOrder });
-  }
+function CockpitLayoutEditor({
+  widgets,
+  draft,
+  onChange,
+}: {
+  widgets: readonly CockpitWidget[];
+  draft: CockpitLayout;
+  onChange: (next: CockpitLayout) => void;
+}) {
+  const visible = draft.order.filter((id) => !draft.hidden.includes(id));
 
   function toggleVisibility(id: CockpitWidgetId) {
-    if (!layout.hidden.includes(id) && visible.length <= 1) return;
-    applyLayout({
-      ...layout,
-      hidden: layout.hidden.includes(id)
-        ? layout.hidden.filter((item) => item !== id)
-        : [...layout.hidden, id],
+    const hidden = draft.hidden.includes(id);
+    if (!hidden && visible.length <= 1) return;
+    onChange({
+      ...draft,
+      hidden: hidden ? draft.hidden.filter((item) => item !== id) : [...draft.hidden, id],
     });
   }
 
   function toggleWidth(id: CockpitWidgetId) {
-    applyLayout({
-      ...layout,
-      wide: layout.wide.includes(id)
-        ? layout.wide.filter((item) => item !== id)
-        : [...layout.wide, id],
+    onChange({
+      ...draft,
+      wide: draft.wide.includes(id)
+        ? draft.wide.filter((item) => item !== id)
+        : [...draft.wide, id],
     });
+  }
+
+  return (
+    <div className="workbench-cockpit-modal-content">
+      <p className="workbench-cockpit-modal-intro">
+        调整卡片的顺序、尺寸和显示状态。完成后应用到工作台。
+      </p>
+      <div className="workbench-cockpit-modal-list" role="list" aria-label="卡片布局">
+        {draft.order.map((id) => {
+          const widget = widgets.find((item) => item.id === id);
+          if (!widget) return null;
+          const hidden = draft.hidden.includes(id);
+          const index = visible.indexOf(id);
+          const wide = draft.wide.includes(id);
+
+          return (
+            <div
+              key={id}
+              role="listitem"
+              aria-label={widget.title}
+              className="workbench-cockpit-modal-row"
+              data-hidden={hidden}
+            >
+              <div className="workbench-cockpit-modal-label">
+                <strong>{widget.title}</strong>
+                <small>{hidden ? "已隐藏" : wide ? "通栏" : "半宽"}</small>
+              </div>
+              <div className="workbench-cockpit-modal-row-actions">
+                <button
+                  type="button"
+                  disabled={hidden || index === 0}
+                  aria-label={"上移" + widget.title}
+                  onClick={() => onChange(moveWidget(draft, id, -1))}
+                >
+                  <ArrowUp size={14} aria-hidden="true" />
+                  上移
+                </button>
+                <button
+                  type="button"
+                  disabled={hidden || index === visible.length - 1}
+                  aria-label={"下移" + widget.title}
+                  onClick={() => onChange(moveWidget(draft, id, 1))}
+                >
+                  <ArrowDown size={14} aria-hidden="true" />
+                  下移
+                </button>
+                <button
+                  type="button"
+                  disabled={hidden}
+                  aria-label={(wide ? "改为半宽" : "改为通栏") + widget.title}
+                  onClick={() => toggleWidth(id)}
+                >
+                  {wide ? "半宽" : "通栏"}
+                </button>
+                <button
+                  type="button"
+                  disabled={!hidden && visible.length <= 1}
+                  aria-label={(hidden ? "显示" : "隐藏") + widget.title}
+                  onClick={() => toggleVisibility(id)}
+                >
+                  {hidden ? "显示" : "隐藏"}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="workbench-cockpit-modal-footnote">
+        <button
+          type="button"
+          className="workbench-cockpit-reset"
+          onClick={() => onChange(defaultCockpitLayout())}
+        >
+          <RotateCcw size={14} aria-hidden="true" />
+          恢复默认
+        </button>
+        <small>布局只保存在当前浏览器，不会同步到其他设备。</small>
+      </div>
+    </div>
+  );
+}
+
+export function CockpitDashboard({
+  widgets,
+  onCreate,
+}: {
+  widgets: readonly CockpitWidget[];
+  onCreate: () => void;
+}) {
+  const [layout, setLayout] = useState(readCockpitLayout);
+  const [draft, setDraft] = useState(layout);
+  const [editing, setEditing] = useState(false);
+  const visible = layout.order
+    .filter((id) => !layout.hidden.includes(id))
+    .map((id) => widgets.find((widget) => widget.id === id))
+    .filter((widget): widget is CockpitWidget => Boolean(widget));
+
+  function openEditor() {
+    setDraft(layout);
+    setEditing(true);
+  }
+
+  const closeEditor = useCallback(() => setEditing(false), []);
+
+  function finishEditor() {
+    setLayout(draft);
+    persistCockpitLayout(draft);
+    closeEditor();
   }
 
   return (
     <div className="workbench-cockpit">
       <div className="workbench-cockpit-toolbar">
         <p>演示数据 · 未接入云端任务服务</p>
-        <button
-          type="button"
-          className="workbench-cockpit-customize"
-          aria-expanded={editing}
-          onClick={() => setEditing((value) => !value)}
-        >
-          {editing ? (
-            <Check size={15} aria-hidden="true" />
-          ) : (
+        <div className="workbench-cockpit-toolbar-actions">
+          <button type="button" className="workbench-primary-link" onClick={onCreate}>
+            <Plus size={15} aria-hidden="true" />
+            交代工作
+          </button>
+          <button type="button" className="workbench-cockpit-customize" onClick={openEditor}>
             <SlidersHorizontal size={15} aria-hidden="true" />
-          )}
-          {editing ? "完成调整" : "调整工作台"}
-        </button>
+            调整工作台
+          </button>
+        </div>
       </div>
 
-      {editing ? (
-        <div className="workbench-cockpit-editor" aria-label="工作台布局设置">
-          <div className="workbench-cockpit-visibility" role="group" aria-label="显示的卡片">
-            {widgets.map((widget) => (
-              <label key={widget.id}>
-                <input
-                  type="checkbox"
-                  checked={!layout.hidden.includes(widget.id)}
-                  disabled={!layout.hidden.includes(widget.id) && visible.length === 1}
-                  onChange={() => toggleVisibility(widget.id)}
-                />
-                {widget.title}
-              </label>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="workbench-cockpit-reset"
-            onClick={() => applyLayout(defaultCockpitLayout())}
-          >
-            <RotateCcw size={14} aria-hidden="true" />
-            恢复默认
-          </button>
-          <small>布局只保存在当前浏览器，不会同步到其他设备。</small>
-        </div>
-      ) : null}
-
       <div className="workbench-cockpit-grid" aria-label="工作驾驶舱">
-        {visible.map((widget, index) => (
+        {visible.map((widget) => (
           <Card
             key={widget.id}
             variant="default"
@@ -122,43 +197,34 @@ export function CockpitDashboard({ widgets }: { widgets: readonly CockpitWidget[
                 <div>
                   <h2>{widget.title}</h2>
                 </div>
-                {!editing && widget.action ? <div>{widget.action}</div> : null}
+                {widget.action ? <div>{widget.action}</div> : null}
               </header>
-              {editing ? (
-                <div className="workbench-cockpit-card-edit" aria-label={widget.title + "布局操作"}>
-                  <button
-                    type="button"
-                    disabled={index === 0}
-                    aria-label={"上移" + widget.title}
-                    onClick={() => move(widget.id, -1)}
-                  >
-                    <ArrowUp size={14} aria-hidden="true" /> 上移
-                  </button>
-                  <button
-                    type="button"
-                    disabled={index === visible.length - 1}
-                    aria-label={"下移" + widget.title}
-                    onClick={() => move(widget.id, 1)}
-                  >
-                    <ArrowDown size={14} aria-hidden="true" /> 下移
-                  </button>
-                  <button type="button" onClick={() => toggleWidth(widget.id)}>
-                    {layout.wide.includes(widget.id) ? "改为半宽" : "改为通栏"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={visible.length <= 1}
-                    onClick={() => toggleVisibility(widget.id)}
-                  >
-                    隐藏
-                  </button>
-                </div>
-              ) : null}
               <div className="workbench-cockpit-card-content">{widget.content}</div>
             </section>
           </Card>
         ))}
       </div>
+
+      <ModalShell
+        open={editing}
+        title="调整工作台"
+        width={680}
+        maxHeight="calc(100dvh - 2rem)"
+        closeLabel="关闭工作台布局设置"
+        onClose={closeEditor}
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={closeEditor}>
+              取消
+            </Button>
+            <Button variant="primary" size="sm" onClick={finishEditor}>
+              完成
+            </Button>
+          </>
+        }
+      >
+        <CockpitLayoutEditor widgets={widgets} draft={draft} onChange={setDraft} />
+      </ModalShell>
     </div>
   );
 }
