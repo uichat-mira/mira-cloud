@@ -345,16 +345,11 @@ function HomePage({
               previewTasks.length +
               " 件工作在手边。"
         }
-        action={
-          <button type="button" className="workbench-primary-link" onClick={onCreate}>
-            <Plus size={15} aria-hidden="true" /> 交代工作
-          </button>
-        }
       />
       {scenario === "empty" ? (
         <EmptyWorkspace onCreate={onCreate} />
       ) : (
-        <CockpitDashboard widgets={widgets} />
+        <CockpitDashboard widgets={widgets} onCreate={onCreate} />
       )}
     </>
   );
