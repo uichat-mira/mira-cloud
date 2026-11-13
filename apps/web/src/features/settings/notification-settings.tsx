@@ -4,7 +4,7 @@ import { Result } from "../../components/mira-design/index.ts";
 
 export function NotificationSettingsPage() {
   return (
-    <div className="flex min-h-[min(64dvh,560px)] w-full items-center justify-center">
+    <div className="workspace-page-body flex min-h-[min(64dvh,560px)] items-center justify-center">
       <h1 className="sr-only">通知与送达</h1>
       <Result
         size="lg"
