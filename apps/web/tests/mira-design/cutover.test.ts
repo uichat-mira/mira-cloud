@@ -112,7 +112,8 @@ describe("AGT-050 MiraDesign cutover contract", () => {
     const globals = readRepo("apps/web/src/styles/globals.css");
 
     expect(workspace).toContain("<WorkspaceShellFrame");
-    expect(shell).toContain("<WorkspaceTabs");
+    expect(shell).not.toContain("<WorkspaceTabs");
+    expect(shell).toContain('<main className="workspace-content"');
     expect(shell).toContain("<Drawer");
     expect(workspace).not.toContain('className="nav-link"');
     expect(connection).toContain("<SectionCard");

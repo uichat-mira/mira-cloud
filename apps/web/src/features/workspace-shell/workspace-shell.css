@@ -3,7 +3,6 @@
   --workspace-rail-width: 56px;
   --workspace-sidebar-width: 252px;
   --workspace-header-height: 58px;
-  --workspace-topicbar-height: 44px;
   --workspace-separator-width: 1px;
   --workspace-mobile-header-height: 62px;
   --workspace-content-max-width: 1320px;
@@ -286,19 +285,6 @@
   backdrop-filter: blur(10px);
 }
 
-.workspace-topicbar {
-  position: sticky;
-  top: var(--workspace-header-height);
-  z-index: 18;
-  display: flex;
-  height: var(--workspace-topicbar-height);
-  box-sizing: border-box;
-  align-items: end;
-  padding: 0 28px;
-  border-bottom: var(--workspace-separator-width) solid rgb(var(--mira-color-border));
-  background: rgb(var(--mira-color-surface-primary));
-}
-
 .workspace-content {
   width: 100%;
   max-width: var(--workspace-content-max-width);
@@ -468,12 +454,6 @@
 
   .workspace-topbar {
     display: none;
-  }
-
-  .workspace-topicbar {
-    top: max(var(--workspace-mobile-header-height), calc(52px + env(safe-area-inset-top)));
-    height: var(--workspace-topicbar-height);
-    padding: 0 max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
   }
 
   .workspace-content {

@@ -54,12 +54,6 @@ type PreviewLink = (path: string) => string;
 type TaskTopic = "overview" | "progress" | "artifacts";
 type ArtifactTopic = "preview" | "source" | "versions";
 
-interface ShellTopic {
-  value: string;
-  label: string;
-  to?: string;
-}
-
 function withScenario(path: string, scenario: PreviewScenario): string {
   if (scenario === "active") return path;
   const [pathname, rawQuery = ""] = path.split("?");
@@ -77,59 +71,6 @@ function taskTopic(value: string | null): TaskTopic {
 function artifactTopic(value: string | null): ArtifactTopic {
   if (value === "source" || value === "versions") return value;
   return "preview";
-}
-
-function resolveShellTopics(
-  pathname: string,
-  searchParams: URLSearchParams,
-): { tabs: readonly ShellTopic[]; value: string } {
-  if (
-    pathname === "/" ||
-    pathname === "/attention" ||
-    pathname === "/artifacts" ||
-    pathname === "/new"
-  ) {
-    const tabs = [
-      { value: "overview", label: "概览", to: "/" },
-      { value: "attention", label: "待处理", to: "/attention" },
-      { value: "artifacts", label: "成果", to: "/artifacts" },
-    ] as const;
-    if (pathname === "/attention") return { tabs, value: "attention" };
-    if (pathname === "/artifacts") return { tabs, value: "artifacts" };
-    return { tabs, value: "overview" };
-  }
-
-  if (pathname === "/tasks") {
-    return { tabs: [{ value: "tasks", label: "全部工作" }], value: "tasks" };
-  }
-
-  if (pathname.startsWith("/tasks/")) {
-    const tabs = [
-      { value: "overview", label: "概览", to: pathname },
-      { value: "progress", label: "进展", to: pathname + "?view=progress" },
-      { value: "artifacts", label: "成果", to: pathname + "?view=artifacts" },
-    ] as const;
-    return { tabs, value: taskTopic(searchParams.get("view")) };
-  }
-
-  if (pathname.startsWith("/artifacts/")) {
-    const tabs = [
-      { value: "preview", label: "预览", to: pathname },
-      { value: "source", label: "来源", to: pathname + "?view=source" },
-      { value: "versions", label: "版本", to: pathname + "?view=versions" },
-    ] as const;
-    return { tabs, value: artifactTopic(searchParams.get("view")) };
-  }
-
-  if (pathname === "/diagnostics") {
-    return { tabs: [{ value: "diagnostics", label: "连接诊断" }], value: "diagnostics" };
-  }
-
-  if (pathname === "/settings/general") {
-    return { tabs: [{ value: "general", label: "通用" }], value: "general" };
-  }
-
-  return { tabs: [{ value: "unknown", label: "工作" }], value: "unknown" };
 }
 
 function TaskStatus({ status }: { status: PreviewTask["status"] }) {
@@ -665,6 +606,12 @@ function TaskDetail({ task, view, to }: { task: PreviewTask; view: TaskTopic; to
         action={<TaskStatus status={task.status} />}
       />
 
+      {view !== "overview" ? (
+        <Link to={to("/tasks/" + task.id)} className="workbench-inline-return">
+          <ArrowLeft size={15} aria-hidden="true" /> 返回工作概览
+        </Link>
+      ) : null}
+
       {view === "overview" ? (
         <TaskOverview
           task={task}
@@ -717,8 +664,19 @@ function ArtifactDetail({
             <small>Fixture 预览</small>
             <h2>{artifact.title}</h2>
             <p>这里保留真正的成果阅读区域。文件内容、下载权限与版本读取尚未接入。</p>
+            <p className="workbench-artifact-context-links">
+              <Link to={to("/artifacts/" + artifact.id + "?view=source")}>查看来源信息</Link>
+              <span aria-hidden="true"> · </span>
+              <Link to={to("/artifacts/" + artifact.id + "?view=versions")}>查看版本记录</Link>
+            </p>
           </div>
         </section>
+      ) : null}
+
+      {view !== "preview" ? (
+        <Link to={to("/artifacts/" + artifact.id)} className="workbench-inline-return">
+          <ArrowLeft size={15} aria-hidden="true" /> 返回成果预览
+        </Link>
       ) : null}
 
       {view === "source" ? (
@@ -736,7 +694,11 @@ function ArtifactDetail({
             </div>
             <div>
               <dt>版本</dt>
-              <dd>{artifact.version}</dd>
+              <dd>
+                <Link to={to("/artifacts/" + artifact.id + "?view=versions")}>
+                  {artifact.version} · 查看版本记录
+                </Link>
+              </dd>
             </div>
             <div>
               <dt>访问状态</dt>
@@ -754,6 +716,9 @@ function ArtifactDetail({
             <small>{artifact.updated}</small>
           </div>
           <p className="workbench-boundary-note">本轮只演示版本入口，不制造不存在的历史版本。</p>
+          <p className="workbench-artifact-context-links">
+            <Link to={to("/artifacts/" + artifact.id + "?view=source")}>查看成果来源</Link>
+          </p>
         </section>
       ) : null}
     </>
@@ -911,19 +876,6 @@ export function WorkspaceShell() {
     setParams(updated);
   };
 
-  const isUnavailableDetail =
-    scenario !== "active" && /^\/(tasks|artifacts)\/[^/]+$/.test(location.pathname);
-  const topics = isUnavailableDetail
-    ? {
-        tabs: [{ value: "state", label: scenario === "empty" ? "尚无工作" : "数据不可用" }],
-        value: "state",
-      }
-    : resolveShellTopics(location.pathname, params);
-  const changeTopic = (value: string) => {
-    const target = topics.tabs.find((tab) => tab.value === value)?.to;
-    if (target) navigate(to(target));
-  };
-
   const visibleTasks = scenario === "active" ? previewTasks : [];
 
   const railItems = [
@@ -969,6 +921,20 @@ export function WorkspaceShell() {
           label: "全部工作",
           to: to("/tasks"),
           icon: <Layers3 size={15} aria-hidden="true" />,
+          end: true,
+        },
+        {
+          id: "attention",
+          label: "待处理",
+          to: to("/attention"),
+          icon: <CheckCircle2 size={15} aria-hidden="true" />,
+          end: true,
+        },
+        {
+          id: "artifacts",
+          label: "成果",
+          to: to("/artifacts"),
+          icon: <FileText size={15} aria-hidden="true" />,
           end: true,
         },
       ],
@@ -1022,6 +988,20 @@ export function WorkspaceShell() {
           label: "全部工作",
           to: to("/tasks"),
           icon: <Layers3 size={15} aria-hidden="true" />,
+          end: true,
+        },
+        {
+          id: "attention",
+          label: "待处理",
+          to: to("/attention"),
+          icon: <CheckCircle2 size={15} aria-hidden="true" />,
+          end: true,
+        },
+        {
+          id: "artifacts",
+          label: "成果",
+          to: to("/artifacts"),
+          icon: <FileText size={15} aria-hidden="true" />,
           end: true,
         },
       ],
@@ -1104,9 +1084,6 @@ export function WorkspaceShell() {
           </Link>
         </div>
       }
-      topicTabs={topics.tabs}
-      topicValue={topics.value}
-      onTopicChange={changeTopic}
       topbarLeading={
         <div className="flex min-w-0 items-center gap-2 text-sm text-text-secondary">
           <Cloud size={15} aria-hidden="true" />

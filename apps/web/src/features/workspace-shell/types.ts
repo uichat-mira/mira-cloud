@@ -29,16 +29,10 @@ export interface WorkspaceSidebarSection {
   defaultExpanded?: boolean;
 }
 
-export interface WorkspaceTopicTab {
-  value: string;
-  label: ReactNode;
-}
-
 export interface WorkspaceShellLayoutMetrics {
   railWidth: number;
   sidebarWidth: number;
   headerHeight: number;
-  topicbarHeight: number;
   separatorWidth: number;
   mobileHeaderHeight: number;
   contentMaxWidth: number;
@@ -56,9 +50,6 @@ export interface WorkspaceShellFrameProps {
   sidebarSections: readonly WorkspaceSidebarSection[];
   mobileSidebarSections?: readonly WorkspaceSidebarSection[];
   sidebarFooter?: ReactNode;
-  topicTabs: readonly WorkspaceTopicTab[];
-  topicValue: string;
-  onTopicChange: (value: string) => void;
   topbarLeading?: ReactNode;
   topbarActions?: ReactNode;
   mobileContextTitle: ReactNode;
