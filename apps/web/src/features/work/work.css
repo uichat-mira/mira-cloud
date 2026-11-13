@@ -721,6 +721,11 @@ button.workbench-secondary-link {
   font-size: 10px;
 }
 
+.workbench-unavailable {
+  /* Error state is the page, not a second panel beneath an empty heading. */
+  border-top: 0;
+}
+
 .workbench-unavailable .workbench-empty-icon {
   color: rgb(var(--mira-color-warning-text));
 }

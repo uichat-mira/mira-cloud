@@ -587,7 +587,8 @@ describe("AGT-054 Work workspace migration", () => {
     await user.click(within(debugMenu).getByRole("button", { name: "数据不可用" }));
     expect(screen.getByRole("heading", { name: "工作数据暂时无法更新" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "从第一件工作开始" })).toBeNull();
-    expect(screen.getByText("工作数据暂时不可用，无法确认当前任务。")).toBeInTheDocument();
+    expect(screen.queryByText("工作数据暂时不可用，无法确认当前任务。")).toBeNull();
+    expect(document.querySelector(".workbench-page-header")).toBeNull();
     expect(within(sidebar).queryByRole("link", { name: /东南亚市场进入研究/ })).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "原型调试（拖动移动位置）" }));
@@ -595,6 +596,27 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("heading", { name: "工作台" })).toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: /东南亚市场进入研究/ })).toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("shows only the unavailable state without decorative headers across Work landing pages", () => {
+    const paths = ["/", "/attention", "/tasks", "/artifacts"];
+    for (const path of paths) {
+      const page = renderWorkspace(path + "?scenario=unavailable");
+      const main = document.getElementById("main-content") as HTMLElement;
+      expect(
+        within(main).getByRole("heading", { name: "工作数据暂时无法更新" }),
+      ).toBeInTheDocument();
+      expect(within(main).getByRole("link", { name: /查看连接诊断/ })).toBeInTheDocument();
+      expect(main.querySelector(".workbench-page-header")).toBeNull();
+      expect(main.querySelector(".workbench-full-ledger")).toBeNull();
+      expect(main.querySelector(".workbench-cockpit")).toBeNull();
+      expect(main.querySelectorAll(".workbench-unavailable")).toHaveLength(1);
+      page.unmount();
+    }
+
+    renderWorkspace("/artifacts");
+    expect(document.querySelector(".workbench-page-header")).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "成果" })).toBeInTheDocument();
   });
 
   it("opens a contextual lazy debug menu only on Work preview routes", async () => {
