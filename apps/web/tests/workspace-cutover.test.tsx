@@ -347,21 +347,111 @@ describe("AGT-054 Work workspace migration", () => {
     expect(
       within(main as HTMLElement).getByRole("heading", { name: "工作台" }),
     ).toBeInTheDocument();
-    const workZone = within(main as HTMLElement).getByRole("region", { name: "正在推进" });
-    const attentionZone = within(main as HTMLElement).getByRole("complementary", {
-      name: "等你决定",
+    const workZone = within(main as HTMLElement).getByRole("region", { name: "持续中的工作" });
+    const attentionZone = within(main as HTMLElement).getByRole("region", {
+      name: "需要你关注",
     });
+    const schedule = within(main as HTMLElement).getByRole("region", { name: "未来七天" });
+    const artifacts = within(main as HTMLElement).getByRole("region", { name: "最近交付" });
     expect(within(workZone).getByRole("link", { name: "东南亚市场进入研究" })).toBeInTheDocument();
     expect(within(workZone).getByRole("link", { name: "新品牌定位与故事" })).toBeInTheDocument();
     expect(
       within(attentionZone).getByRole("link", { name: /研究摘要，等待你的确认/ }),
     ).toBeInTheDocument();
-    expect(within(workZone).getByRole("region", { name: "最近成果" })).toBeInTheDocument();
+    expect(within(artifacts).getByRole("link", { name: /市场机会研究摘要/ })).toBeInTheDocument();
+    expect(
+      within(schedule).getByRole("group", { name: "未来七天演示计划分布" }),
+    ).toBeInTheDocument();
     expect(
       attentionZone.compareDocumentPosition(workZone) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(screen.getByText("有 2 件事需要你处理，3 件工作在手边。")).toBeInTheDocument();
+    expect(screen.getByText(/演示数据 · 未接入云端任务服务/)).toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("supports local-only Work card order, width, visibility and reset without API calls", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const first = renderWorkspace();
+
+    const attention = screen.getByRole("region", { name: "需要你关注" });
+    const schedule = screen.getByRole("region", { name: "未来七天" });
+    expect(
+      attention.compareDocumentPosition(schedule) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "调整工作台" }));
+    expect(screen.getByText(/只保存在当前浏览器/)).toBeInTheDocument();
+
+    await user.click(within(attention).getByRole("button", { name: "下移需要你关注" }));
+    expect(
+      schedule.compareDocumentPosition(attention) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    await user.click(within(attention).getByRole("button", { name: "改为通栏" }));
+    expect(attention.closest(".workbench-cockpit-card")).toHaveAttribute("data-span", "wide");
+
+    await user.click(within(attention).getByRole("button", { name: "隐藏" }));
+    expect(screen.queryByRole("region", { name: "需要你关注" })).toBeNull();
+    expect(screen.getByRole("checkbox", { name: "需要你关注" })).not.toBeChecked();
+    expect(localStorage.getItem("mira:work-cockpit-layout:v1")).toContain('"attention"');
+
+    await user.click(screen.getByRole("button", { name: "完成调整" }));
+    first.unmount();
+
+    renderWorkspace();
+    expect(screen.queryByRole("region", { name: "需要你关注" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "调整工作台" }));
+    await user.click(screen.getByRole("checkbox", { name: "需要你关注" }));
+    expect(screen.getByRole("region", { name: "需要你关注" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "恢复默认" }));
+    const restoredAttention = screen.getByRole("region", { name: "需要你关注" });
+    const restoredSchedule = screen.getByRole("region", { name: "未来七天" });
+    expect(
+      restoredAttention.compareDocumentPosition(restoredSchedule) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(restoredAttention.closest(".workbench-cockpit-card")).toHaveAttribute(
+      "data-span",
+      "normal",
+    );
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("explores explicitly fictional schedule days without creating any real work", async () => {
+    const user = userEvent.setup();
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    renderWorkspace();
+
+    const schedule = screen.getByRole("region", { name: "未来七天" });
+    const chart = within(schedule).getByRole("group", { name: "未来七天演示计划分布" });
+    expect(within(chart).getAllByRole("button")).toHaveLength(7);
+    expect(within(schedule).getByText(/演示计划 · 未接入真实 Scheduler/)).toBeInTheDocument();
+
+    await user.click(within(chart).getByRole("button", { name: /：2 项演示计划/ }));
+    expect(within(schedule).getByText("核对重点市场准入资料")).toBeInTheDocument();
+    expect(within(schedule).getByText("整理访谈问题")).toBeInTheDocument();
+    expect(within(schedule).getByRole("link", { name: /核对重点市场准入资料/ })).toHaveAttribute(
+      "href",
+      "/tasks/market-research",
+    );
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("does not render fixture cockpit widgets for unavailable or empty scenarios", () => {
+    const empty = renderWorkspace("/?scenario=empty");
+    expect(screen.queryByRole("group", { name: "工作驾驶舱" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "调整工作台" })).toBeNull();
+    empty.unmount();
+
+    renderWorkspace("/?scenario=unavailable");
+    expect(screen.queryByRole("group", { name: "工作驾驶舱" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "调整工作台" })).toBeNull();
+    expect(screen.getByText(/当前状态未知，不代表没有工作/)).toBeInTheDocument();
   });
 
   it("reaches Work pages through the business sidebar without a Shell topic bar", async () => {
@@ -485,7 +575,7 @@ describe("AGT-054 Work workspace migration", () => {
     vi.stubGlobal("fetch", fetcher);
     renderWorkspace("/?scenario=empty");
     expect(screen.getByRole("heading", { name: "从第一件工作开始" })).toBeInTheDocument();
-    expect(screen.queryByRole("complementary", { name: "等你决定" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "需要你关注" })).toBeNull();
     expect(screen.getByText("还没有交代过工作，从第一件开始。")).toBeInTheDocument();
     const sidebar = screen.getByRole("complementary", { name: "当前业务" });
     expect(within(sidebar).queryByRole("link", { name: /东南亚市场进入研究/ })).toBeNull();
