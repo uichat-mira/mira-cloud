@@ -390,7 +390,12 @@ describe("AGT-054 Work workspace migration", () => {
     fireEvent.pointerUp(launcher, { pointerId: 1, clientX: 690, clientY: 530 });
     fireEvent.click(launcher);
     expect(launcher).toHaveAttribute("aria-expanded", "false");
-    expect(launcher.closest(".preview-debug-float")).toHaveAttribute("data-placed", "true");
+    const floating = launcher.closest(".preview-debug-float");
+    expect(floating).toHaveAttribute("data-placed", "true");
+    expect(floating?.getAttribute("style")).toContain("safe-area-inset-left");
+    expect(floating?.getAttribute("style")).toContain("safe-area-inset-right");
+    expect(floating?.getAttribute("style")).toContain("safe-area-inset-top");
+    expect(floating?.getAttribute("style")).toContain("safe-area-inset-bottom");
 
     launcher.focus();
     fireEvent.keyDown(launcher, { key: "ArrowLeft" });

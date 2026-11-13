@@ -832,7 +832,10 @@ button.workbench-secondary-link {
     grid-template-columns: 32px minmax(0, 1fr) 16px;
   }
 
-  .workbench-artifact-time,
+  .workbench-artifact-time {
+    display: none;
+  }
+
   .workbench-composer-outline {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -853,9 +856,5 @@ button.workbench-secondary-link {
 
   .workbench-page-header > div:last-child {
     flex: 0 0 auto;
-  }
-
-  .workbench-fixture-label {
-    display: none;
   }
 }

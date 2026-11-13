@@ -169,7 +169,15 @@ export function PreviewDebugBall({ scope, contextKey, title, children }: Preview
       data-placed={position ? "true" : "false"}
       data-horizontal={menuLeft ? "left" : "right"}
       data-vertical={menuBelow ? "below" : "above"}
-      style={position ? { left: position.left, top: position.top } : undefined}
+      style={
+        position
+          ? {
+              // CSS env() is evaluated by the browser, including landscape notch insets.
+              left: `clamp(max(${EDGE_GAP}px, env(safe-area-inset-left)), ${position.left}px, calc(100vw - ${BALL_SIZE}px - max(${EDGE_GAP}px, env(safe-area-inset-right))))`,
+              top: `clamp(max(${EDGE_GAP}px, env(safe-area-inset-top)), ${position.top}px, calc(100dvh - ${BALL_SIZE}px - max(${EDGE_GAP}px, env(safe-area-inset-bottom))))`,
+            }
+          : undefined
+      }
     >
       <button
         ref={trigger}
