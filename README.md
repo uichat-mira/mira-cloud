@@ -1,6 +1,6 @@
 # Mira Cloud
 
-> **Status: Local Web/API/DB code under active development; no hosted or production service.**
+> **Status: React/Hono/PostgreSQL foundation with a prod-only Tencent delivery path; authenticated Cloud work remains unverified.**
 > Design baseline: **product architecture v0.4** and **technology ADR-003** (2026-11-11).  
 > Principle: **One Account, Multiple Runtimes, Shared Work.**
 
@@ -8,7 +8,7 @@ Mira Cloud is the future independent, continuously available agent workspace, gr
 
 ## Engineering base (implemented)
 
-This repository now has a reproducible **Node 24 / pnpm 10 / TypeScript strict** workspace scaffold. It contains a local-only Hono API and a responsive React Web shell; there is now one Drizzle/PostgreSQL metadata table and migration, but **no OAuth flow, Cloud Pi connection, Docker/Caddy deployment or production service**.
+This repository now has a reproducible **Node 24 / pnpm 10 / TypeScript strict** workspace scaffold. It contains a Hono API, responsive React Web shell and Drizzle/PostgreSQL persistence, plus a **prod-only Tencent deployment path**. This does **not** establish Cloud Auth business login, Cloud Pi execution integration or a live authenticated work product.
 
 Prerequisites: Node.js 24 and Corepack. pnpm is pinned by `packageManager` in `package.json`.
 
@@ -20,7 +20,7 @@ pnpm check
 
 `pnpm check` runs Prettier, ESLint, TypeScript strict checking and Vitest T1 unit tests. Before recursing, it also verifies that every `apps/*` / `packages/*` workspace package declares a runnable `check` script, so a later Web/API package cannot be silently skipped. This covers local unit/source/HTTP testing; the separate required PostgreSQL Integration job establishes real DB T3, never OAuth, Agent execution, hosted T4/T5 or deployment.
 
-The workspace now has real local-only Web/API packages. Design documents and `prototypes/` remain non-runtime references.
+The workspace has real Web/API packages and a separate prod-only infrastructure delivery path; design documents and `prototypes/` remain non-runtime references. Verify live deployment and integrations separately.
 
 ## Current decisions
 
@@ -29,7 +29,7 @@ The workspace now has real local-only Web/API packages. Design documents and `pr
 - **Clients:** browser, Mira Mobile (WebView), Mira Desktop (OAuth Cloud Client and separately a local-first Capability Host), and IM channels.
 - **Work:** temporary and scheduled tasks, run status, artifacts, memory, skills/MCP, GitHub collaboration, and explicit cross-runtime handoff.
 - **Permissions:** same-account sign-in is not tool authority. Desktop-owned runs and files stay local until explicitly shared.
-- **UI:** Web UI consumes the AGT-047 MiraDesign Foundation generated from pinned [Mira Desktop theme sources](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts). AGT-042 provides a local-only static React workspace; AGT-043 provides a local-only Hono HTTP service. Neither is a deployed or authenticated product.
+- **UI:** Web consumes the AGT-047 MiraDesign Foundation from pinned [Mira Desktop theme sources](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts). The workbench currently uses Fixture views; its legacy Composer Modal does not implement the [reviewed Intelligent UI delegation design](docs/product/delegation-intelligent-ui.md). The prod-only infrastructure path is not proof of authenticated business workflows.
 
 ## Open-source license
 
@@ -37,7 +37,7 @@ Mira Cloud is **publicly available under the [MIT License](LICENSE)**. Contribut
 
 ## Repository governance and environment reality
 
-The working source branch is **`dev`**; ordinary design changes flow through `feat/*` PRs and deliberate `dev → test → prod` source promotions. `main` is a retained bootstrap/history branch and **never means production**. The repository has local source implementations, but no Mira Cloud runtime is deployed from any branch. In particular, **`dev` and `test` have no configured servers**; do not add fake deployment URLs or claim T4/T5 evidence.
+The working source branch is **`dev`**; ordinary design changes flow through `feat/*` PRs and deliberate `dev → test → prod` source promotions. `main` is a retained bootstrap/history branch and **never means production**. A **prod-only Tencent deployment path** is configured, but source state alone does not prove the deployed version or runtime health. **`dev` and `test` have no configured servers**; do not add fake deployment URLs or claim T4/T5 evidence.
 
 Source validation has three layers: `node scripts/check-docs.mjs` (the `Docs Contract` job) and `pnpm check` (the Node 24 workspace tooling and T1 `Engineering Checks` job). Both are aggregated by the `Mira Gate` status. They validate documentation, source configuration and unit-level tooling only, not Agent functionality or deployment. See [environment and promotion contract](docs/engineering/environment.md) and the [organization environment model](https://github.com/uichat-mira/.github/blob/main/docs/engineering/environment-model.md).
 
@@ -59,7 +59,7 @@ No other agent, review provider, server, environment or deployment automation is
 
 ## Technology stack initiative
 
-The [AGT-040 initial technology design work item](https://github.com/uichat-mira/mira-cloud/issues/4) is governed by **[ADR-003 · Hono + Drizzle + PostgreSQL + Docker Compose/Caddy](docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md)** and the [initial technical design](docs/architecture/initial-technical-design.md). **ADR-002 is historical and superseded for Core/database/deployment choices.** Future Web remains React/Vite; existing Cloud Pi owns the Pi SDK runtime; Cloud Auth retains independent Fastify identity services. The [agent/contributor coding standard](docs/engineering/coding-standard.md) describes scoped implementation requirements. These are design decisions; local Web/API and one metadata repository are partially implemented, not deployed.
+The [AGT-040 initial technology design work item](https://github.com/uichat-mira/mira-cloud/issues/4) is governed by **[ADR-003 · Hono + Drizzle + PostgreSQL + Docker Compose/Caddy](docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md)** and the [initial technical design](docs/architecture/initial-technical-design.md). **ADR-002 is historical and superseded for Core/database/deployment choices.** Future Web remains React/Vite; existing Cloud Pi owns the Pi SDK runtime; Cloud Auth retains independent Fastify identity services. The [agent/contributor coding standard](docs/engineering/coding-standard.md) describes scoped implementation requirements. Architecture decisions and implementation evidence are distinct: Web/API/persistence and a prod-only infrastructure path exist, while authenticated Cloud work and cross-runtime integration still require independent proof.
 
 ## Contents
 
@@ -70,13 +70,15 @@ The [AGT-040 initial technology design work item](https://github.com/uichat-mira
 | [`docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md`](docs/decisions/ADR-003-hono-drizzle-postgres-deployment.md) | Current preferred technology/deployment decision |
 | [`docs/engineering/coding-standard.md`](docs/engineering/coding-standard.md) | Agent/contributor coding and security conventions |
 | [`docs/decisions/ADR-002-full-stack-technology.md`](docs/decisions/ADR-002-full-stack-technology.md) | Historical technology decision; superseded for new Core, DB and deployment by ADR-003 |
-| [`docs/product/workbench.md`](docs/product/workbench.md) | User-facing workbench scope and core journeys |
+| [`docs/product/workbench.md`](docs/product/workbench.md) | Workspace product contract and entrypoint for domain-specific UX decisions |
+| [`docs/product/delegation-intelligent-ui.md`](docs/product/delegation-intelligent-ui.md) | Approved D01–D31 product contract for long-running intelligent work delegation |
+| [`docs/product/delegation-technical-validation.md`](docs/product/delegation-technical-validation.md) | Unverified implementation risks and evidence gates for delegation |
 | [`docs/decisions/ADR-001-repository-scope.md`](docs/decisions/ADR-001-repository-scope.md) | Scope and truth-source boundaries for this design phase |
 | [`prototypes/workbench-v0.1/`](prototypes/workbench-v0.1/) | Previously created standalone HTML interaction demo, **non-production reference only** |
 
 ## What is explicitly **not** authorized by this repository
 
-- No authenticated business API, Cloud Pi scheduler migration, production database, production deployment or release machinery. `Mira Gate` requires Docs Contract, local app checks and actual ephemeral PostgreSQL T3; it is not a T4/T5 or deploy workflow.
+- No authenticated Cloud work or Cloud Pi scheduler migration is implied by source or docs. The **prod-only Tencent delivery path exists**, but this document does not authorize a deployment; `Mira Gate` and ephemeral PostgreSQL T3 are not live T4/T5 evidence.
 - No GitHub Issues / engineering cards or automatic changes to existing projects merely because they are mentioned in a design.
 - No assumption that future API endpoints, OAuth scopes or cross-device capabilities already exist.
 
@@ -90,7 +92,7 @@ The [AGT-040 initial technology design work item](https://github.com/uichat-mira
 Design docs are proposals; actual repository code and deployed runtime remain authoritative for implementation state.
 ## Local Hono HTTP transport (AGT-043)
 
-The `apps/api` package is a **minimal local-only HTTP process**, not a cloud deployment or a connected Agent backend. It uses Node 24, Hono, Zod and a bounded request-ID/error contract.
+The `apps/api` package implements a minimal Hono HTTP process; local runs and tests do not establish that a given production version is live or connected to an Agent backend. It uses Node 24, Hono, Zod and a bounded request-ID/error contract.
 
 ```bash
 pnpm install --frozen-lockfile
@@ -102,7 +104,7 @@ pnpm --filter @mira-cloud/api build
 
 `GET /api/v1/health` returns this process's own liveness/version; it makes **no** statement about Cloud Auth, Cloud Pi or PostgreSQL availability. `?detail=basic` is the only optional diagnostic query parameter. Unexpected/duplicate parameters return `INVALID_QUERY` (400), unsupported methods `METHOD_NOT_ALLOWED` (405), missing routes `NOT_FOUND` (404), and internal exceptions a scrubbed `INTERNAL_ERROR` (500). Errors carry a request ID. All HTTP integration tests use an actual ephemeral TCP listener and disable machine-wide proxy routing for loopback requests.
 
-No production secrets, Docker/Caddy/prod, Cloud Auth or Cloud Pi are configured; AGT-044 adds optional database connection configuration.
+Cloud Auth and Cloud Pi integration are not implied by this local HTTP contract. Production infrastructure and credentials are governed separately by [Tencent production delivery](docs/operations/tencent-production.md); no secrets belong in this repository.
 
 ## Local React Web workspace (AGT-042)
 
@@ -162,7 +164,7 @@ pnpm --filter @mira-cloud/web dev
 
 Without `DATABASE_URL`, the Hono API still starts and reports **database not configured**, not "user logged out" or a fake ready state. Without Hono, Web reports the API as unreachable. Restart services or repair the DB and use the explicit **重新检查** control.
 
-The Vite proxy is **only for local dev/preview**. A future hosted deployment must implement an explicitly reviewed same-origin `/api` reverse proxy; no permissive CORS, production host, OAuth session, Agent Runtime or database instance is provisioned here.
+The Vite proxy is **only for local dev/preview**; do not infer its behavior as the Tencent production API routing or proof of an OAuth session/Agent Runtime. The prod-only infrastructure contract is governed by [the Tencent runbook](docs/operations/tencent-production.md).
 
 GitHub CI's required PostgreSQL Integration job now launches **actual Vite + compiled Hono + ephemeral PostgreSQL** and tests ready → API offline → DB unconfigured → DB unreachable → ready again through real proxied HTTP requests. The Web's contract and retry/race behavior are covered by component tests. This is local/CI T1–T3 only, **not** browser device T4, live prod, or an authenticated Cloud Pi connection.
 
