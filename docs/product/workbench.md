@@ -1,11 +1,17 @@
 # Mira Cloud Workspace — 个人持续工作空间产品合同
 
-**Status:** AGT-051 · 产品信息架构 / Home 体验设计合同（仅设计，尚未实现）  
+**Status:** 工作空间 IA / Home 产品合同；当前 Web 为 Fixture 演示，完整业务流程未接通；2026-11-14 已纳入「交代工作」D01–D31 设计决议  
 **Decision:** 方向 A — Personal Continuous Workspace（2026-11-12）  
 **Work item:** [AGT-051](https://github.com/uichat-mira/mira-cloud/issues/70)  
-**Authority:** 本文件是 Workspace 用户体验合同的单一入口；[架构 v0.4](../architecture/v0.4.md) 约束数据/运行时所有权，[DESIGN.md](../../DESIGN.md) 与 [MiraDesign](../design/component-library.md) 约束视觉和组件消费。任何矛盾应明确提出，不能以本文重写真实运行时或安全权限。
+**Authority:** 本文件是 Workspace 用户体验合同的单一入口；「交代工作」的已确认详细设计以 [Intelligent UI PRD](./delegation-intelligent-ui.md) 为准，技术缺口见 [验证清单](./delegation-technical-validation.md)。[架构 v0.4](../architecture/v0.4.md) 约束数据/运行时所有权，[DESIGN.md](../../DESIGN.md) 与 [MiraDesign](../design/component-library.md) 约束视觉和组件消费。任何矛盾应明确提出，不能以本文重写真实运行时或安全权限。
 
-> **实现事实与设计提案分开看：** 当前 `apps/web/src/pages/workspace.tsx` 仅有「工作台／任务／成果」导航、基础设施连接检查及无数据占位；没有真实 Cloud Auth Web 业务登录、Cloud Task / Run / Artifact 服务和跨端交接。下文路由、操作、状态与演示情境均为**未来产品合同**，并非已部署能力。旧版 `prototypes/workbench-v0.1/` 是另一种 Run / Scheduler 优先的概念模拟，不能作为本版 IA 的权威。
+> **实现事实与设计提案分开看：** 当前工作台主要实现位于 `apps/web/src/features/work/workspace-view.tsx`，其中「交代工作」仍是旧式 `ComposerModal`／静态 `ComposerOutline` Fixture；它**不是当前产品设计目标**。Cloud Auth Web 业务登录、真实 Cloud Task / Run / Artifact 服务及跨端交接是否可用，必须以实际代码和运行证据为准。下文涉及未接通的交互、路由和状态属于设计合同，不可宣称已经上线。旧版 `prototypes/workbench-v0.1/` 仅是历史概念模拟。
+
+## 当前生效的「交代工作」体验（2026-11-14）
+
+「交代工作」面向**长期定时／条件触发的托管工作**，不采用旧 Composer Modal、传统聊天框或固定四步表单。用户通过**单主线时间轴 → Intelligent UI 动态需求画布 → Office 式锚定批注 → 逐阶段显式接受**完成交代；最终以「接受并交代」提交。提交不代表立即运行；交代后仍沿同一时间轴呈现长期监测、重要成果和必要的用户介入。最大定时频率为**每小时一次**，无重点不打扰；有期限则必须在期限内诚实报告并到期结束。
+
+完整决议 D01–D31、范围及验收要求由 [交代工作 PRD](./delegation-intelligent-ui.md) 唯一维护；待验证的组件锚点、Diff、流式动态 UI 和运行时契约见 [技术验证清单](./delegation-technical-validation.md)。**本节及所链接 PRD 覆盖下文旧版 Composer Modal 的交互提案；§8 的历史迭代记录只作追溯，不作为新实现指令。**
 
 ## 1. 产品承诺及首要取舍
 
@@ -46,7 +52,7 @@ Mira Cloud 不再把「首页 / 待处理 / 我的工作 / 成果」冻结为系
 | **待处理** | `/attention` | 需要我决定、补充、核对什么 | 由源对象投影的待处理事项，按可行动性排序 | 普通通知、第二份审批状态库 |
 | **全部工作** | `/tasks` | 我的目标、进度、历史接续 | 受权 Task 列表；Run 藏在 Task 之下 | 独立 Run 首页、GitHub Issues 的复制 |
 | **成果** | `/artifacts` | 找到、使用、追溯产物 | 受权 Artifact 索引及版本/来源 | 无权限文件的目录索引 |
-| **交代工作** | 当前 route + Composer Modal（legacy `/new` 兼容） | 提交目标与边界 | 当前上下文内的 Delegation Composer；结构化目标/材料/能力/权限预览 | 独立页面切换、直接执行的聊天输入框 |
+| **交代工作** | 主入口保持可达；legacy `/new` 仍需兼容，目标路由由实现卡决定 | 交代长期工作并逐阶段确认 | 单主线时间轴 + 动态需求画布 + 按需批注；现有代码仍为静态 Modal Fixture | 聊天框、固定表单、立即执行 |
 
 - 「交代工作」是当前「工作」业务的高可达主操作，但不意味着未来所有业务工作台都必须复用同一种创建动作。
 - 「全部工作」「待处理」「成果」均由当前 Work 的 L1 Sidebar 担任可达入口；「工作台」由 Work Sidebar 与 Mobile 对象 Drawer 的首页入口承担，指向根路径 `/`，只在根路径激活。点击 L0「工作」也进入同一个驾驶舱，不增加全局 Tab。
@@ -62,7 +68,7 @@ flowchart TB
     HOME["首页 · 下一步"] --> ATT["待处理 · Attention"]
     HOME --> TASKS["我的工作 · Tasks"]
     HOME --> ART["成果 · Artifacts"]
-    HOME --> NEW["交代工作 · Composer"]
+    HOME --> NEW["交代工作 · Intelligent UI"]
     ATT --> SRC["源对象的处理上下文"]
     SRC --> TASK["Task · 用户目标"]
     TASKS --> TASK
@@ -86,7 +92,7 @@ flowchart TB
 | Home Continuity → Task | 默认落在 Task 的「当前进展 / 下一步」，而非 Run 日志顶部 | 返回原 Home 滚动位置；深链直接打开无需先进入 Home |
 | Task → Run | Run 必须隶属于当前 Task；展示真实执行位置与结果来源 | 返回所属 Task；ID 不匹配给出不可访问/不存在，不错误回退他人记录 |
 | Home / 成果库 → Artifact | 直接读取获权版本、来源、可用操作 | 返回来源页面；源对象被撤权/删除时仅展示仍有权的元数据 |
-| Artifact → Composer | 显式引用 ArtifactRef，展示类型、来源、版本、可见权限 | 取消返回 Artifact，不产生任务或上传 |
+| Artifact → 交代工作 | 显式引用 ArtifactRef，展示类型、来源、版本、可见权限；据此起草需求 | 取消返回 Artifact，不产生任务或上传 |
 | Cloud → Desktop Handoff | 显式选择上下文 / Artifact / 目标设备；先创建待接受交接请求 | 目标未接受、离线、过期或拒绝都回到来源，不称「已在 Desktop 运行」 |
 
 - 未认证：进入受控登录/恢复流程（**具体 OAuth 路径尚未实施**）；不把缺失会话当空账号。
@@ -102,7 +108,7 @@ flowchart TB
 | --- | --- | --- | --- | --- |
 | **Attention** | 什么正在等我？ | 最多 3 条，余量去待处理 | 对象标题、所需决定、阻塞原因、可信时间/到期提示 | 「查看并处理」→ 源操作上下文 |
 | **Continuity** | 我的哪些工作值得接着关注？ | 2–4 张 Task | 用户目标、已验证进展/未知、执行位置、上次实质更新、下一步 | 「查看工作」→ Task |
-| **Creation** | 我如何交代新的工作？ | 1 个持久可达主入口 | 「交代工作」 + 极短辅助文案 | → Composer，**不直接运行** |
+| **Creation** | 我如何交代新的工作？ | 1 个持久可达主入口 | 「交代工作」 + 极短辅助文案 | → 智能需求画布（当前仍为 Fixture），**不直接运行** |
 | **Recent Artifacts** | 最近留下了什么？ | 2–3 项，余量去成果库 | 标题/类型/版本、来源 Task、可访问性、变更时间 | → Artifact Detail |
 | Statistics | 我做了多少？ | 首轮不显示 | 无 | 无 |
 
@@ -166,7 +172,7 @@ flowchart TB
 
 | 情境 | Home 行为 | 用户可做什么 |
 | --- | --- | --- |
-| 新账号，数据查询确认成功且确实空 | 不制造四块空面板；「交代第一件工作」置于主要位置，辅以成果的后续价值 | 进入 Composer |
+| 新账号，数据查询确认成功且确实空 | 不制造四块空面板；「交代第一件工作」置于主要位置，辅以成果的后续价值 | 进入交代工作意图入口 |
 | Attention 确认为空，有 Task | Attention 区域收起，Continuity 上移；不显示「一切都完成」 | 继续 Task 或新建 |
 | 只有 Artifact、没有可继续的 Task | 最近成果成为主区域，Creation 保留 | 查看/引用 Artifact |
 | 有待处理事项 | 把真实 Decision 前置，提示原因而非仅显示红点 | 打开原始操作上下文 |
@@ -233,11 +239,11 @@ Task 的标题/概括状态是**多个事实的阅读摘要**，不是把最近 
 | Home「查看并处理」 | 有效源对象 + 授权；打开该 Decision 所属 Task/Artifact/交接上下文 | **只打开上下文**，不批准 | 不存在/过期/无权限时解释并移除可操作入口 |
 | Home「查看工作」 | 有权 Task，打开 `/tasks/:taskId` | 只查看 | 离线可显示已知快照并标时，不能悄悄开始新 Run |
 | Task「查看本次运行」 | Task 与 Run 归属匹配，打开 Run Detail | 只查看该次真实执行事实 | 未知/断连显式标记，不把超时当成功 |
-| Shell / Home「交代工作」 | 在当前 route 打开 Composer Modal；legacy `/new` 映射到同一 Modal，尚未触发任何执行 | 仅打开 Composer，关闭后恢复原上下文与焦点 | 无权创建时给出阻断说明 |
-| Composer「提交委托」 | 目标、材料、能力、预算/外部副作用范围已审视；服务端身份与幂等边界成立 | 最多声称「已接收请求」，直到有 Run 来源证明才显示运行 | 失败不造 Task；网络未知先用幂等键对账，不盲重试 |
+| Shell / Home「交代工作」 | 进入单主线 Intelligent UI 需求审阅；当前 Web 仅以 Composer Modal Fixture 占位，`/new` 兼容路径不变 | 开始/恢复草稿，不直接启动执行；关闭后能回到来源上下文 | 无权创建时给出阻断说明 |
+| 最终阶段「接受并交代」 | 每个需求阶段经用户接受，批注闭环、正文与确认 UI 一致；目标、周期、交付、费用/授权范围已审视；服务端身份与幂等边界成立 | 只在权威回执确认后显示「已接收请求」，直到有 Run 来源证明才显示运行 | 失败不造 Task；网络未知先用幂等键对账，不盲重试 |
 | Task「重新尝试 / 取消」 | 有明确 Run 权限和成本 / 副作用说明；再确认 | `retry_requested` / `cancel_requested` **仅为请求** | 重复提交去重；未知结果先查源事实，不显示终态 |
 | Home / Library「打开成果」 | Artifact 元数据与版本获权；打开 Detail | 可查看的只是当前有权的版本 | 撤权/过期/未就绪不下载、不公开路径 |
-| Artifact「引用到新工作」 | 明示 ArtifactRef 及可读权限；进入 Composer | 只预填来源引用，不意味着新 Task 已创建 | 版本过期/不可访问时阻止引用并给出原因 |
+| Artifact「引用到新工作」 | 明示 ArtifactRef 及可读权限；进入交代工作画布 | 仅带入来源上下文供起稿，不意味着新 Task 已创建 | 版本过期/不可访问时阻止引用并给出原因 |
 | Artifact「在 Desktop 继续」 | 显式选择可分享材料/目标，预览敏感范围；对象 ACL 和身份有效 | Handoff 请求被接收、目标仍待接收 | 拒绝/离线/过期不冒充新的 Desktop Run |
 | 有效 Decision「批准 / 拒绝 / 补材料」 | 在源操作上下文核对对象、具体副作用、费用及权限；需可信源确认 | 请求已接收或源确认的结果分别展示 | 失败/回执未知不自动重放外发或昂贵动作 |
 
@@ -247,10 +253,10 @@ Task 的标题/概括状态是**多个事实的阅读摘要**，不是把最近 
 
 ### J1 · 首次交代工作
 
-**Home [可信空态] →「交代第一件工作」→ Composer → 预览委托范围 → 提交请求 → 已接收 / 未知 / 失败反馈 → Task。**
+**Home [可信空态] →「交代第一件工作」→ 表达意图 → AI 动态起稿 → 批注/修订 → 逐阶段接受 →「接受并交代」→ 已接收 / 未知 / 失败反馈 → 长期工作。**
 
 - 未登录是身份边界，不是空状态；未实现 Web 业务登录时无法真实提交。
-- Composer 至少让用户理解目标、参考材料、执行方及权限 / 成本边界；它不是一个按回车就发起未知副作用的聊天框。
+- 用户须能审阅并确认目标、频率、重要结果交付条件、期限、参考材料和权限 / 成本边界；没有真实提交回执不能宣称已委托成功。详见 [交代工作 PRD](./delegation-intelligent-ui.md)。
 - 接收请求与开始 Run 两个时间点必须区别；重试需可对账且幂等。
 - 验收点：新用户知道下一步，且系统没有伪造开始执行。
 
@@ -272,7 +278,7 @@ Task 的标题/概括状态是**多个事实的阅读摘要**，不是把最近 
 
 ### J4 · 从成果延续工作
 
-**Home Recent Artifacts → Artifact Detail → 版本 / 来源 / 访问范围 →「以此交代新工作」→ 带 ArtifactRef 的 Composer。**
+**Home Recent Artifacts → Artifact Detail → 版本 / 来源 / 访问范围 →「以此交代新工作」→ 带 ArtifactRef 上下文的智能需求画布。**
 
 - 只有在确实可访问时才支持预览/下载/引用；引用不是自动拷贝原文件或自动执行。
 - 验收点：用户不用记 Run 编号，也能复用已完成工作。
@@ -291,7 +297,7 @@ Task 的标题/概括状态是**多个事实的阅读摘要**，不是把最近 
 
 | ID | 来源事实模拟 | 预期首页呈现 | 点击 / 失败证据 |
 | --- | --- | --- | --- |
-| F00 | 认证成功且工作数据真正为空 | 创建第一件工作，无遮羞式 KPI 空面板 | 进入 Composer，无伪造 Run |
+| F00 | 认证成功且工作数据真正为空 | 创建第一件工作，无遮羞式 KPI 空面板 | 进入交代工作入口，无伪造 Run |
 | F01 | Task 请求已接受，尚无 Run | Continuity「等待开始」 | Task Detail 不显示正在运行 |
 | F02 | Cloud-owned Run 运行中，进度来源可信 | 单张 Task「正在进行 · Cloud」 | 多 Run 仍有唯一 Task 卡 |
 | F03 | 源审批有效且用户可操作 | Attention「需要你的决定」置顶 | 点击仅打开 Decision，不直接批准 |
@@ -329,7 +335,7 @@ Fixture 列表描述**要设计和测试的场景**，不代表本卡要实现 T
 ### 8.3 留给后续卡的明确输入和未决事项
 
 1. **Home / Shell 原型：** 按本文件 IA 做 React fixture-only 可交互视图；不直接写业务服务。需要专门解决静态站的 SPA 深链回退和预览 API 隔离。
-2. **Composer：** 明确目标、材料、执行方选择、费用/外部副作用授权预览和幂等提交；真实 API 接线另立合同。
+2. **交代工作 Intelligent UI：** 以 [D01–D31 PRD](./delegation-intelligent-ui.md) 为产品边界，验证单主线需求审阅、Office 式批注、动态确认、流式重写与长期托管语义；真实 API 和授权接线另立工程合同。
 3. **Task / Run Detail：** 与真实 Cloud Pi / Desktop Run 枚举及数据 ACL 比对之后，建立单一只读投影；尤其核对 `succeeded` 与 `completed` 的实际映射。
 4. **Artifact Library：** 版本、访问/撤销、来源链接、引用/分享，不以 Run Store 路径猜文件可读性。
 5. **Handoff：** 只做显式包与目标确认的交互；Cloud→Desktop 主动执行 Host 工具仍是**未经授权的未来提案**。
@@ -407,7 +413,7 @@ Mira Cloud 的 Fixture 情境切换属于原型调试，不是首页产品内容
 | 消息中心 | 全部消息、送达记录 | /notifications、/notifications/deliveries | 先提供可达页面与明确未接入状态，不伪造未读数、实际通知、投递尝试或后端连接 |
 | 设置 | 通用、通知与送达、连接诊断 | /settings/general、/settings/notifications、/diagnostics | 通用保留当前浏览器本地主题偏好；通知授权/渠道仅保留边界占位；诊断保留实际可执行的服务健康探测 |
 
-「待我处理」仍是 Work 对象所需的操作，不等于全局消息。通知设置属于全局偏好，单项工作自己的执行频率、监测条件和报告策略仍归 Work 详情；运行成功与消息送达是两种独立的事实。/new 继续兼容当前工作 Composer 的前端入口，不因此增加另一个执行 Owner。
+「待我处理」仍是 Work 对象所需的操作，不等于全局消息。通知设置属于全局偏好，单项工作自己的执行频率、监测条件和报告策略归该工作主时间轴的配置与结果上下文；运行成功与消息送达是两种独立的事实。`/new` 保持旧入口兼容，目标为智能交代工作，不因此增加另一个执行 Owner。
 
 本次只补 **导航、路由与空态页面架构**；真实 Cloud Task/Trigger、Cloud Pi Scheduler、Delivery、Cloud Auth Web Session、消息存储/ACL、推送授权、运行状态和计费均未接线。后续不得因为原型入口已存在而宣称这些能力可用。WorkspaceTabs 通用组件仍可被独立消费，但不进入当前 Shell。
 
