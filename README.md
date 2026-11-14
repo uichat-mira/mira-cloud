@@ -89,7 +89,7 @@ The [AGT-040 initial technology design work item](https://github.com/uichat-mira
 - [Cloud Pi product design](https://github.com/uichat-mira/cloud-pi/blob/dev/docs/product-design.md)
 - [Cloud Auth OAuth V0 contract](https://github.com/uichat-mira/cloud-auth/blob/dev/docs/oauth-authorization-v0.md)
 
-Design docs are proposals; actual repository code and deployed runtime remain authoritative for implementation state.
+Product/design contracts describe the agreed target behavior; technical validation plans remain unverified until evidenced. Actual repository code and deployed runtime remain authoritative for implementation state.
 ## Local Hono HTTP transport (AGT-043)
 
 The `apps/api` package implements a minimal Hono HTTP process; local runs and tests do not establish that a given production version is live or connected to an Agent backend. It uses Node 24, Hono, Zod and a bounded request-ID/error contract.
