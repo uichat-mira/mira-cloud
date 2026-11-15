@@ -475,9 +475,7 @@ export default function DelegationPage() {
             <span>
               <FileText size={14} aria-hidden="true" /> 需求草稿 / {scenario.label}
             </span>
-            <span>
-              {saveStatus === "failed" ? "会话保存失败" : "仅在此标签页保存"}
-            </span>
+            <span>{saveStatus === "failed" ? "会话保存失败" : "仅在此标签页保存"}</span>
           </div>
           <div className="delegation-paper-content">
             <div className="delegation-paper-title">
@@ -595,7 +593,9 @@ export default function DelegationPage() {
             {streaming ? (
               <div className="delegation-streaming" role="status">
                 <WandSparkles size={15} aria-hidden="true" />
-                <span>Mira 正在同时更新正文与确认组件（演示） · {Math.min(streamStep + 1, 3)}/3</span>
+                <span>
+                  Mira 正在同时更新正文与确认组件（演示） · {Math.min(streamStep + 1, 3)}/3
+                </span>
                 <button type="button" onClick={stopRevision}>
                   <Square size={12} aria-hidden="true" /> 中止
                 </button>
