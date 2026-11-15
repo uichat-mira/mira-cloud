@@ -133,7 +133,14 @@ describe("MiraDesign component ownership boundary", () => {
     };
     expect(packageJson.dependencies).not.toHaveProperty("mermaid");
     expect(packageJson.dependencies).not.toHaveProperty("@mermaid-js/parser");
-    expect(packageJson.dependencies).not.toHaveProperty("@milkdown/kit");
+    // POC-B directly consumes Milkdown Kit for ProseMirror transactions and its official Doc Diff.
+    // Keep the direct dependency pinned to the same release as Crepe, not a floating transitive import.
+    expect(packageJson.dependencies["@milkdown/kit"]).toBe("7.21.2");
+    const reviewPOC = readFileSync(
+      join(webRoot, "src/features/work/delegation-review-poc.ts"),
+      "utf8",
+    );
+    expect(reviewPOC).toContain('from "@milkdown/kit/plugin/diff"');
     for (const required of [
       "@milkdown/crepe",
       "@milkdown/react",

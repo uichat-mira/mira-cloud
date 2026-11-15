@@ -178,6 +178,17 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("heading", { level: 1, name: "市场机会研究摘要" })).toBeInTheDocument();
   });
 
+  it("keeps the POC-B review lab a separate, explicit fixture route", async () => {
+    renderWorkspace("/new/review-lab");
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "随文批注与版本 Diff" }),
+    ).toBeInTheDocument();
+    const lab = screen.getByRole("region", { name: "POC-B 批注与 Diff 实验" });
+    expect(within(lab).getByRole("button", { name: "选中第二处重复句子" })).toBeInTheDocument();
+    expect(within(lab).getByRole("list", { name: "正文 Diff" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "接受本阶段" })).toBeNull();
+  });
+
   it("renders /new as a direct-linkable independent page", async () => {
     const user = userEvent.setup();
     renderWorkspace("/new");
