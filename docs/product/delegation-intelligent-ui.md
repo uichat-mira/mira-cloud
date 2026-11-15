@@ -133,7 +133,7 @@
 
 ## 9. 与现有 Mira Cloud 合同的关系
 
-[Workbench 产品合同](./workbench.md)是整个工作空间的唯一入口，本文件是其中「交代工作」领域的**已确认详细产品合同**，以 D01–D31 为准。原有 Composer Modal 交互合同已被本文件取代；`apps/web/src/features/work/workspace-view.tsx` 中的旧 Modal 仍是未接入业务的 Fixture 实现。**设计生效不代表运行时已经实现；不得以本文件宣称真实长期托管能力已接通。** 具体可行性与验证缺口见[技术验证清单](./delegation-technical-validation.md)。
+[Workbench 产品合同](./workbench.md)是整个工作空间的唯一入口，本文件是其中「交代工作」领域的**已确认详细产品合同**，以 D01–D31 为准。原有 Composer Modal 交互合同已被本文件取代；当前 React Web 的独立 `/new` 页面已使用 json-render 和 Milkdown 演示统一需求草稿、约定校验与历史审阅，但仍为未接 Cloud Agent 的 Fixture 原型。**设计生效不代表运行时已经实现；不得以本文件宣称真实长期托管能力已接通。** 具体可行性与验证缺口见[技术验证清单](./delegation-technical-validation.md)。
 
 参考：
 - [Mira Cloud / docs/product/workbench.md（dev）](https://github.com/uichat-mira/mira-cloud/blob/dev/docs/product/workbench.md)

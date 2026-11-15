@@ -16,14 +16,28 @@ import {
   WandSparkles,
   X,
 } from "lucide-react";
-import { Renderer, JSONUIProvider, useStateValue } from "@json-render/react";
+import { Renderer, JSONUIProvider } from "@json-render/react";
 import { lazy, Suspense, useEffect, useMemo, useState, type MouseEvent } from "react";
+import MarkdownText from "../../components/mira-design/MarkdownText";
 import { useLocation, useNavigate } from "react-router";
 import { delegationRegistry } from "./delegation-catalog";
 import {
+  DRAFT_STORAGE_KEY,
+  acceptDocumentStage,
+  alignDocumentAgreement,
+  beginHistoricalEdit,
+  cancelHistoricalEdit,
+  changeDocumentConfig,
+  changeDocumentMarkdown,
+  createDelegationDraft,
+  isAgreementConsistent,
+  parseDelegationDraft,
+  submitHistoricalRevision,
+  updateReviewComments,
+} from "./delegation-document";
+import {
   buildDelegationSpec,
   delegationScenarios,
-  delegationSummary,
   type DelegationScenario,
   type DelegationScenarioId,
   type DelegationStage,
@@ -32,36 +46,12 @@ import {
 const MarkdownEditor = lazy(() => import("../../components/mira-design/MarkdownEditor"));
 
 type CommentStatus = "open" | "suggested" | "resolved" | "abandoned";
-interface ReviewComment {
-  id: number;
-  stage: DelegationStage;
-  excerpt: string;
-  text: string;
-  status: CommentStatus;
-}
-
 const statusLabels: Record<CommentStatus, string> = {
   open: "待处理",
   suggested: "AI 已建议处理",
   resolved: "已解决",
   abandoned: "已放弃",
 };
-
-function DynamicSummary({
-  scenario,
-  stage,
-}: {
-  scenario: DelegationScenarioId;
-  stage: DelegationStage;
-}) {
-  const config = useStateValue<Record<string, unknown>>("/config") ?? {};
-  return (
-    <p className="delegation-live-summary">
-      <CheckCircle2 size={15} aria-hidden="true" />
-      <span>{delegationSummary(scenario, stage, config)}</span>
-    </p>
-  );
-}
 
 function LiveReviewCanvas({
   scenario,
@@ -93,7 +83,6 @@ function LiveReviewCanvas({
       >
         <Renderer spec={spec} registry={delegationRegistry} />
       </div>
-      <DynamicSummary scenario={scenario.id} stage={stage} />
     </div>
   );
 }
@@ -104,18 +93,22 @@ function ReviewSurface({
   revision,
   streamStep,
   readonly,
+  config,
+  onConfigChange,
 }: {
   scenario: DelegationScenario;
   stage: DelegationStage;
   revision: number;
   streamStep: number;
   readonly: boolean;
+  config: Record<string, string | boolean>;
+  onConfigChange: (changes: Array<{ path: string; value: unknown }>) => void;
 }) {
   return (
     <JSONUIProvider
-      key={scenario.id}
       registry={delegationRegistry}
-      initialState={{ config: scenario.initialConfig }}
+      initialState={{ config }}
+      onStateChange={onConfigChange}
     >
       <LiveReviewCanvas
         scenario={scenario}
@@ -137,33 +130,62 @@ function parseReturnTo(value: unknown): string {
 export default function DelegationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [scenarioId, setScenarioId] = useState<DelegationScenarioId>("radar");
-  const [stage, setStage] = useState<DelegationStage>(0);
-  const [acceptedCount, setAcceptedCount] = useState(0);
+  const [draft, setDraft] = useState(() => {
+    if (typeof window === "undefined") return createDelegationDraft();
+    try {
+      return (
+        parseDelegationDraft(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)) ??
+        createDelegationDraft()
+      );
+    } catch {
+      return createDelegationDraft();
+    }
+  });
+  const [saveStatus, setSaveStatus] = useState<"saved" | "failed">("saved");
+  const scenarioId = draft.scenarioId;
+  const [stage, setStage] = useState<DelegationStage>(
+    () =>
+      draft.editingHistorical ??
+      (draft.acceptedCount === 3 ? 2 : (draft.acceptedCount as DelegationStage)),
+  );
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [comments, setComments] = useState<ReviewComment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [selectedExcerpt, setSelectedExcerpt] = useState("");
   const [revision, setRevision] = useState(0);
   const [streamStep, setStreamStep] = useState(0);
   const [streaming, setStreaming] = useState(false);
   const [message, setMessage] = useState("");
-  const [editedBody, setEditedBody] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState(false);
-  const [demoFinished, setDemoFinished] = useState(false);
+  const [providerEpoch, setProviderEpoch] = useState(0);
+  const [demoFinished, setDemoFinished] = useState(draft.acceptedCount === 3);
   const scenario = delegationScenarios[scenarioId];
   const returnTo = parseReturnTo((location.state as { returnTo?: unknown } | null)?.returnTo);
+  const comments = draft.comments;
+  const acceptedCount = draft.acceptedCount;
+  const record = draft.stages[stage];
   const currentComments = comments.filter((comment) => comment.stage === stage);
   const unresolved = currentComments.filter(
     (comment) => comment.status === "open" || comment.status === "suggested",
   ).length;
-  const historical = stage < acceptedCount;
-  const body = editedBody ?? scenario.text;
+  const historicStage = stage < acceptedCount;
+  const historical = historicStage && draft.editingHistorical !== stage;
+  const revisingHistory = draft.editingHistorical === stage;
+  const consistent = isAgreementConsistent(draft, stage);
   const renderedBody =
     revision > 0 || streamStep >= 1
-      ? body + "\n\n这一版已经整理本轮反馈。需要你逐条确认批注后，才可以接受当前阶段。"
-      : body;
+      ? record.markdown + "\n\n本轮反馈正在整理；在完成后才允许重新验收。"
+      : record.markdown;
+
+  // Prototype-only session storage, never a Cloud save receipt.
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      setSaveStatus("saved");
+    } catch {
+      setSaveStatus("failed");
+    }
+  }, [draft]);
 
   useEffect(() => {
     if (!streaming) return;
@@ -174,11 +196,13 @@ export default function DelegationPage() {
       if (next >= 3) {
         window.clearInterval(timer);
         setRevision((previous) => previous + 1);
-        setComments((previous) =>
-          previous.map((comment) =>
-            comment.stage === stage && comment.status === "open"
-              ? { ...comment, status: "suggested" }
-              : comment,
+        setDraft((previous) =>
+          updateReviewComments(previous, (items) =>
+            items.map((comment) =>
+              comment.stage === stage && comment.status === "open"
+                ? { ...comment, status: "suggested" }
+                : comment,
+            ),
           ),
         );
         setStreaming(false);
@@ -190,35 +214,49 @@ export default function DelegationPage() {
 
   const setScenario = (next: DelegationScenarioId) => {
     setStreaming(false);
-    setScenarioId(next);
+    setDraft(createDelegationDraft(next));
     setStage(0);
-    setAcceptedCount(0);
     setTimelineOpen(false);
     setCommentsOpen(false);
-    setComments([]);
     setCommentText("");
     setSelectedExcerpt("");
     setRevision(0);
     setStreamStep(0);
-    setEditedBody(null);
     setEditingBody(false);
     setMessage("");
     setDemoFinished(false);
   };
 
+  const handleConfigChanges = (changes: Array<{ path: string; value: unknown }>) => {
+    if (streaming || historical || editingBody) return;
+    setDraft((previous) =>
+      changes.reduce((next, change) => {
+        if (!change.path.startsWith("/config/")) return next;
+        return changeDocumentConfig(
+          next,
+          stage,
+          change.path.slice("/config/".length),
+          change.value,
+        );
+      }, previous),
+    );
+  };
+
   const addComment = () => {
     const text = commentText.trim();
     if (!text || streaming || historical) return;
-    setComments((previous) => [
-      ...previous,
-      {
-        id: Math.max(0, ...previous.map((item) => item.id)) + 1,
-        stage,
-        excerpt: selectedExcerpt || "本阶段整体",
-        text,
-        status: "open",
-      },
-    ]);
+    setDraft((previous) =>
+      updateReviewComments(previous, (items) => [
+        ...items,
+        {
+          id: Math.max(0, ...items.map((item) => item.id)) + 1,
+          stage,
+          excerpt: selectedExcerpt || "本阶段整体",
+          text,
+          status: "open",
+        },
+      ]),
+    );
     setCommentText("");
     setSelectedExcerpt("");
     setCommentsOpen(true);
@@ -227,8 +265,10 @@ export default function DelegationPage() {
 
   const updateComment = (id: number, status: "resolved" | "abandoned") => {
     if (streaming) return;
-    setComments((previous) =>
-      previous.map((comment) => (comment.id === id ? { ...comment, status } : comment)),
+    setDraft((previous) =>
+      updateReviewComments(previous, (items) =>
+        items.map((comment) => (comment.id === id ? { ...comment, status } : comment)),
+      ),
     );
   };
 
@@ -256,17 +296,23 @@ export default function DelegationPage() {
   };
 
   const accept = () => {
-    if (streaming || unresolved > 0 || historical) return;
+    if (
+      streaming ||
+      unresolved > 0 ||
+      historicStage ||
+      stage !== acceptedCount ||
+      !consistent ||
+      saveStatus === "failed"
+    )
+      return;
+    setDraft((previous) => acceptDocumentStage(previous, stage));
     if (stage === 2) {
-      setAcceptedCount(3);
       setDemoFinished(true);
-      setMessage("这是原型中的审阅完成状态。没有创建真实任务，也没有启动执行。");
+      setMessage("三个阶段已经验收（演示），没有创建真实任务，也没有启动执行。");
       return;
     }
-    setAcceptedCount(stage + 1);
     setStage((stage + 1) as DelegationStage);
     setSelectedExcerpt("");
-    setEditedBody(null);
     setRevision(0);
     setStreamStep(0);
     setEditingBody(false);
@@ -274,15 +320,35 @@ export default function DelegationPage() {
   };
 
   const reviewStage = (target: DelegationStage) => {
-    if (target > acceptedCount) return;
+    if (target > acceptedCount || draft.editingHistorical !== null) return;
     setStage(target);
-    setEditedBody(null);
     setRevision(0);
     setStreamStep(0);
     setEditingBody(false);
     setSelectedExcerpt("");
     setTimelineOpen(false);
     setMessage("");
+  };
+
+  const startHistoricalRevision = () => {
+    if (streaming || !historical) return;
+    setDraft((previous) => beginHistoricalEdit(previous, stage));
+    setMessage("历史验收仍然有效。只有提交修改才会要求本阶段及后续阶段重新验收。");
+  };
+
+  const cancelHistoricalRevision = () => {
+    setDraft(cancelHistoricalEdit);
+    setProviderEpoch((value) => value + 1);
+    setEditingBody(false);
+    setMessage("已放弃本次历史修改草稿，原验收版本保持不变。");
+  };
+
+  const submitHistorical = () => {
+    if (!revisingHistory || !consistent || saveStatus === "failed" || streaming) return;
+    setDraft(submitHistoricalRevision);
+    setEditingBody(false);
+    setDemoFinished(false);
+    setMessage("历史修改已提交，本阶段与后续阶段需要依次重新验收。旧版本仍可追溯。");
   };
 
   return (
@@ -389,7 +455,13 @@ export default function DelegationPage() {
               <FileText size={14} aria-hidden="true" /> 需求草稿 / {scenario.label}
             </span>
             <span>
-              {streaming ? "Mira 正在修订…" : historical ? "已接受 · 只读" : "本次会话草稿"}
+              {streaming
+                ? "Mira 正在修订…"
+                : historical
+                  ? "已接受 · 只读"
+                  : saveStatus === "failed"
+                    ? "会话保存失败"
+                    : "浏览器会话已保存"}
             </span>
           </div>
           <div className="delegation-paper-content">
@@ -400,11 +472,20 @@ export default function DelegationPage() {
             </div>
             <blockquote className="delegation-intent">
               <Sparkles size={16} aria-hidden="true" />
-              <span>{scenario.intent}</span>
+              <span>{draft.intent}</span>
             </blockquote>
 
             <div className="delegation-document-heading">
               <h3>工作说明</h3>
+              {historical && !streaming ? (
+                <button
+                  type="button"
+                  onClick={startHistoricalRevision}
+                  className="delegation-text-action"
+                >
+                  <PenLine size={13} aria-hidden="true" /> 修改本阶段
+                </button>
+              ) : null}
               {!streaming && !historical ? (
                 <button
                   type="button"
@@ -420,22 +501,32 @@ export default function DelegationPage() {
               <Suspense fallback={<p className="delegation-loading">正在准备编辑器…</p>}>
                 <div className="delegation-editor">
                   <MarkdownEditor
-                    initialValue={body}
-                    onChange={(value) => setEditedBody(value)}
+                    initialValue={record.markdown}
+                    onChange={(value) =>
+                      setDraft((previous) => changeDocumentMarkdown(previous, stage, value))
+                    }
                     disabled={historical}
                   />
                 </div>
               </Suspense>
             ) : (
               <div className="delegation-document-text" onMouseUp={selectText}>
-                {renderedBody
-                  .split("\n")
-                  .filter(Boolean)
-                  .map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
+                <MarkdownText features="basic">{renderedBody}</MarkdownText>
               </div>
             )}
+            {record.history.length > 0 ? (
+              <details className="delegation-history">
+                <summary>历史验收版本 · {record.history.length}</summary>
+                {record.history.map((snapshot, index) => (
+                  <div className="delegation-history-version" key={index}>
+                    <span>
+                      已接受版本 {index + 1} · 修订 {snapshot.revision}
+                    </span>
+                    <MarkdownText features="basic">{snapshot.markdown}</MarkdownText>
+                  </div>
+                ))}
+              </details>
+            ) : null}
             {selectedExcerpt && !editingBody ? (
               <button
                 type="button"
@@ -446,13 +537,31 @@ export default function DelegationPage() {
               </button>
             ) : null}
 
+            {!consistent && !streaming ? (
+              <div className="delegation-consistency-warning" role="alert">
+                正文中的「当前约定」与动态控件不一致，暂时不能接受本阶段。
+                {!historical ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraft((previous) => alignDocumentAgreement(previous, stage));
+                      setEditingBody(false);
+                    }}
+                  >
+                    按控件同步约定
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             <ReviewSurface
-              key={scenarioId}
+              key={`${scenarioId}-${stage}-${providerEpoch}`}
               scenario={scenario}
               stage={stage}
               revision={revision}
               streamStep={streamStep}
-              readonly={streaming || historical}
+              readonly={streaming || historical || editingBody}
+              config={record.config}
+              onConfigChange={handleConfigChanges}
             />
 
             {streaming ? (
@@ -489,7 +598,26 @@ export default function DelegationPage() {
               批注 {currentComments.length ? "· " + currentComments.length : ""}
             </button>
             <div className="delegation-paper-actions">
-              {!historical && !demoFinished ? (
+              {revisingHistory ? (
+                <>
+                  <button
+                    type="button"
+                    className="delegation-quiet-action"
+                    onClick={cancelHistoricalRevision}
+                  >
+                    放弃修改
+                  </button>
+                  <button
+                    type="button"
+                    className="delegation-accept"
+                    disabled={!consistent || streaming || saveStatus === "failed"}
+                    onClick={submitHistorical}
+                  >
+                    提交修改并重新验收
+                  </button>
+                </>
+              ) : null}
+              {!historicStage && !demoFinished ? (
                 <button
                   type="button"
                   className="delegation-quiet-action"
@@ -500,15 +628,24 @@ export default function DelegationPage() {
                   {unresolved > 0 ? "根据批注修订" : "演示流式修订"}
                 </button>
               ) : null}
-              <button
-                type="button"
-                className="delegation-accept"
-                onClick={accept}
-                disabled={streaming || unresolved > 0 || historical || demoFinished}
-              >
-                {stage === 2 ? "接受并交代（演示）" : "接受本阶段"}
-                <ArrowRight size={16} aria-hidden="true" />
-              </button>
+              {!revisingHistory ? (
+                <button
+                  type="button"
+                  className="delegation-accept"
+                  onClick={accept}
+                  disabled={
+                    streaming ||
+                    unresolved > 0 ||
+                    historicStage ||
+                    !consistent ||
+                    saveStatus === "failed" ||
+                    demoFinished
+                  }
+                >
+                  {stage === 2 ? "接受并交代（演示）" : "接受本阶段"}
+                  <ArrowRight size={16} aria-hidden="true" />
+                </button>
+              ) : null}
             </div>
           </footer>
           {unresolved > 0 ? (

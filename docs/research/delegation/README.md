@@ -14,6 +14,7 @@
 | 01 · POC-A 协议形状与安全门 | [动态 UI 技术选型预研与最小实验](./01-poc-a-ui-protocol.md) | 自有适配器的隔离断言与 Node 测试源码；**官方库/React 浏览器尚未实测，选型未完成** |
 | 02 · 已有「交代工作」入口改造 | [真实 json-render `/new` 可交互原型](./02-delegation-page-prototype.md) | 官方 React 渲染器本地接线、Fixture 交互与浏览器截图；**未接真实生成/调度/提交** |
 | 03 · D01–D31 设计对照审查 | [原型符合性审查](./03-d01-d31-prototype-conformance-audit.md) | 依据 PRD、dev 源码、桌面/手机截图及 CDP 控件几何；**提出差距，不代表已修复或业务已实现** |
+| 04 · 统一需求模型组合实验 | [Milkdown × json-render × 统一需求草稿 POC](./04-unified-document-poc.md) | 实际 Milkdown 编辑与 json-render 交互连通，约定一致性、历史修订、浏览器会话恢复；**不等于语义/正式持久化验收** |
 
 ## 后续阶段及入库规则
 

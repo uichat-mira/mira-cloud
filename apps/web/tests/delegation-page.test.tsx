@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import DelegationPage from "../src/features/work/delegation-page";
+
+beforeEach(() => {
+  window.sessionStorage.clear();
+});
 
 afterEach(() => {
   cleanup();
@@ -108,5 +112,89 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     expect(screen.getByRole("button", { name: "批注所选文字" })).toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: "随文批注" })).toBeNull();
     selection?.removeAllRanges();
+  });
+});
+
+describe("delegation single document end-to-end prototype", () => {
+  it("rejects a stored Markdown agreement that disagrees with the controls", async () => {
+    const { createDelegationDraft, changeDocumentMarkdown } =
+      await import("../src/features/work/delegation-document");
+    const fixture = createDelegationDraft();
+    const inconsistent = changeDocumentMarkdown(
+      fixture,
+      0,
+      fixture.stages[0].markdown.replace("模型、产品与开源", "创业与商业化"),
+    );
+    window.sessionStorage.setItem("mira-cloud-delegation-fixture-v1", JSON.stringify(inconsistent));
+    const user = userEvent.setup();
+    renderPage();
+    expect(screen.getByRole("alert")).toHaveTextContent("暂时不能接受本阶段");
+    expect(screen.getByRole("button", { name: "接受本阶段" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "按控件同步约定" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("button", { name: "接受本阶段" })).toBeEnabled();
+  });
+
+  it("uses the same saved document for json-render changes and session restoration", async () => {
+    const user = userEvent.setup();
+    const view = renderPage();
+    await user.click(screen.getByRole("combobox", { name: "关注重点" }));
+    await user.click(await screen.findByRole("option", { name: "创业与商业化机会" }));
+    expect(screen.getByText(/研究重点：创业与商业化/)).toBeInTheDocument();
+    expect(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")).toContain("business");
+    view.unmount();
+    renderPage();
+    expect(screen.getByText(/研究重点：创业与商业化/)).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "关注重点" })).toHaveTextContent(
+      "创业与商业化机会",
+    );
+  });
+
+  it("keeps accepted history read-only until explicit submission invalidates later stages", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "接受本阶段" }));
+    await user.click(screen.getByRole("button", { name: /研究目标.*已接受/ }));
+    expect(screen.getByRole("button", { name: "修改本阶段" })).toBeInTheDocument();
+    expect(screen.getByText(/历史验收版本 · 1/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "修改本阶段" }));
+    await user.click(screen.getByRole("combobox", { name: "关注重点" }));
+    await user.click(await screen.findByRole("option", { name: "创业与商业化机会" }));
+    const pending = JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!);
+    expect(pending.acceptedCount).toBe(1);
+    expect(pending.stages[0].accepted.config.focus).toBe("products");
+    await user.click(screen.getByRole("button", { name: "提交修改并重新验收" }));
+    expect(screen.getByRole("button", { name: "接受本阶段" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /工作节奏.*等待前一阶段/ })).toBeDisabled();
+    expect(screen.getByText(/研究重点：创业与商业化/)).toBeInTheDocument();
+  });
+
+  it("cancelling a historical change restores the visible json-render field", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "接受本阶段" }));
+    await user.click(screen.getByRole("button", { name: /研究目标.*已接受/ }));
+    await user.click(screen.getByRole("button", { name: "修改本阶段" }));
+    await user.click(screen.getByRole("combobox", { name: "关注重点" }));
+    await user.click(await screen.findByRole("option", { name: "创业与商业化机会" }));
+    await user.click(screen.getByRole("button", { name: "放弃修改" }));
+    expect(screen.getByRole("combobox", { name: "关注重点" })).toHaveTextContent(
+      "模型、产品与开源工具",
+    );
+    expect(screen.getByRole("button", { name: "修改本阶段" })).toBeInTheDocument();
+  });
+});
+
+describe("historical draft recovery", () => {
+  it("returns to an in-progress historical revision after a same-tab reload", async () => {
+    const user = userEvent.setup();
+    const initial = renderPage();
+    await user.click(screen.getByRole("button", { name: "接受本阶段" }));
+    await user.click(screen.getByRole("button", { name: /研究目标.*已接受/ }));
+    await user.click(screen.getByRole("button", { name: "修改本阶段" }));
+    initial.unmount();
+    renderPage();
+    expect(screen.getByRole("button", { name: "提交修改并重新验收" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "关注重点" })).toBeInTheDocument();
   });
 });
