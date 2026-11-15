@@ -29,6 +29,8 @@ jobs:
           node-version-file: .nvmrc
       - name: Check design source integrity
         run: node scripts/check-docs.mjs
+      - name: Verify isolated delegation POC-A protocol gate
+        run: node --test prototypes/delegation-poc-a/protocol-gate.test.mjs
 
   engineering:
     name: Engineering Checks
