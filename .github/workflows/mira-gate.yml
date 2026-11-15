@@ -46,6 +46,12 @@ jobs:
         env:
           COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
         run: pnpm install --frozen-lockfile
+      - name: Show exact formatter delta for UI review (temporary diagnostic)
+        run: |
+          cp apps/web/src/features/work/delegation-page.tsx /tmp/delegation-page.tsx
+          pnpm exec prettier --write apps/web/src/features/work/delegation-page.tsx
+          git diff -- apps/web/src/features/work/delegation-page.tsx
+          cp /tmp/delegation-page.tsx apps/web/src/features/work/delegation-page.tsx
       - name: Run workspace checks and T1 tests
         run: pnpm check
 
