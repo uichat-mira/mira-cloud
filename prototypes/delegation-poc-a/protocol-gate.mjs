@@ -105,7 +105,10 @@ export function verifyTree(state) {
     if (!["Column", "Text", "NumberField", "ToggleField"].includes(node.type)) issues.push("unapproved component: " + node.type);
     if (!Array.isArray(node.children) || !node.props || typeof node.props !== "object") issues.push("invalid component shape: " + id);
     else {
-      if (node.on || node.actions || Object.keys(node.props).some(x => !["label","value","text"].includes(x))) issues.push("unapproved action or prop: " + id);
+      const allowedProps = node.type === "Column" ? [] : node.type === "Text" ? ["text"] : ["label", "value"];
+      if (node.on || node.actions || Object.keys(node.props).some(x => !allowedProps.includes(x))) issues.push("unapproved action or prop: " + id);
+      if (node.type === "Text" && (typeof node.props.text !== "string" || node.props.text.length > 2000)) issues.push("invalid text payload: " + id);
+      if (node.type !== "Column" && node.children.length) issues.push("leaf component cannot own children: " + id);
       if (node.type === "NumberField" || node.type === "ToggleField") {
         try {
           const bound = readBinding(node.props.value);
