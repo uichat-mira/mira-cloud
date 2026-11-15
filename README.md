@@ -73,6 +73,7 @@ The [AGT-040 initial technology design work item](https://github.com/uichat-mira
 | [`docs/product/workbench.md`](docs/product/workbench.md) | Workspace product contract and entrypoint for domain-specific UX decisions |
 | [`docs/product/delegation-intelligent-ui.md`](docs/product/delegation-intelligent-ui.md) | Approved D01–D31 product contract for long-running intelligent work delegation |
 | [`docs/product/delegation-technical-validation.md`](docs/product/delegation-technical-validation.md) | Unverified implementation risks and evidence gates for delegation |
+| [`docs/research/delegation/README.md`](docs/research/delegation/README.md) | Staged technical research evidence for delegation; separates source review from POC validation |
 | [`docs/decisions/ADR-001-repository-scope.md`](docs/decisions/ADR-001-repository-scope.md) | Scope and truth-source boundaries for this design phase |
 | [`prototypes/workbench-v0.1/`](prototypes/workbench-v0.1/) | Previously created standalone HTML interaction demo, **non-production reference only** |
 
