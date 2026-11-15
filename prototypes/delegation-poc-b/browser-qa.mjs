@@ -1,0 +1,35 @@
+import {writeFileSync} from "node:fs";
+const target=await fetch("http://127.0.0.1:9222/json/new?about:blank",{method:"PUT"}).then(x=>x.json());const ws=new WebSocket(target.webSocketDebuggerUrl);
+let id=0;const handlers=new Map();
+ws.addEventListener("message",ev=>{const r=JSON.parse(ev.data);if(r.id&&handlers.has(r.id)){const h=handlers.get(r.id);handlers.delete(r.id);r.error?h.reject(new Error(r.error.message)):h.resolve(r.result)}});
+await new Promise((resolve,reject)=>{ws.addEventListener("open",resolve,{once:true});ws.addEventListener("error",reject,{once:true})});
+const send=(method,params={})=>{const n=++id;return new Promise((resolve,reject)=>{handlers.set(n,{resolve,reject});ws.send(JSON.stringify({id:n,method,params}))})};
+const evalJs=async expression=>{const r=await send("Runtime.evaluate",{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.text);return r.result.value};
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+try{
+ await send("Page.enable");await send("Emulation.setDeviceMetricsOverride",{width:390,height:844,deviceScaleFactor:1,mobile:true});await send("Page.navigate",{url:"http://127.0.0.1:5173/new/review-lab"});await pause(5000);
+ const base=await evalJs("JSON.stringify({editor:!!document.querySelector('.ProseMirror'),title:document.querySelector('h1')?.textContent,scroll:document.documentElement.scrollWidth,w:innerWidth,buttons:[...document.querySelectorAll('button')].filter(x=>x.textContent.includes('选中第二')).length})");
+ console.log("BASE",base);if(!JSON.parse(base).editor||JSON.parse(base).scroll>390)throw Error("initial lab broken");
+ await evalJs("Array.from(document.querySelectorAll('button')).find(x=>x.textContent.includes('选中第二处重复句子'))?.click()");await pause(140);
+ console.log("SELECTED",await evalJs("JSON.stringify({selection:window.getSelection()?.toString(),hint:document.querySelector('.review-poc-footer')?.innerText})"));
+ await evalJs("Array.from(document.querySelectorAll('button')).find(x=>x.textContent.includes('批注所选文字'))?.click()");await pause(200);
+ const added=await evalJs("JSON.stringify({comment:document.querySelector('.review-poc-list')?.innerText,highlight:[...document.querySelectorAll('.delegation-review-poc-anchor')].map(x=>x.textContent)})");
+ console.log("ADDED",added);if(JSON.parse(added).highlight.length!==1)throw Error("anchor not in live editor");
+ await evalJs("Array.from(document.querySelectorAll('button')).find(x=>x.textContent.includes('在开头插入文字'))?.click()");await pause(200);
+ const mapped=await evalJs("JSON.stringify({diff:document.querySelector('[aria-label=\"正文 Diff\"]')?.innerText,highlight:[...document.querySelectorAll('.delegation-review-poc-anchor')].map(x=>x.textContent)})");
+ console.log("MAPPED",mapped);if(JSON.parse(mapped).highlight.length!==1||!JSON.parse(mapped).diff)throw Error("mapping or diff failed");
+ await evalJs("document.querySelector('.delegation-review-poc-anchor')?.click()");await pause(100);
+ const link=await evalJs("JSON.stringify({selected:document.querySelector('.review-poc-list li[data-selected=\"true\"]')?.innerText})");console.log("BIDIRECTIONAL",link);
+ await evalJs("document.querySelector('.review-poc-list li button')?.click()");await pause(100);
+ const returned=await evalJs("JSON.stringify({selection:window.getSelection()?.toString()})");console.log("RETURN_TO_TEXT",returned);
+ if(!JSON.parse(returned).selection.includes("这里有一条重复的判断"))throw Error("cannot navigate from comment to text");
+ await evalJs("Array.from(document.querySelectorAll('button')).find(x=>x.textContent.includes('删除首个批注原文'))?.click()");await pause(200);
+ const deleted=await evalJs("JSON.stringify({comment:document.querySelector('.review-poc-list')?.innerText,highlight:document.querySelectorAll('.delegation-review-poc-anchor').length})");console.log("DELETED",deleted);if(!JSON.parse(deleted).comment.includes("定位失效"))throw Error("deleted comment mislocated");
+ const pic=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});writeFileSync("/tmp/mira-poc-b-mobile-390.png",Buffer.from(pic.data,"base64"));
+ await evalJs("Array.from(document.querySelectorAll('button')).find(x=>x.textContent.includes('模拟字段 ID 丢失'))?.click()");await evalJs("Array.from(document.querySelectorAll('button')).find(x=>x.textContent.includes('定位关注重点组件'))?.click()");await pause(160);
+ const comp=await evalJs("JSON.stringify({msg:document.querySelector('.review-poc-status')?.innerText,summary:document.querySelector('[aria-label=\"组件 Diff\"]')?.innerText})");console.log("COMPONENT",comp);if(!JSON.parse(comp).summary.includes("重新生成"))throw Error("no identity fallback");
+ await send("Emulation.setDeviceMetricsOverride",{width:1365,height:900,deviceScaleFactor:1,mobile:false});await pause(270);
+ const desktop=await evalJs("JSON.stringify({w:innerWidth,scroll:document.documentElement.scrollWidth})");console.log("DESKTOP",desktop);
+ const pic2=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});writeFileSync("/tmp/mira-poc-b-desktop.png",Buffer.from(pic2.data,"base64"));
+ console.log("POC_B_BROWSER_PASS");
+}finally{try{await send("Page.close")}catch{}ws.close()}

@@ -796,6 +796,7 @@ function getContextTitle(pathname: string, scenario: PreviewScenario): string {
   if (taskMatch) return findPreviewTask(taskMatch[1])?.title ?? "工作";
   const artifactMatch = pathname.match(/^\/artifacts\/([^/]+)$/);
   if (artifactMatch) return findPreviewArtifact(artifactMatch[1])?.title ?? "成果";
+  if (pathname === "/new/review-lab") return "批注与 Diff 实验";
   if (pathname === "/new") return "交代工作";
   if (pathname === "/attention") return "待处理";
   if (pathname === "/artifacts") return "成果";
@@ -816,6 +817,7 @@ function getContextGroup(pathname: string): string {
 
 const WorkPreviewDebugPanel = lazy(() => import("./work-preview-debug-panel"));
 const DelegationPage = lazy(() => import("./delegation-page"));
+const DelegationReviewLab = lazy(() => import("./delegation-review-lab"));
 
 function hasWorkPreviewDebug(pathname: string): boolean {
   const pathSegments = pathname.split("/").filter(Boolean);
@@ -1156,6 +1158,14 @@ export function WorkspaceShell() {
         <Route
           path="/artifacts/:artifactId"
           element={<DetailPreview kind="artifact" scenario={scenario} to={to} />}
+        />
+        <Route
+          path="/new/review-lab"
+          element={
+            <Suspense fallback={<p className="workbench-inline-empty">正在准备批注实验…</p>}>
+              <DelegationReviewLab />
+            </Suspense>
+          }
         />
         <Route
           path="/new"

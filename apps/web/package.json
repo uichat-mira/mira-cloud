@@ -20,6 +20,7 @@
     "@json-render/core": "0.22.0",
     "@json-render/react": "0.22.0",
     "@milkdown/crepe": "7.21.2",
+    "@milkdown/kit": "7.21.2",
     "@milkdown/react": "7.21.2",
     "@radix-ui/react-dropdown-menu": "2.1.18",
     "@radix-ui/react-select": "2.3.1",

@@ -1,0 +1,169 @@
+.review-poc-page {
+  max-width: 1320px;
+  margin-inline: auto;
+  padding: 22px clamp(14px, 3vw, 36px) 48px;
+  color: rgb(var(--mira-color-text-primary));
+}
+.review-poc-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  margin-bottom: 18px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+}
+.review-poc-header small {
+  display: block;
+  color: rgb(var(--mira-color-text-tertiary));
+  letter-spacing: 0.12em;
+  font-size: 11px;
+}
+.review-poc-header h1 {
+  margin: 8px 0;
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 600;
+}
+.review-poc-header p,
+.review-poc-muted {
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+  line-height: 1.75;
+}
+.review-poc-header {
+  margin-bottom: 22px;
+}
+.review-poc-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+}
+.review-poc-pane {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-panel);
+  background: rgb(var(--mira-color-surface-primary));
+}
+.review-poc-pane h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.review-poc-pane h3 {
+  font-size: 13px;
+}
+.review-poc-editor {
+  min-height: 250px;
+  padding: 12px;
+  background: rgb(var(--mira-color-surface-secondary));
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+}
+.review-poc-editor .milkdown,
+.review-poc-editor .ProseMirror {
+  min-height: 230px;
+}
+.review-poc-editor .delegation-review-poc-anchor {
+  background: rgb(var(--mira-color-primary) / 0.16);
+  border-bottom: 2px solid rgb(var(--mira-color-primary));
+}
+.review-poc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+.review-poc-actions button,
+.review-poc-footer button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 12px;
+  background: rgb(var(--mira-color-surface-primary));
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+  color: rgb(var(--mira-color-text-primary));
+  font-size: 12px;
+  cursor: pointer;
+}
+.review-poc-list {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+}
+.review-poc-list li {
+  display: grid;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgb(var(--mira-color-border));
+  font-size: 12px;
+}
+.review-poc-list li:last-child {
+  border-bottom: none;
+}
+.review-poc-list li button {
+  text-align: left;
+  cursor: pointer;
+  color: rgb(var(--mira-color-text-primary));
+}
+.review-poc-list li button:disabled {
+  cursor: default;
+  color: rgb(var(--mira-color-warning-text));
+}
+.review-poc-list li small {
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 10px;
+}
+.review-poc-diff del {
+  color: rgb(var(--mira-color-danger-text));
+  background: rgb(var(--mira-color-danger-soft));
+}
+.review-poc-diff ins {
+  text-decoration: none;
+  color: rgb(var(--mira-color-success-text));
+  background: rgb(var(--mira-color-success-soft));
+}
+.review-poc-divider {
+  margin-top: 26px !important;
+}
+.review-poc-controls {
+  padding: 14px;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+}
+.review-poc-status {
+  font-size: 11px;
+  color: rgb(var(--mira-color-text-secondary));
+}
+.review-poc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+}
+.review-poc-footer p {
+  font-size: 12px;
+  color: rgb(var(--mira-color-text-secondary));
+}
+@media (max-width: 820px) {
+  .review-poc-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .review-poc-pane {
+    padding: 16px;
+  }
+}
+@media (pointer: coarse) {
+  .review-poc-actions button,
+  .review-poc-footer button {
+    min-height: 44px;
+  }
+}
+
+.review-poc-list li[data-selected="true"] {
+  border-left: 2px solid rgb(var(--mira-color-primary));
+  padding-left: 8px;
+}
