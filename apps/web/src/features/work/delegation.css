@@ -765,3 +765,57 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Accepted snapshots remain inspectable without reopening edit mode. */
+.delegation-history {
+  margin: 18px 0;
+  border-top: 1px solid rgb(var(--mira-color-border));
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+}
+.delegation-history summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-size: 11px;
+}
+.delegation-history-version {
+  padding: 12px 0 18px;
+  border-top: 1px solid rgb(var(--mira-color-border));
+  line-height: 1.8;
+}
+.delegation-history-version > span {
+  display: block;
+  font-size: 10px;
+  color: rgb(var(--mira-color-text-tertiary));
+}
+.delegation-consistency-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 17px 0;
+  padding: 12px 0;
+  border-top: 1px solid rgb(var(--mira-color-border));
+  color: rgb(var(--mira-color-text-primary));
+  font-size: 12px;
+  line-height: 1.7;
+}
+.delegation-consistency-warning button {
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--mira-radius-ui-control);
+  background: rgb(var(--mira-color-surface-secondary));
+  color: rgb(var(--mira-color-text-primary));
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .delegation-back,
+  .delegation-scenario,
+  .delegation-quiet-action,
+  .delegation-accept {
+    min-height: 44px;
+  }
+}
