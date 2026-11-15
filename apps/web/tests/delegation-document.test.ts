@@ -143,6 +143,57 @@ describe("single authority for delegation document, JSON UI and acceptance", () 
     expect(cancelled.stages[0].accepted).not.toBeNull();
   });
 
+  it("persists precise text anchors alongside existing stage-wide comments", () => {
+    let draft = createDelegationDraft();
+    draft = updateReviewComments(draft, (items) => [
+      ...items,
+      { id: 1, stage: 0, excerpt: "全文", text: "整体意见", status: "open" },
+      {
+        id: 2,
+        stage: 0,
+        excerpt: "请持续观察",
+        text: "补充来源",
+        status: "open",
+        anchor: {
+          from: 1,
+          to: 7,
+          version: { stage: 0, revision: 0 },
+          status: "active",
+        },
+      },
+    ]);
+    const recovered = parseDelegationDraft(JSON.stringify(draft));
+    expect(recovered?.comments[0]?.anchor).toBeUndefined();
+    expect(recovered?.comments[1]?.anchor).toEqual(draft.comments[1]?.anchor);
+    expect(recovered?.comments[1]?.text).toBe("补充来源");
+  });
+
+  it("fails closed on tampered anchor metadata without trusting stored ranges", () => {
+    let draft = createDelegationDraft();
+    draft = updateReviewComments(draft, (items) => [
+      ...items,
+      {
+        id: 4,
+        stage: 0,
+        excerpt: "文字",
+        text: "批注",
+        status: "open",
+        anchor: { from: 1, to: 3, version: { stage: 0, revision: 0 }, status: "active" },
+      },
+    ]);
+    const tampered = JSON.parse(JSON.stringify(draft));
+    tampered.comments[0].anchor.from = 99;
+    tampered.comments[0].anchor.to = 98;
+    expect(parseDelegationDraft(JSON.stringify(tampered))).toBeNull();
+    tampered.comments[0].anchor.from = 1;
+    tampered.comments[0].anchor.to = 3;
+    tampered.comments[0].anchor.version.stage = 1;
+    expect(parseDelegationDraft(JSON.stringify(tampered))).toBeNull();
+    tampered.comments[0].anchor.version.stage = 0;
+    tampered.comments[0].anchor.version.revision = 100;
+    expect(parseDelegationDraft(JSON.stringify(tampered))).toBeNull();
+  });
+
   it("comments and snapshots survive typed session serialization without treating it as server proof", () => {
     let draft = createDelegationDraft();
     draft = updateReviewComments(draft, (items) => [

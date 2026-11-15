@@ -16,6 +16,7 @@
 | 03 · D01–D31 设计对照审查 | [原型符合性审查](./03-d01-d31-prototype-conformance-audit.md) | 依据 PRD、dev 源码、桌面/手机截图及 CDP 控件几何；**提出差距，不代表已修复或业务已实现** |
 | 04 · 统一需求模型组合实验 | [Milkdown × json-render × 统一需求草稿 POC](./04-unified-document-poc.md) | 实际 Milkdown 编辑与 json-render 交互连通，约定一致性、历史修订、浏览器会话恢复；**不等于语义/正式持久化验收** |
 | 05 · POC-B 文字锚点／版本与组件 Diff | [真实编辑器与语义身份实验](./05-review-anchor-diff-poc.md) | ProseMirror transaction/Decoration 与 Milkdown computeDocDiff、json-render 字段身份，单测及真实 Chrome CDP；**单版本基础路径可行，跨版本/密集批注/真机仍有缺口** |
+| 06 · 正式交代工作随文批注 UI 第一轮 | [批注 UI 整合与浏览器证据](./06-inline-review-ui.md) | 真实 Milkdown/ProseMirror 批注接入 /new，双向定位、桌面右栏与手机底部面板；**基础路径通过，密集布局／真机仍待验收** |
 
 ## 后续阶段及入库规则
 

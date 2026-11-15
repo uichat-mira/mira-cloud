@@ -46,10 +46,10 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
   it("updates live prose when a json-render bound Select changes", async () => {
     const user = userEvent.setup();
     renderPage();
-    expect(screen.getByText(/研究重点：模型、产品与开源/)).toBeInTheDocument();
+    expect(await screen.findByText(/研究重点：模型、产品与开源/)).toBeInTheDocument();
     await user.click(screen.getByRole("combobox", { name: "关注重点" }));
     await user.click(await screen.findByRole("option", { name: "创业与商业化机会" }));
-    expect(screen.getByText(/研究重点：创业与商业化/)).toBeInTheDocument();
+    expect(await screen.findByText(/研究重点：创业与商业化/)).toBeInTheDocument();
   });
 
   it("blocks acceptance on unresolved comments, never submitting a real task", async () => {
@@ -70,6 +70,37 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
       screen.getByText("工作节奏", { selector: ".delegation-ui-intro h3" }),
     ).toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("saves a ProseMirror-backed text annotation in the existing draft and restores its highlight", async () => {
+    const user = userEvent.setup();
+    const first = renderPage();
+    await screen.findByText(/研究重点：模型、产品与开源/);
+    const editor = document.querySelector(".delegation-review-editor") as HTMLElement;
+    const paragraph = editor.querySelector(".ProseMirror p") as HTMLElement;
+    const range = document.createRange();
+    range.selectNodeContents(paragraph);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    fireEvent.mouseUp(editor);
+    await user.click(await screen.findByRole("button", { name: "批注所选文字" }));
+    const panel = screen.getByRole("complementary", { name: "随文批注" });
+    await user.type(within(panel).getByRole("textbox", { name: "批注所选文字" }), "请注明证据来源");
+    await user.click(within(panel).getByRole("button", { name: "添加批注" }));
+    const draft = JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!);
+    expect(draft.comments[0].anchor).toMatchObject({
+      status: "active",
+      version: { stage: 0, revision: 0 },
+    });
+    expect(draft.comments[0].anchor.to).toBeGreaterThan(draft.comments[0].anchor.from);
+    expect(document.querySelectorAll(".delegation-review-poc-anchor")).toHaveLength(1);
+    first.unmount();
+    selection?.removeAllRanges();
+    renderPage();
+    await screen.findByText(/研究重点：模型、产品与开源/);
+    expect(document.querySelectorAll(".delegation-review-poc-anchor")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "批注 · 1" })).toBeInTheDocument();
   });
 
   it("simulates streaming and abort without committing incomplete generated UI", async () => {
@@ -99,8 +130,9 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     expect(screen.getByText(/没有发送工作请求/)).toBeInTheDocument();
   });
 
-  it("provides selection-based comment affordance without opening sidebar automatically", () => {
+  it("provides selection-based comment affordance without opening sidebar automatically", async () => {
     renderPage();
+    await screen.findByText(/研究重点：模型、产品与开源/);
     const content = document.querySelector(".delegation-document-text") as HTMLElement;
     const paragraph = content.querySelector("p") as HTMLElement;
     const selection = window.getSelection();
@@ -108,8 +140,8 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     range.selectNodeContents(paragraph);
     selection?.removeAllRanges();
     selection?.addRange(range);
-    fireEvent.mouseUp(content);
-    expect(screen.getByRole("button", { name: "批注所选文字" })).toBeInTheDocument();
+    fireEvent.mouseUp(content.querySelector(".delegation-review-editor")!);
+    expect(await screen.findByRole("button", { name: "批注所选文字" })).toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: "随文批注" })).toBeNull();
     selection?.removeAllRanges();
   });
@@ -140,11 +172,11 @@ describe("delegation single document end-to-end prototype", () => {
     const view = renderPage();
     await user.click(screen.getByRole("combobox", { name: "关注重点" }));
     await user.click(await screen.findByRole("option", { name: "创业与商业化机会" }));
-    expect(screen.getByText(/研究重点：创业与商业化/)).toBeInTheDocument();
+    expect(await screen.findByText(/研究重点：创业与商业化/)).toBeInTheDocument();
     expect(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")).toContain("business");
     view.unmount();
     renderPage();
-    expect(screen.getByText(/研究重点：创业与商业化/)).toBeInTheDocument();
+    expect(await screen.findByText(/研究重点：创业与商业化/)).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "关注重点" })).toHaveTextContent(
       "创业与商业化机会",
     );
@@ -166,7 +198,7 @@ describe("delegation single document end-to-end prototype", () => {
     await user.click(screen.getByRole("button", { name: "提交修改并重新验收" }));
     expect(screen.getByRole("button", { name: "接受本阶段" })).toBeEnabled();
     expect(screen.getByRole("button", { name: /工作节奏.*等待前一阶段/ })).toBeDisabled();
-    expect(screen.getByText(/研究重点：创业与商业化/)).toBeInTheDocument();
+    expect(await screen.findByText(/研究重点：创业与商业化/)).toBeInTheDocument();
   });
 
   it("cancelling a historical change restores the visible json-render field", async () => {
@@ -198,7 +230,7 @@ describe("delegation POC UI completion", () => {
     expect(confirmation).toHaveTextContent("清空本标签页中的正文、批注与阶段验收记录");
     await user.click(within(confirmation).getByRole("button", { name: "继续审阅" }));
     expect(screen.queryByRole("dialog", { name: "切换体验情境" })).toBeNull();
-    expect(screen.getByText(/研究重点：创业与商业化/)).toBeInTheDocument();
+    expect(await screen.findByText(/研究重点：创业与商业化/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "旅行规划" }));
     await user.click(

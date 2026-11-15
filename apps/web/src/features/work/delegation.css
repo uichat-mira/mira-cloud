@@ -841,3 +841,163 @@
     min-height: 44px;
   }
 }
+
+/* Inline review is part of /new, not a second task or review state machine. */
+.delegation-document-text {
+  position: relative;
+  min-width: 0;
+}
+.delegation-review-editor {
+  min-width: 0;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 13px;
+  line-height: 1.85;
+}
+.delegation-review-editor .milkdown,
+.delegation-review-editor .ProseMirror,
+.delegation-review-editor .milkdown .editor {
+  min-height: 100px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: inherit;
+  outline: none;
+  box-shadow: none;
+}
+.delegation-review-editor .milkdown .editor > :first-child,
+.delegation-review-editor .ProseMirror > :first-child {
+  margin-top: 0;
+}
+.delegation-review-editor .ProseMirror p {
+  line-height: 1.85;
+}
+.delegation-review-editor.is-editing {
+  margin-bottom: 17px;
+  padding: 14px;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+  background: rgb(var(--mira-color-surface-secondary));
+}
+.delegation-review-editor .delegation-review-poc-anchor {
+  border-bottom: 1.5px solid rgb(var(--mira-color-primary) / 0.78);
+  background: rgb(var(--mira-color-primary) / 0.12);
+  cursor: pointer;
+}
+.delegation-review-editor .delegation-review-poc-anchor:hover {
+  background: rgb(var(--mira-color-primary) / 0.22);
+}
+.delegation-selected-comment {
+  min-height: 36px;
+  margin: 4px 0 14px;
+  box-shadow: var(--mira-shadow-ui-panel, none);
+}
+.delegation-comment-item[data-selected="true"] {
+  border-color: rgb(var(--mira-color-primary) / 0.65);
+  background: rgb(var(--mira-color-primary) / 0.04);
+}
+.delegation-comment-source {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.delegation-comment-source span {
+  display: inline-flex;
+  margin-top: 2px;
+  color: rgb(var(--mira-color-primary));
+  font-size: 10px;
+}
+.delegation-comment-source:hover blockquote {
+  color: rgb(var(--mira-color-text-primary));
+}
+.delegation-comment-item blockquote small {
+  color: rgb(var(--mira-color-warning-text));
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .delegation-selected-comment {
+    min-height: 44px;
+    max-width: 100%;
+  }
+  .delegation-comments {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: max(26px, env(safe-area-inset-bottom));
+  }
+  .delegation-comment-source {
+    min-height: 44px;
+  }
+  .delegation-comment-compose textarea {
+    font-size: 16px; /* Prevent iOS autofocus viewport zoom. */
+  }
+}
+
+.delegation-document-text[data-has-selection="true"] {
+  padding-bottom: 37px;
+}
+.delegation-selected-comment.is-floating {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  white-space: nowrap;
+}
+.delegation-comment-clear-selection {
+  align-self: flex-start;
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  cursor: pointer;
+}
+/* Keep the actual document readable when the sidebar and comments are both open. */
+@media (min-width: 1121px) and (max-width: 1520px) {
+  .delegation-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .delegation-layout.has-comments {
+    grid-template-columns: minmax(0, 1fr) minmax(248px, 294px);
+    gap: 22px;
+  }
+  .delegation-timeline {
+    display: none;
+  }
+  .delegation-compact-progress {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--mira-color-border));
+    background: transparent;
+    padding: 12px 20px;
+    color: rgb(var(--mira-color-text-secondary));
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .delegation-compact-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgb(var(--mira-color-border));
+  }
+  .delegation-compact-steps button {
+    min-height: 36px;
+    border: 0;
+    background: transparent;
+    color: rgb(var(--mira-color-text-secondary));
+    font-size: 11px;
+    cursor: pointer;
+  }
+}
+
+.delegation-review-editor .delegation-review-poc-anchor:focus-visible {
+  outline: 2px solid rgb(var(--mira-color-primary));
+  outline-offset: 2px;
+}
