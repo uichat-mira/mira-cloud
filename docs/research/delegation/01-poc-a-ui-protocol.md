@@ -38,6 +38,7 @@ Mira 的「交代工作」并非“模型吐 React 代码”：它要求持续�
 | 组件稳定身份 | 扁平 elements key，适合作语义 ID 的候选 | 组件 id + surfaceId，适合作语义 ID 的候选 | 可自定义 ID/版本，但需防止生成时漂移 |
 | 权限/动作 | catalog/action 需要主机额外施加授权门 | catalogs/RPC/function 有能力边界，主机仍需权限验证 | 所有权限边界自行设计审计 |
 | 跨平台/开放互通 | 多种 renderer，默认是 json-render 自有 schema | 标准化代理到客户端协议，跨运行时潜力较强 | 生态互通和跨端重用成本最大 |
+| 依赖兼容 | `@json-render/react@0.22.0` peer `react ^19.2.3`、core 使用 `zod ^4`；与 Cloud Web React 19.3.1 版本范围相容，**未安装验证** | `@a2ui/react@0.15.0` peer 支持 React 17/18/19，但依赖 Zod `^3.25.76`、Web Core/Lit；需实测 Zod3 与 Cloud API Zod4 的包体及边界，**不是已发现运行冲突** | 可减少第三方依赖，但维护成本归自己 |
 | 当前可证性 | 官方源码及版本已核对，**未装包** | 官方源码及版本已核对，**未装包** | 下文只验证了最小业务门控形状，无 React 真实渲染 |
 | 初步意见 | **作为 Cloud Web 首选集成候选** | 保留为跨端 UI 互通候选；不提前锁定 | **不建议自建完整生成式 UI 框架**；仅保留薄业务安全适配层 |
 
@@ -71,6 +72,7 @@ node --test prototypes/delegation-poc-a/protocol-gate.test.mjs
 4. **协议本身不授予 side effects：** AI 可请求一个按钮布局，不代表能发送邮件、删除文件或支付。A2UI 的函数 RPC 与 json-render 的 built-in actions 均需在 Mira 侧严格注册/授权；一期最小方案先关闭 AI 侧有副作用动作。
 5. **语义一致性无法只靠 JSON 结构验证：** D10 的“正文描述每天一次、字段每周一次”必须由独立业务规范化/检查和用户明确审阅解决；本 POC 只有外部门控槽位，未声称完成。
 6. **协议版本漂移真实存在：** json-render API 与 A2UI 规范/包快速演进。必须精确 pin 版本/来源，并在选型前跑真正的第三方包安装、打包、React mount、交互与失败路径。
+   - 核对的 package peer：json-render React 0.22.0 需要 React `^19.2.3`；A2UI React 0.15.0 支持 React 17–19，但依赖 Zod 3 系列。Mira Cloud Web 是 React 19.3.1，API 使用 Zod 4；这要求未来在单一构建里验证依赖隔离/重复包成本，不应把版本范围兼容误写为运行时兼容已通过。
 7. **资源和模型成本未知：** JSONL event 数、token 数、patch 冗余、前端重渲染、组件包体积、低端移动设备延迟尚未测量，不得给出虚构指标。
 8. **可访问性、滚动、输入焦点、编辑器交叉区域** 必须进浏览器真实交互验证；不能靠 headless 对象树推断 UI 可用性。
 
