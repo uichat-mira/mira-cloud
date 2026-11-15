@@ -484,8 +484,10 @@ export default function DelegationPage() {
               <div className="delegation-paper-title-meta">
                 <span className="delegation-paper-index">0{stage + 1} / 03</span>
                 <span className="delegation-stage-state">
-                  {revisingHistory
-                    ? "正在修改历史阶段"
+                  {streaming
+                    ? "正在演示修订"
+                    : revisingHistory
+                      ? "正在修改历史阶段"
                     : historical
                       ? "已接受 · 只读"
                       : demoFinished
@@ -676,9 +678,9 @@ export default function DelegationPage() {
             </div>
           </footer>
           {editingBody && !historical ? (
-             <p className="delegation-accept-hint">请先完成正文编辑，再接受这一阶段。</p>
-           ) : null}
-           {unresolved > 0 ? (
+            <p className="delegation-accept-hint">请先完成正文编辑，再接受这一阶段。</p>
+          ) : null}
+          {unresolved > 0 ? (
             <p className="delegation-accept-hint">
               <CircleHelp size={13} aria-hidden="true" /> 还有 {unresolved}{" "}
               条批注需要你确认解决或放弃。
