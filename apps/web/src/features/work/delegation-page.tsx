@@ -774,8 +774,27 @@ export default function DelegationPage() {
       </div>
       <p className="delegation-bottom-note">
         <CornerUpLeft size={13} aria-hidden="true" />
-        交互演示 · 当前内容仅在此会话生效，不会真实提交工作。
+        交互演示 · 仅在当前浏览器标签页保存，不会创建或运行真实任务。
       </p>
+      <ModalShell
+        open={pendingScenario !== null}
+        title="切换体验情境"
+        width={440}
+        footer={null}
+        onClose={() => setPendingScenario(null)}
+      >
+        <ConfirmDialog
+          title="放弃当前草稿？"
+          description="切换情境会清空本标签页中的正文、批注与阶段验收记录，无法撤销。"
+          tone="warning"
+          cancelText="继续审阅"
+          confirmText="放弃并切换"
+          onCancel={() => setPendingScenario(null)}
+          onConfirm={() => {
+            if (pendingScenario !== null) setScenario(pendingScenario);
+          }}
+        />
+      </ModalShell>
     </section>
   );
 }
