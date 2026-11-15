@@ -19,6 +19,8 @@ import {
 import { Renderer, JSONUIProvider } from "@json-render/react";
 import { lazy, Suspense, useEffect, useMemo, useState, type MouseEvent } from "react";
 import MarkdownText from "../../components/mira-design/MarkdownText";
+import ConfirmDialog from "../../components/mira-design/ConfirmDialog";
+import { ModalShell } from "../../components/mira-design/Modal";
 import { useLocation, useNavigate } from "react-router";
 import { delegationRegistry } from "./delegation-catalog";
 import {
@@ -73,8 +75,8 @@ function LiveReviewCanvas({
   return (
     <div className="delegation-generated" aria-label="动态需求确认">
       <div className="delegation-section-caption">
-        <span>结构化确认</span>
-        <span>可直接调整</span>
+        <span>确认与调整</span>
+        <span>与正文共用一份草稿</span>
       </div>
       <div
         className={readonly ? "delegation-generated-readonly" : ""}
@@ -159,6 +161,7 @@ export default function DelegationPage() {
   const [editingBody, setEditingBody] = useState(false);
   const [providerEpoch, setProviderEpoch] = useState(0);
   const [demoFinished, setDemoFinished] = useState(draft.acceptedCount === 3);
+  const [pendingScenario, setPendingScenario] = useState<DelegationScenarioId | null>(null);
   const scenario = delegationScenarios[scenarioId];
   const returnTo = parseReturnTo((location.state as { returnTo?: unknown } | null)?.returnTo);
   const comments = draft.comments;
@@ -173,9 +176,15 @@ export default function DelegationPage() {
   const revisingHistory = draft.editingHistorical === stage;
   const consistent = isAgreementConsistent(draft, stage);
   const renderedBody =
-    revision > 0 || streamStep >= 1
-      ? record.markdown + "\n\n本轮反馈正在整理；在完成后才允许重新验收。"
+    streaming && streamStep > 0
+      ? record.markdown + "\n\n*正在演示修订过程，当前约定尚未改变。*"
       : record.markdown;
+  const hasDraftProgress =
+    streaming ||
+    acceptedCount > 0 ||
+    comments.length > 0 ||
+    draft.editingHistorical !== null ||
+    draft.stages.some((item) => item.revision > 0);
 
   // Prototype-only session storage, never a Cloud save receipt.
   useEffect(() => {
@@ -225,6 +234,16 @@ export default function DelegationPage() {
     setEditingBody(false);
     setMessage("");
     setDemoFinished(false);
+    setPendingScenario(null);
+  };
+
+  const requestScenario = (next: DelegationScenarioId) => {
+    if (next === scenarioId) return;
+    if (hasDraftProgress) {
+      setPendingScenario(next);
+      return;
+    }
+    setScenario(next);
   };
 
   const handleConfigChanges = (changes: Array<{ path: string; value: unknown }>) => {
@@ -302,7 +321,8 @@ export default function DelegationPage() {
       historicStage ||
       stage !== acceptedCount ||
       !consistent ||
-      saveStatus === "failed"
+      saveStatus === "failed" ||
+      editingBody
     )
       return;
     setDraft((previous) => acceptDocumentStage(previous, stage));
@@ -344,7 +364,8 @@ export default function DelegationPage() {
   };
 
   const submitHistorical = () => {
-    if (!revisingHistory || !consistent || saveStatus === "failed" || streaming) return;
+    if (!revisingHistory || !consistent || saveStatus === "failed" || streaming || editingBody)
+      return;
     setDraft(submitHistoricalRevision);
     setEditingBody(false);
     setDemoFinished(false);
@@ -378,7 +399,7 @@ export default function DelegationPage() {
               item.id === scenarioId ? "delegation-scenario is-active" : "delegation-scenario"
             }
             aria-pressed={item.id === scenarioId}
-            onClick={() => setScenario(item.id)}
+            onClick={() => requestScenario(item.id)}
           >
             {item.label}
           </button>
@@ -455,18 +476,23 @@ export default function DelegationPage() {
               <FileText size={14} aria-hidden="true" /> 需求草稿 / {scenario.label}
             </span>
             <span>
-              {streaming
-                ? "Mira 正在修订…"
-                : historical
-                  ? "已接受 · 只读"
-                  : saveStatus === "failed"
-                    ? "会话保存失败"
-                    : "浏览器会话已保存"}
+              {saveStatus === "failed" ? "会话保存失败" : "仅在此标签页保存"}
             </span>
           </div>
           <div className="delegation-paper-content">
             <div className="delegation-paper-title">
-              <span className="delegation-paper-index">0{stage + 1} / 03</span>
+              <div className="delegation-paper-title-meta">
+                <span className="delegation-paper-index">0{stage + 1} / 03</span>
+                <span className="delegation-stage-state">
+                  {revisingHistory
+                    ? "正在修改历史阶段"
+                    : historical
+                      ? "已接受 · 只读"
+                      : demoFinished
+                        ? "全部阶段已接受"
+                        : "待你审阅"}
+                </span>
+              </div>
               <h2>{scenario.title}</h2>
               <p>{scenario.tagline}</p>
             </div>
@@ -567,7 +593,7 @@ export default function DelegationPage() {
             {streaming ? (
               <div className="delegation-streaming" role="status">
                 <WandSparkles size={15} aria-hidden="true" />
-                <span>Mira 正在同时更新正文与确认组件 · {streamStep + 1}/4</span>
+                <span>Mira 正在同时更新正文与确认组件（演示） · {Math.min(streamStep + 1, 3)}/3</span>
                 <button type="button" onClick={stopRevision}>
                   <Square size={12} aria-hidden="true" /> 中止
                 </button>
@@ -610,7 +636,7 @@ export default function DelegationPage() {
                   <button
                     type="button"
                     className="delegation-accept"
-                    disabled={!consistent || streaming || saveStatus === "failed"}
+                    disabled={!consistent || streaming || saveStatus === "failed" || editingBody}
                     onClick={submitHistorical}
                   >
                     提交修改并重新验收
@@ -639,6 +665,7 @@ export default function DelegationPage() {
                     historicStage ||
                     !consistent ||
                     saveStatus === "failed" ||
+                    editingBody ||
                     demoFinished
                   }
                 >
@@ -648,7 +675,10 @@ export default function DelegationPage() {
               ) : null}
             </div>
           </footer>
-          {unresolved > 0 ? (
+          {editingBody && !historical ? (
+             <p className="delegation-accept-hint">请先完成正文编辑，再接受这一阶段。</p>
+           ) : null}
+           {unresolved > 0 ? (
             <p className="delegation-accept-hint">
               <CircleHelp size={13} aria-hidden="true" /> 还有 {unresolved}{" "}
               条批注需要你确认解决或放弃。
