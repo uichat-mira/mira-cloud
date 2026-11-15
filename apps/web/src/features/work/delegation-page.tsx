@@ -84,7 +84,7 @@ function LiveReviewCanvas({
     <div className="delegation-generated" aria-label="动态需求确认">
       <div className="delegation-section-caption">
         <span>结构化确认</span>
-        <span>json-render · MiraDesign</span>
+        <span>可直接调整</span>
       </div>
       <div
         className={readonly ? "delegation-generated-readonly" : ""}
@@ -607,7 +607,7 @@ export default function DelegationPage() {
       </div>
       <p className="delegation-bottom-note">
         <CornerUpLeft size={13} aria-hidden="true" />
-        本页使用真实 json-render 组件与演示内容。没有接入任务提交、持久化或云端执行服务。
+        交互演示 · 当前内容仅在此会话生效，不会真实提交工作。
       </p>
     </section>
   );
