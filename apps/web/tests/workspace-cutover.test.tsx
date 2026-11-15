@@ -140,7 +140,7 @@ describe("AGT-054 Work workspace migration", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "交代工作" })).toBeNull();
     expect(screen.getByRole("region", { name: "交代工作原型" })).toBeInTheDocument();
-    expect(screen.getByText("可直接调整")).toBeInTheDocument();
+    expect(screen.getByText("与正文共用一份草稿")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "返回" }));
     expect(
       await screen.findByRole("heading", { level: 1, name: "东南亚市场进入研究" }),

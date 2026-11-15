@@ -185,6 +185,43 @@ describe("delegation single document end-to-end prototype", () => {
   });
 });
 
+describe("delegation POC UI completion", () => {
+  it("protects an edited draft before changing the demonstration scenario", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("combobox", { name: "关注重点" }));
+    await user.click(await screen.findByRole("option", { name: "创业与商业化机会" }));
+    await user.click(screen.getByRole("button", { name: "旅行规划" }));
+
+    const confirmation = screen.getByRole("dialog", { name: "切换体验情境" });
+    expect(confirmation).toHaveTextContent("清空本标签页中的正文、批注与阶段验收记录");
+    await user.click(within(confirmation).getByRole("button", { name: "继续审阅" }));
+    expect(screen.queryByRole("dialog", { name: "切换体验情境" })).toBeNull();
+    expect(screen.getByText(/研究重点：创业与商业化/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "旅行规划" }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: "切换体验情境" })).getByRole("button", {
+        name: "放弃并切换",
+      }),
+    );
+    expect(screen.getByRole("heading", { name: "准备一段有余地的旅行" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "目的地" })).toBeInTheDocument();
+  });
+
+  it("keeps the stage and session-save states separate", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    expect(screen.getByText("待你审阅")).toBeInTheDocument();
+    expect(screen.getByText("仅在此标签页保存")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "接受本阶段" }));
+    await user.click(screen.getByRole("button", { name: /研究目标.*已接受/ }));
+    expect(screen.getByText("已接受 · 只读")).toBeInTheDocument();
+    expect(screen.getByText("仅在此标签页保存")).toBeInTheDocument();
+  });
+});
+
 describe("historical draft recovery", () => {
   it("returns to an in-progress historical revision after a same-tab reload", async () => {
     const user = userEvent.setup();
