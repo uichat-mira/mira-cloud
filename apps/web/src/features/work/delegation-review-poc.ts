@@ -185,7 +185,7 @@ export function componentDiff(
 }
 
 export function resolveComponentAnchor(
-  target: { id: string; version: ReviewVersion },
+  target: { id: string; kind: ReviewField["kind"]; version: ReviewVersion },
   viewVersion: ReviewVersion,
   fields: readonly ReviewField[],
 ): ReviewField | null {
@@ -195,6 +195,8 @@ export function resolveComponentAnchor(
   ) {
     return null;
   }
+  // Stable ID alone is insufficient: regenerated UI can reuse an ID for a different type.
+  // In that case the old annotation must not follow the new component.
   const matches = fields.filter((field) => field.id === target.id);
-  return matches.length === 1 ? matches[0]! : null;
+  return matches.length === 1 && matches[0]?.kind === target.kind ? matches[0] : null;
 }

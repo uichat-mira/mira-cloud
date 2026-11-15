@@ -202,7 +202,11 @@ export default function DelegationReviewLab() {
     sequence.current = 0;
     setMessage("实验已重置。");
   };
-  const resolved = resolveComponentAnchor({ id: "field-focus", version }, version, fields);
+  const resolved = resolveComponentAnchor(
+    { id: "field-focus", kind: "choice", version },
+    version,
+    fields,
+  );
 
   return (
     <section className="review-poc-page workspace-page-body" aria-label="POC-B 批注与 Diff 实验">

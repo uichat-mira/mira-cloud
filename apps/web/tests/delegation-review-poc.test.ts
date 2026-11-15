@@ -137,8 +137,16 @@ describe("POC-B Milkdown diff and semantic component identity", () => {
 
   it("refuses to move a component comment into a newer revision implicitly", () => {
     const fields = [{ id: "focus", kind: "choice" as const, label: "重点", value: "models" }];
-    const target = { id: "focus", version: { stage: 0, revision: 3 } };
+    const target = { id: "focus", kind: "choice" as const, version: { stage: 0, revision: 3 } };
     expect(resolveComponentAnchor(target, { stage: 0, revision: 3 }, fields)?.label).toBe("重点");
     expect(resolveComponentAnchor(target, { stage: 0, revision: 4 }, fields)).toBeNull();
+    expect(
+      resolveComponentAnchor(target, { stage: 0, revision: 3 }, [
+        { id: "focus", kind: "toggle", label: "复用 ID 的新开关", value: true },
+      ]),
+    ).toBeNull();
+    expect(
+      resolveComponentAnchor(target, { stage: 0, revision: 3 }, [fields[0]!, fields[0]!]),
+    ).toBeNull();
   });
 });
