@@ -5,7 +5,7 @@
 **Work item:** [AGT-051](https://github.com/uichat-mira/mira-cloud/issues/70)  
 **Authority:** 本文件是 Workspace 用户体验合同的单一入口；「交代工作」的已确认详细设计以 [Intelligent UI PRD](./delegation-intelligent-ui.md) 为准，技术缺口见 [验证清单](./delegation-technical-validation.md)。[架构 v0.4](../architecture/v0.4.md) 约束数据/运行时所有权，[DESIGN.md](../../DESIGN.md) 与 [MiraDesign](../design/component-library.md) 约束视觉和组件消费。任何矛盾应明确提出，不能以本文重写真实运行时或安全权限。
 
-> **实现事实与设计提案分开看：** 当前工作台主要实现位于 `apps/web/src/features/work/workspace-view.tsx`，其中「交代工作」仍是旧式 `ComposerModal`／静态 `ComposerOutline` Fixture；它**不是当前产品设计目标**。Cloud Auth Web 业务登录、真实 Cloud Task / Run / Artifact 服务及跨端交接是否可用，必须以实际代码和运行证据为准。下文涉及未接通的交互、路由和状态属于设计合同，不可宣称已经上线。旧版 `prototypes/workbench-v0.1/` 仅是历史概念模拟。
+> **实现事实与设计提案分开看：** 当前工作台主要实现位于 `apps/web/src/features/work/workspace-view.tsx`，其中「交代工作」已改为独立 `/new` UI 原型页：`delegation-page.tsx` 以真实 json-render 0.22 与 MiraDesign 组件提供可交互的三种演示需求。页面展示的批注、流式修订及阶段状态均为浏览器会话 Fixture，**不是已接通的长期委托能力**。Cloud Auth Web 业务登录、真实 Cloud Task / Run / Artifact 服务及跨端交接是否可用，必须以实际代码和运行证据为准。下文涉及未接通的交互、路由和状态属于设计合同，不可宣称已经上线。旧版 `prototypes/workbench-v0.1/` 仅是历史概念模拟。
 
 ## 当前生效的「交代工作」体验（2026-11-14）
 
@@ -52,7 +52,7 @@ Mira Cloud 不再把「首页 / 待处理 / 我的工作 / 成果」冻结为系
 | **待处理** | `/attention` | 需要我决定、补充、核对什么 | 由源对象投影的待处理事项，按可行动性排序 | 普通通知、第二份审批状态库 |
 | **全部工作** | `/tasks` | 我的目标、进度、历史接续 | 受权 Task 列表；Run 藏在 Task 之下 | 独立 Run 首页、GitHub Issues 的复制 |
 | **成果** | `/artifacts` | 找到、使用、追溯产物 | 受权 Artifact 索引及版本/来源 | 无权限文件的目录索引 |
-| **交代工作** | 主入口保持可达；legacy `/new` 仍需兼容，目标路由由实现卡决定 | 交代长期工作并逐阶段确认 | 单主线时间轴 + 动态需求画布 + 按需批注；现有代码仍为静态 Modal Fixture | 聊天框、固定表单、立即执行 |
+| **交代工作** | 独立 `/new` 页面；从现有 Work 入口进入并可返回来源上下文 | 交代长期工作并逐阶段确认 | 单主线时间轴 + json-render 动态需求画布 + 演示批注；**未接任务提交 API** | 聊天框、固定表单、立即执行 |
 
 - 「交代工作」是当前「工作」业务的高可达主操作，但不意味着未来所有业务工作台都必须复用同一种创建动作。
 - 「全部工作」「待处理」「成果」均由当前 Work 的 L1 Sidebar 担任可达入口；「工作台」由 Work Sidebar 与 Mobile 对象 Drawer 的首页入口承担，指向根路径 `/`，只在根路径激活。点击 L0「工作」也进入同一个驾驶舱，不增加全局 Tab。
@@ -239,7 +239,7 @@ Task 的标题/概括状态是**多个事实的阅读摘要**，不是把最近 
 | Home「查看并处理」 | 有效源对象 + 授权；打开该 Decision 所属 Task/Artifact/交接上下文 | **只打开上下文**，不批准 | 不存在/过期/无权限时解释并移除可操作入口 |
 | Home「查看工作」 | 有权 Task，打开 `/tasks/:taskId` | 只查看 | 离线可显示已知快照并标时，不能悄悄开始新 Run |
 | Task「查看本次运行」 | Task 与 Run 归属匹配，打开 Run Detail | 只查看该次真实执行事实 | 未知/断连显式标记，不把超时当成功 |
-| Shell / Home「交代工作」 | 进入单主线 Intelligent UI 需求审阅；当前 Web 仅以 Composer Modal Fixture 占位，`/new` 兼容路径不变 | 开始/恢复草稿，不直接启动执行；关闭后能回到来源上下文 | 无权创建时给出阻断说明 |
+| Shell / Home「交代工作」 | 进入独立 `/new` Intelligent UI 原型；展示三种 Fixture 任务、批注、流式修订和阶段接受；不接后端 | 开始浏览器会话内的演示草稿，不直接启动执行；返回保留来源上下文 | 无权创建时给出阻断说明 |
 | 最终阶段「接受并交代」 | 每个需求阶段经用户接受，批注闭环、正文与确认 UI 一致；目标、周期、交付、费用/授权范围已审视；服务端身份与幂等边界成立 | 只在权威回执确认后显示「已接收请求」，直到有 Run 来源证明才显示运行 | 失败不造 Task；网络未知先用幂等键对账，不盲重试 |
 | Task「重新尝试 / 取消」 | 有明确 Run 权限和成本 / 副作用说明；再确认 | `retry_requested` / `cancel_requested` **仅为请求** | 重复提交去重；未知结果先查源事实，不显示终态 |
 | Home / Library「打开成果」 | Artifact 元数据与版本获权；打开 Detail | 可查看的只是当前有权的版本 | 撤权/过期/未就绪不下载、不公开路径 |
@@ -413,9 +413,9 @@ Mira Cloud 的 Fixture 情境切换属于原型调试，不是首页产品内容
 | 消息中心 | 全部消息、送达记录 | /notifications、/notifications/deliveries | 先提供可达页面与明确未接入状态，不伪造未读数、实际通知、投递尝试或后端连接 |
 | 设置 | 通用、通知与送达、连接诊断 | /settings/general、/settings/notifications、/diagnostics | 通用保留当前浏览器本地主题偏好；通知授权/渠道仅保留边界占位；诊断保留实际可执行的服务健康探测 |
 
-「待我处理」仍是 Work 对象所需的操作，不等于全局消息。通知设置属于全局偏好，单项工作自己的执行频率、监测条件和报告策略归该工作主时间轴的配置与结果上下文；运行成功与消息送达是两种独立的事实。`/new` 保持旧入口兼容，目标为智能交代工作，不因此增加另一个执行 Owner。
+「待我处理」仍是 Work 对象所需的操作，不等于全局消息。通知设置属于全局偏好，单项工作自己的执行频率、监测条件和报告策略归该工作主时间轴的配置与结果上下文；运行成功与消息送达是两种独立的事实。`/new` 已是独立智能交代工作原型页，具有真正的 json-render 控件但没有后端持久化，不因此增加另一个执行 Owner。
 
-本次只补 **导航、路由与空态页面架构**；真实 Cloud Task/Trigger、Cloud Pi Scheduler、Delivery、Cloud Auth Web Session、消息存储/ACL、推送授权、运行状态和计费均未接线。后续不得因为原型入口已存在而宣称这些能力可用。WorkspaceTabs 通用组件仍可被独立消费，但不进入当前 Shell。
+当前工作空间具有独立 `/new` 需求审阅原型，其余工作区仍保留现有 Fixture；真实 Cloud Task/Trigger、Cloud Pi Scheduler、Delivery、Cloud Auth Web Session、消息存储/ACL、推送授权、运行状态和计费均未接线。后续不得因为原型入口已存在而宣称这些能力可用。WorkspaceTabs 通用组件仍可被独立消费，但不进入当前 Shell。
 
 ## 9. 设计来源和变更说明
 

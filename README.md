@@ -29,7 +29,7 @@ The workspace has real Web/API packages and a separate prod-only infrastructure 
 - **Clients:** browser, Mira Mobile (WebView), Mira Desktop (OAuth Cloud Client and separately a local-first Capability Host), and IM channels.
 - **Work:** temporary and scheduled tasks, run status, artifacts, memory, skills/MCP, GitHub collaboration, and explicit cross-runtime handoff.
 - **Permissions:** same-account sign-in is not tool authority. Desktop-owned runs and files stay local until explicitly shared.
-- **UI:** Web consumes the AGT-047 MiraDesign Foundation from pinned [Mira Desktop theme sources](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts). The workbench currently uses Fixture views; its legacy Composer Modal does not implement the [reviewed Intelligent UI delegation design](docs/product/delegation-intelligent-ui.md). The prod-only infrastructure path is not proof of authenticated business workflows.
+- **UI:** Web consumes the AGT-047 MiraDesign Foundation from pinned [Mira Desktop theme sources](https://github.com/uichat-mira/mira-desktop/blob/dev/desktop/src/shared/theme/colorThemes.ts). The Workbench contains Fixture views; the independent `/new` route now prototypes the [reviewed Intelligent UI delegation design](docs/product/delegation-intelligent-ui.md) using pinned json-render 0.22 and MiraDesign, but does not submit or persist real tasks. The prod-only infrastructure path is not proof of authenticated business workflows.
 
 ## Open-source license
 

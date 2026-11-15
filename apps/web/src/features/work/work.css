@@ -635,53 +635,6 @@ button.workbench-secondary-link {
   color: rgb(var(--mira-color-text-tertiary));
 }
 
-.workbench-composer-summary {
-  margin: 0 0 18px;
-  color: rgb(var(--mira-color-text-secondary));
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.workbench-composer-outline {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(100%, 880px);
-  border-top: 1px solid rgb(var(--mira-color-text-primary) / 0.3);
-}
-
-.workbench-composer-outline section {
-  min-height: 134px;
-  padding: 20px 22px 20px 0;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
-}
-
-.workbench-composer-outline section:nth-child(odd) {
-  border-right: 1px solid rgb(var(--mira-color-border));
-}
-
-.workbench-composer-outline section:nth-child(even) {
-  padding-left: 22px;
-}
-
-.workbench-composer-outline small {
-  color: rgb(var(--mira-color-primary));
-  font-size: 10px;
-}
-
-.workbench-composer-outline h2 {
-  margin: 8px 0 6px;
-  color: rgb(var(--mira-color-text-primary));
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.workbench-composer-outline p {
-  margin: 0;
-  color: rgb(var(--mira-color-text-secondary));
-  font-size: 12px;
-  line-height: 1.65;
-}
-
 .workbench-empty {
   display: flex;
   min-height: 360px;
@@ -802,18 +755,6 @@ button.workbench-secondary-link {
 
   .workbench-artifact-time {
     display: none;
-  }
-
-  .workbench-composer-outline {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .workbench-composer-outline section:nth-child(odd) {
-    border-right: 0;
-  }
-
-  .workbench-composer-outline section:nth-child(even) {
-    padding-left: 0;
   }
 }
 
