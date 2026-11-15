@@ -1126,14 +1126,6 @@ export function WorkspaceShell() {
       }
       mobileContextTitle={getContextTitle(location.pathname, scenario)}
     >
-      {isWork && location.pathname !== "/new" ? (
-        <div className="workbench-mobile-utility">
-          <button type="button" className="workbench-primary-link" onClick={openDelegation}>
-            <Plus size={15} aria-hidden="true" />
-            交代工作
-          </button>
-        </div>
-      ) : null}
       <Routes>
         <Route
           path="/"

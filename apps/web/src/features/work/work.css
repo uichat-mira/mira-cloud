@@ -684,28 +684,7 @@ button.workbench-secondary-link {
   color: rgb(var(--mira-color-warning-text));
 }
 
-.workbench-mobile-utility {
-  display: none;
-}
-
 @media (max-width: 980px) {
-  .workbench-mobile-utility {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-bottom: 18px;
-  }
-
-  .workbench-mobile-utility .workbench-primary-link {
-    flex: 0 0 auto;
-    min-height: 40px;
-  }
-
-  .workbench-page-header .workbench-primary-link {
-    display: none;
-  }
-
   .workbench-page-header {
     min-height: 88px;
     gap: 14px;
@@ -1205,6 +1184,37 @@ button.workbench-secondary-link {
 
   .workbench-cockpit-toolbar {
     align-items: flex-start;
+  }
+}
+
+/* Narrow Work content: the two Home actions sit together below the fixture note. */
+@container (max-width: 620px) {
+  .workbench-cockpit-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .workbench-cockpit-toolbar p {
+    flex: none;
+  }
+
+  .workbench-cockpit-toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    margin-left: 0;
+    white-space: normal;
+  }
+
+  .workbench-cockpit-toolbar-actions > button {
+    min-width: 0;
+    min-height: 44px;
+  }
+}
+
+@container (max-width: 280px) {
+  .workbench-cockpit-toolbar-actions {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

@@ -161,8 +161,13 @@ describe("AGT-054 Work workspace migration", () => {
     home.unmount();
 
     renderWorkspace("/artifacts/market-note");
+    expect(
+      within(document.getElementById("main-content") as HTMLElement).queryByRole("button", {
+        name: "交代工作",
+      }),
+    ).toBeNull();
     await user.click(
-      within(document.getElementById("main-content") as HTMLElement).getByRole("button", {
+      within(screen.getByRole("complementary", { name: "当前业务" })).getByRole("button", {
         name: "交代工作",
       }),
     );
@@ -188,24 +193,33 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
   });
 
-  it("moves the mobile create action out of the workspace header into Work content", () => {
-    renderWorkspace("/tasks/market-research");
+  it("keeps the create action in Work navigation instead of repeating it on each page", () => {
+    const detail = renderWorkspace("/tasks/market-research");
 
     const mobileHeader = document.querySelector('[data-workspace-region="mobile-header"]');
     expect(mobileHeader).not.toBeNull();
     expect(
       within(mobileHeader as HTMLElement).queryByRole("button", { name: "交代工作" }),
     ).toBeNull();
-    expect(
-      within(mobileHeader as HTMLElement).queryByRole("link", { name: "交代工作" }),
-    ).toBeNull();
     expect(mobileHeader?.querySelector(".workspace-mobile-create")).toBeNull();
 
     const main = document.getElementById("main-content");
     expect(main).not.toBeNull();
+    expect(within(main as HTMLElement).queryByRole("button", { name: "交代工作" })).toBeNull();
     expect(
-      within(main as HTMLElement).getByRole("button", { name: "交代工作" }),
+      within(screen.getByRole("complementary", { name: "当前业务" })).getByRole("button", {
+        name: "交代工作",
+      }),
     ).toBeInTheDocument();
+    detail.unmount();
+
+    renderWorkspace();
+    const home = document.getElementById("main-content") as HTMLElement;
+    const actions = home.querySelector(".workbench-cockpit-toolbar-actions") as HTMLElement;
+    expect(actions).not.toBeNull();
+    expect(within(home).getAllByRole("button", { name: "交代工作" })).toHaveLength(1);
+    expect(within(actions).getByRole("button", { name: "调整工作台" })).toBeInTheDocument();
+    expect(home.querySelector(".workbench-mobile-utility")).toBeNull();
   });
 
   it("uses the canonical Mira logo on desktop and mobile shell surfaces", () => {
