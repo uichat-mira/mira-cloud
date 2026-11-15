@@ -1,5 +1,5 @@
 import "./work.css";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -30,7 +30,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router";
-import { Badge, ExpandableSection, ModalShell } from "../../components/mira-design/index.ts";
+import { Badge, ExpandableSection } from "../../components/mira-design/index.ts";
 import { CockpitDashboard, type CockpitWidget } from "./cockpit-dashboard";
 import { SchedulePreview } from "./schedule-preview";
 import { ConnectionPanel } from "../connection/connection-panel";
@@ -785,45 +785,6 @@ function DetailPreview({
   );
 }
 
-function ComposerOutline() {
-  return (
-    <>
-      <p className="workbench-composer-summary">先说清目标与边界，再决定交给谁做。</p>
-      <div className="workbench-composer-outline">
-        {[
-          ["01", "目标", "希望完成什么，怎样才算有结果"],
-          ["02", "材料", "明确允许使用的上下文与附件"],
-          ["03", "执行", "执行方、时机与可能的费用"],
-          ["04", "边界", "工具权限、外部发送与必要确认"],
-        ].map(([number, title, description]) => (
-          <section key={number}>
-            <small>{number}</small>
-            <h2>{title}</h2>
-            <p>{description}</p>
-          </section>
-        ))}
-      </div>
-      <p className="workbench-boundary-note">Composer 结构预览，未接通任务提交或执行服务。</p>
-    </>
-  );
-}
-
-function ComposerModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  return (
-    <ModalShell
-      open={open}
-      title="交代工作"
-      width={720}
-      maxHeight="calc(100dvh - 2rem)"
-      closeLabel="关闭交代工作"
-      closeText="取消"
-      onClose={onClose}
-    >
-      <ComposerOutline />
-    </ModalShell>
-  );
-}
-
 function getContextTitle(pathname: string, scenario: PreviewScenario): string {
   if (
     scenario !== "active" &&
@@ -835,6 +796,7 @@ function getContextTitle(pathname: string, scenario: PreviewScenario): string {
   if (taskMatch) return findPreviewTask(taskMatch[1])?.title ?? "工作";
   const artifactMatch = pathname.match(/^\/artifacts\/([^/]+)$/);
   if (artifactMatch) return findPreviewArtifact(artifactMatch[1])?.title ?? "成果";
+  if (pathname === "/new") return "交代工作";
   if (pathname === "/attention") return "待处理";
   if (pathname === "/artifacts") return "成果";
   if (pathname === "/tasks") return "全部工作";
@@ -853,32 +815,24 @@ function getContextGroup(pathname: string): string {
 }
 
 const WorkPreviewDebugPanel = lazy(() => import("./work-preview-debug-panel"));
+const DelegationPage = lazy(() => import("./delegation-page"));
 
 function hasWorkPreviewDebug(pathname: string): boolean {
   const pathSegments = pathname.split("/").filter(Boolean);
   return (
-    ["/", "/new", "/attention", "/tasks", "/artifacts"].includes(pathname) ||
+    ["/", "/attention", "/tasks", "/artifacts"].includes(pathname) ||
     (pathSegments.length === 2 && ["tasks", "artifacts"].includes(pathSegments[0] ?? ""))
   );
 }
 
 export function WorkspaceShell() {
   const [params, setParams] = useSearchParams();
-  const [composerOpen, setComposerOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const scenario = parsePreviewScenario(params.get("scenario"));
   const to: PreviewLink = (path) => withScenario(path, scenario);
-  const openComposer = () => setComposerOpen(true);
-  const closeComposer = () => setComposerOpen(false);
-
-  useEffect(() => {
-    if (location.pathname !== "/new") {
-      return;
-    }
-    setComposerOpen(true);
-    navigate(withScenario("/", scenario), { replace: true });
-  }, [location.pathname, navigate, scenario]);
+  const openDelegation = () =>
+    navigate(to("/new"), { state: { returnTo: location.pathname + location.search } });
 
   const changeScenario = (next: PreviewScenario) => {
     const updated = new URLSearchParams(params);
@@ -952,7 +906,7 @@ export function WorkspaceShell() {
         {
           id: "new-work",
           label: "交代工作",
-          onSelect: openComposer,
+          onSelect: openDelegation,
           icon: <Plus size={15} aria-hidden="true" />,
         },
         {
@@ -1026,7 +980,7 @@ export function WorkspaceShell() {
         {
           id: "new-work",
           label: "交代工作",
-          onSelect: openComposer,
+          onSelect: openDelegation,
           icon: <Plus size={15} aria-hidden="true" />,
         },
         {
@@ -1172,9 +1126,9 @@ export function WorkspaceShell() {
       }
       mobileContextTitle={getContextTitle(location.pathname, scenario)}
     >
-      {isWork ? (
+      {isWork && location.pathname !== "/new" ? (
         <div className="workbench-mobile-utility">
-          <button type="button" className="workbench-primary-link" onClick={openComposer}>
+          <button type="button" className="workbench-primary-link" onClick={openDelegation}>
             <Plus size={15} aria-hidden="true" />
             交代工作
           </button>
@@ -1183,22 +1137,24 @@ export function WorkspaceShell() {
       <Routes>
         <Route
           path="/"
-          element={<HomePage scenario={scenario} to={to} onCreate={openComposer} />}
+          element={<HomePage scenario={scenario} to={to} onCreate={openDelegation} />}
         />
         <Route
           path="/attention"
           element={
-            <PreviewList view="attention" scenario={scenario} to={to} onCreate={openComposer} />
+            <PreviewList view="attention" scenario={scenario} to={to} onCreate={openDelegation} />
           }
         />
         <Route
           path="/tasks"
-          element={<PreviewList view="tasks" scenario={scenario} to={to} onCreate={openComposer} />}
+          element={
+            <PreviewList view="tasks" scenario={scenario} to={to} onCreate={openDelegation} />
+          }
         />
         <Route
           path="/artifacts"
           element={
-            <PreviewList view="artifacts" scenario={scenario} to={to} onCreate={openComposer} />
+            <PreviewList view="artifacts" scenario={scenario} to={to} onCreate={openDelegation} />
           }
         />
         <Route
@@ -1211,7 +1167,11 @@ export function WorkspaceShell() {
         />
         <Route
           path="/new"
-          element={<HomePage scenario={scenario} to={to} onCreate={openComposer} />}
+          element={
+            <Suspense fallback={<p className="workbench-inline-empty">正在准备需求画布…</p>}>
+              <DelegationPage />
+            </Suspense>
+          }
         />
         <Route path="/notifications" element={<NotificationsInboxPage />} />
         <Route path="/notifications/deliveries" element={<NotificationDeliveriesPage />} />
@@ -1257,7 +1217,6 @@ export function WorkspaceShell() {
           </Suspense>
         )}
       </PreviewDebugBall>
-      <ComposerModal open={composerOpen} onClose={closeComposer} />
     </WorkspaceShellFrame>
   );
 }

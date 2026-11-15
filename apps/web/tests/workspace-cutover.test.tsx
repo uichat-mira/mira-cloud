@@ -125,87 +125,66 @@ describe("AGT-054 Work workspace migration", () => {
     expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
   });
 
-  it("opens the Composer as a modal without leaving the current Task route", async () => {
+  it("opens a dedicated delegation page and returns to the originating Task", async () => {
     const user = userEvent.setup();
     const fetcher = vi.fn();
     vi.stubGlobal("fetch", fetcher);
     renderWorkspace("/tasks/market-research");
 
-    const workSidebar = screen.getByRole("complementary", { name: "当前业务" });
-    const trigger = within(workSidebar).getByRole("button", { name: "交代工作" });
+    const sidebar = screen.getByRole("complementary", { name: "当前业务" });
+    const trigger = within(sidebar).getByRole("button", { name: "交代工作" });
     await user.click(trigger);
 
-    const dialog = await screen.findByRole("dialog", { name: "交代工作" });
-    expect(within(dialog).getByText("先说清目标与边界，再决定交给谁做。")).toBeInTheDocument();
     expect(
-      within(dialog).getByText("未接通任务提交或执行服务", { exact: false }),
+      await screen.findByRole("heading", { level: 1, name: "交代一件值得持续完成的事" }),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "交代工作" })).toBeNull();
+    expect(screen.getByRole("region", { name: "交代工作原型" })).toBeInTheDocument();
+    expect(screen.getByText("可直接调整")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "返回" }));
     expect(
-      screen.getByRole("heading", { level: 1, name: "东南亚市场进入研究" }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("tab")).toBeNull();
-    expect(screen.queryByRole("button", { name: "提交委托" })).toBeNull();
-
-    await user.keyboard("{Escape}");
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
-    );
-
-    expect(trigger).toHaveFocus();
-    expect(
-      screen.getByRole("heading", { level: 1, name: "东南亚市场进入研究" }),
+      await screen.findByRole("heading", { level: 1, name: "东南亚市场进入研究" }),
     ).toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it("keeps Home and Artifact context when the Composer modal closes", async () => {
+  it("returns from delegation to Home and Artifact contexts", async () => {
     const user = userEvent.setup();
-    const homeView = renderWorkspace("/");
-    const homeHeader = screen.getByRole("heading", { name: "工作台" }).closest("header");
-    expect(homeHeader).not.toBeNull();
-    expect(
-      within(homeHeader as HTMLElement).queryByRole("button", { name: "交代工作" }),
-    ).toBeNull();
+    const home = renderWorkspace("/");
     const toolbar = document.querySelector(".workbench-cockpit-toolbar") as HTMLElement;
-    const homeTrigger = within(toolbar).getByRole("button", { name: "交代工作" });
-    expect(within(toolbar).getByRole("button", { name: "调整工作台" })).toBeInTheDocument();
-    await user.click(homeTrigger);
-    await screen.findByRole("dialog", { name: "交代工作" });
-    await user.click(screen.getByRole("button", { name: "取消" }));
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
-    );
-    expect(homeTrigger).toHaveFocus();
+    await user.click(within(toolbar).getByRole("button", { name: "交代工作" }));
+    expect(
+      await screen.findByRole("heading", { name: "交代一件值得持续完成的事" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "返回" }));
     expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
-    homeView.unmount();
+    home.unmount();
 
     renderWorkspace("/artifacts/market-note");
-    const artifactTrigger = within(
-      document.getElementById("main-content") as HTMLElement,
-    ).getByRole("button", { name: "交代工作" });
-    await user.click(artifactTrigger);
-    await screen.findByRole("dialog", { name: "交代工作" });
-    await user.keyboard("{Escape}");
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
+    await user.click(
+      within(document.getElementById("main-content") as HTMLElement).getByRole("button", {
+        name: "交代工作",
+      }),
     );
-    expect(artifactTrigger).toHaveFocus();
+    expect(
+      await screen.findByRole("heading", { name: "交代一件值得持续完成的事" }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "返回" }));
     expect(screen.getByRole("heading", { level: 1, name: "市场机会研究摘要" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab")).toBeNull();
   });
 
-  it("maps the legacy /new entry to the Composer modal instead of a page", async () => {
+  it("renders /new as a direct-linkable independent page", async () => {
     const user = userEvent.setup();
     renderWorkspace("/new");
-
-    expect(await screen.findByRole("dialog", { name: "交代工作" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /返回工作台/ })).toBeNull();
-
-    await user.click(screen.getByRole("button", { name: "取消" }));
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "交代工作" })).not.toBeInTheDocument(),
+    expect(
+      await screen.findByRole("heading", { name: "交代一件值得持续完成的事" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "行业动态" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
+    await user.click(screen.getByRole("button", { name: "返回" }));
     expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
   });
 
