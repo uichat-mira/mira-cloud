@@ -488,11 +488,11 @@ export default function DelegationPage() {
                     ? "正在演示修订"
                     : revisingHistory
                       ? "正在修改历史阶段"
-                    : historical
-                      ? "已接受 · 只读"
-                      : demoFinished
-                        ? "全部阶段已接受"
-                        : "待你审阅"}
+                      : historical
+                        ? "已接受 · 只读"
+                        : demoFinished
+                          ? "全部阶段已接受"
+                          : "待你审阅"}
                 </span>
               </div>
               <h2>{scenario.title}</h2>
