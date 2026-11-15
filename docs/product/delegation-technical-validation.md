@@ -101,4 +101,6 @@ P0/P1 是本清单的**建议技术验证顺序**，不是已被创建的工程�
 - 视觉与组件约束：[DESIGN.md](https://github.com/uichat-mira/mira-cloud/blob/dev/DESIGN.md)。
 - 权限与运行时所有权：Cloud Auth、Cloud Pi 和 Mira Cloud 各自仓库当前契约；跨系统可达性在实施前另行验证。
 
+技术研究归档和后续阶段索引：[「交代工作」技术研究记录](../research/delegation/README.md)。该目录保留阶段性源码核查、外部资料、方案比较及后续 POC 证据；它不改变本清单的验证状态。
+
 本清单只提出验证，不代表已派卡、已施工、已进行测试、已部署或已完成工程验收。
