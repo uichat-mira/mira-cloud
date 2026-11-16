@@ -72,9 +72,7 @@ try {
   const middle = await checkpoint("SCROLLED_MIDDLE", true);
   await evaluate("window.scrollTo(0,1750)");
   await checkpoint("SCROLLED_DEEP", true);
-  await evaluate(
-    "Array.from(document.querySelectorAll('button.delegation-quiet-action')).find(x=>x.textContent.includes('批注'))?.click()",
-  );
+  await evaluate("document.querySelector('button.delegation-comment-trigger')?.click()");
   await checkpoint("WITH_RIGHT_REVIEW", true);
   const notes = JSON.parse(await inspect());
   if (notes.notes && Math.abs(notes.notes.top - 74) > 2)

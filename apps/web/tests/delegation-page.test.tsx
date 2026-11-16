@@ -52,6 +52,29 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     expect(await screen.findByText(/研究重点：创业与商业化/)).toBeInTheDocument();
   });
 
+  it("keeps one icon-only review entry in the sticky paper topline, not the footer", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const header = document.querySelector(".delegation-paper-topline") as HTMLElement;
+    const footer = document.querySelector(".delegation-paper-footer") as HTMLElement;
+    const trigger = within(header).getByRole("button", { name: "批注" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveAttribute("aria-controls", "delegation-comments-panel");
+    expect(trigger.querySelector("svg")).toBeInTheDocument();
+    expect(trigger.textContent?.trim()).toBe("");
+    expect(within(footer).queryByRole("button", { name: "批注" })).toBeNull();
+    expect(within(header).queryByText("仅在此标签页保存")).toBeNull();
+
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    const aside = screen.getByRole("complementary", { name: "随文批注" });
+    expect(aside).toHaveAttribute("id", "delegation-comments-panel");
+    expect(within(footer).queryByRole("button", { name: "批注" })).toBeNull();
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("complementary", { name: "随文批注" })).toBeNull();
+  });
+
   it("blocks acceptance on unresolved comments, never submitting a real task", async () => {
     const user = userEvent.setup();
     const { fetcher } = renderPage();
@@ -417,11 +440,11 @@ describe("delegation POC UI completion", () => {
     const user = userEvent.setup();
     renderPage();
     expect(screen.getByText("待你审阅")).toBeInTheDocument();
-    expect(screen.getByText("仅在此标签页保存")).toBeInTheDocument();
+    expect(screen.queryByText("仅在此标签页保存")).toBeNull();
     await user.click(screen.getByRole("button", { name: "接受本阶段" }));
     await user.click(screen.getByRole("button", { name: /研究目标.*已接受/ }));
     expect(screen.getByText("已接受 · 只读")).toBeInTheDocument();
-    expect(screen.getByText("仅在此标签页保存")).toBeInTheDocument();
+    expect(screen.queryByText("仅在此标签页保存")).toBeNull();
   });
 });
 

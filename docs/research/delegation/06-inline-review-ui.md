@@ -93,3 +93,12 @@
 - 键盘修改选区也通过 selectionchange / keyup 走同一稳定等待。保留原有 touchend + pointerup 监听；真正的 iOS Safari 长按与系统菜单仍需真机实测，不以 Chrome 模拟替代。
 - Vitest 增加拖动按住 220ms 不弹、松开后 65ms 不弹、稳定后出现、再次改动和取消即隐藏的回归。Mac Chrome 实测 [selection-debounce-qa.mjs](../../../prototypes/delegation-inline-review/selection-debounce-qa.mjs) 使用实际文档 DOM Range + pointerdown/up/selectionchange，长拖动不弹、松开后 80ms 不弹、稳定约 265ms 弹出；再次变动 45ms 不弹、稳定后显示；点击后侧栏摘录严格等于最后选区。
 - 既有 [browser-qa.mjs](../../../prototypes/delegation-inline-review/browser-qa.mjs) 整条文字批注 E2E 通过；同步更新 [selection-animation-qa.mjs](../../../prototypes/delegation-inline-review/selection-animation-qa.mjs) 的稳定选区等待断言，不能再期待选择即刻弹窗。
+
+
+## 顶部单图标批注入口与文案减法（2026-11-16）
+
+按照 Mac 桌面视觉反馈，正式 /new 将底部左侧「批注」按钮移至已吸顶的草稿信息栏右侧，只保留一个 Lucide MessageSquare 图标。保留无障碍名称、悬停 title 与展开状态；点击图标可以打开或关闭右侧批注区。工作底栏现在只包含阶段修订/接受等主要操作。
+
+再次反馈要求删除冗余的「仅在此标签页保存」常驻文案，已从 UI 移除，不改变会话内演示草稿的实际保存语义；发生保存失败时，顶部仍显式提示「会话保存失败」，避免隐藏真实故障。整个顶部区域的宽度分配和吸顶偏移保持不变；移动端继续采用 44px 触控目标。
+
+浏览器验证：[review-icon-topline-qa.mjs](../../../prototypes/delegation-inline-review/review-icon-topline-qa.mjs)；已有浏览器回归中打开批注的入口已统一迁移至此唯一图标，不再依赖旧底部按钮。

@@ -685,7 +685,22 @@ export default function DelegationPage() {
             <span>
               <FileText size={14} aria-hidden="true" /> 需求草稿 / {scenario.label}
             </span>
-            <span>{saveStatus === "failed" ? "会话保存失败" : "仅在此标签页保存"}</span>
+            <div className="delegation-topline-actions">
+              {saveStatus === "failed" ? <span role="status">会话保存失败</span> : null}
+              <button
+                type="button"
+                className="delegation-comment-trigger"
+                onClick={() => (commentsOpen ? closeComments() : openComments())}
+                aria-label={currentComments.length ? "批注 · " + currentComments.length : "批注"}
+                aria-expanded={commentsOpen}
+                aria-controls="delegation-comments-panel"
+                title={
+                  currentComments.length ? "查看批注（" + currentComments.length + "）" : "查看批注"
+                }
+              >
+                <MessageSquare size={16} aria-hidden="true" />
+              </button>
+            </div>
           </div>
           <div className="delegation-paper-content">
             <div className="delegation-paper-title">
@@ -859,10 +874,6 @@ export default function DelegationPage() {
             ) : null}
           </div>
           <footer className="delegation-paper-footer">
-            <button type="button" className="delegation-quiet-action" onClick={openComments}>
-              <MessageSquare size={16} aria-hidden="true" />
-              批注 {currentComments.length ? "· " + currentComments.length : ""}
-            </button>
             <div className="delegation-paper-actions">
               {revisingHistory ? (
                 <>
@@ -934,7 +945,11 @@ export default function DelegationPage() {
               aria-label="关闭批注"
               onClick={() => closeComments()}
             />
-            <aside className="delegation-comments" aria-label="随文批注">
+            <aside
+              id="delegation-comments-panel"
+              className="delegation-comments"
+              aria-label="随文批注"
+            >
               <div className="delegation-comments-header">
                 <div>
                   <small>Review notes</small>

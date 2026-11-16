@@ -71,9 +71,7 @@ try {
   );
   console.log("CLEARED_CTA", cleared);
   if (JSON.parse(cleared).cta) throw Error("Ghost CTA remained after native Selection collapsed");
-  await ev(
-    "Array.from(document.querySelectorAll('button.delegation-quiet-action')).find(x=>x.textContent.includes('批注'))?.click()",
-  );
+  await ev("document.querySelector('button.delegation-comment-trigger')?.click()");
   const afterClick = JSON.parse(await metrics());
   await pause(105);
   const intermediate = JSON.parse(await metrics());
@@ -131,9 +129,7 @@ try {
   });
   await pause(160);
   const wideBefore = JSON.parse(await metrics());
-  await ev(
-    "Array.from(document.querySelectorAll('button.delegation-quiet-action')).find(x=>x.textContent.includes('批注'))?.click()",
-  );
+  await ev("document.querySelector('button.delegation-comment-trigger')?.click()");
   await pause(110);
   const wideMid = JSON.parse(await metrics());
   await pause(210);
@@ -154,9 +150,7 @@ try {
   });
   await pause(180);
   const mobileBefore = JSON.parse(await metrics());
-  await ev(
-    "Array.from(document.querySelectorAll('button.delegation-quiet-action')).find(x=>x.textContent.includes('批注'))?.click()",
-  );
+  await ev("document.querySelector('button.delegation-comment-trigger')?.click()");
   await pause(200);
   const mobileAfter = JSON.parse(await metrics());
   const mobileSheet = JSON.parse(

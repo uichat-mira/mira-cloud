@@ -84,9 +84,7 @@ try {
     throw Error("Abandoned comment remains active");
   await send("Page.reload", { ignoreCache: true });
   await pause(3100);
-  await run(
-    "Array.from(document.querySelectorAll('button.delegation-quiet-action')).find(x=>x.textContent.includes('批注'))?.click()",
-  );
+  await run("document.querySelector('button.delegation-comment-trigger')?.click()");
   await pause(140);
   const restored = JSON.parse(await inspect());
   console.log("AFTER_RELOAD", restored);

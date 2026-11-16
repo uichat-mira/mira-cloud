@@ -222,8 +222,47 @@
   align-items: center;
   gap: 7px;
 }
+.delegation-topline-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
 
-/* Keep the draft identity and save scope visible while reading a long stage.
+.delegation-comment-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--mira-radius-ui-control);
+  background: transparent;
+  color: rgb(var(--mira-color-text-secondary));
+  cursor: pointer;
+}
+
+.delegation-comment-trigger:hover,
+.delegation-comment-trigger[aria-expanded="true"] {
+  background: rgb(var(--mira-color-surface-secondary));
+  color: rgb(var(--mira-color-text-primary));
+}
+
+.delegation-comment-trigger:focus-visible {
+  outline: 2px solid rgb(var(--mira-color-primary));
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .delegation-comment-trigger {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Keep the draft identity and review entry visible while reading a long stage.
    Unlike the review rail, this bar belongs to the paper and should release
    naturally when the paper ends. Do not consume mobile reading height. */
 @media (min-width: 981px) {
@@ -479,8 +518,10 @@
 .delegation-paper-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 16px;
   flex-wrap: wrap;
+  width: 100%;
 }
 .delegation-accept {
   display: inline-flex;

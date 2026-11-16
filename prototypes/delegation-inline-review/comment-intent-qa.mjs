@@ -46,9 +46,7 @@ try {
   });
   await send("Page.navigate", { url: "http://127.0.0.1:5173/new" });
   await pause(3200);
-  await run(
-    "Array.from(document.querySelectorAll('button.delegation-quiet-action')).find(x=>x.textContent.includes('批注'))?.click()",
-  );
+  await run("document.querySelector('button.delegation-comment-trigger')?.click()");
   await pause(170);
   const opened = JSON.parse(await snapshot());
   console.log("REVIEW_ONLY", opened);

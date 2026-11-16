@@ -39,7 +39,7 @@ const inspect = () =>
   );
 async function openPanel() {
   const found = await run(
-    "(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.classList.contains('delegation-quiet-action')&&x.textContent.includes('批注'));b?.click();return !!b})()",
+    "(()=>{const b=document.querySelector('button.delegation-comment-trigger');b?.click();return !!b})()",
   );
   if (!found) throw Error("No annotation entry button");
   await pause(150);
