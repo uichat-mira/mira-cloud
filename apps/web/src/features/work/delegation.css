@@ -222,6 +222,19 @@
   align-items: center;
   gap: 7px;
 }
+
+/* Keep the draft identity and save scope visible while reading a long stage.
+   Unlike the review rail, this bar belongs to the paper and should release
+   naturally when the paper ends. Do not consume mobile reading height. */
+@media (min-width: 981px) {
+  .delegation-paper-topline {
+    position: sticky;
+    top: var(--workspace-header-height);
+    z-index: 18; /* Below the Shell topbar (20), above the paper content. */
+    background: rgb(var(--mira-color-surface-primary) / 0.97);
+    backdrop-filter: blur(8px);
+  }
+}
 .delegation-paper-content {
   padding: clamp(28px, 4vw, 49px) clamp(22px, 5vw, 58px) 20px;
 }

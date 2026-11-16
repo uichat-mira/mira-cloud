@@ -54,3 +54,10 @@
 - 旧选区入口由 ProseMirror 已过期选区和只增不减的 pendingAnchor 造成。现在以实际浏览器原生 Selection 为捕获依据；选区收起、点击正文外区域时清除临时入口。若用户已主动点击批注入口，才保留原锚点供输入区使用；页面仍支持不选文字、通过底部常驻「批注」入口提交**阶段整体意见**。
 - Mac Chrome /new 实测：1600px 展开批注时正文宽度约 1200→（中途 913）→884px，关闭时 884→（中途 1172）→1200px；已有完整批注 E2E 仍通过。1920px 和 390px 分别验证宽屏与手机布局，参见 [selection-animation-qa.mjs](../../../prototypes/delegation-inline-review/selection-animation-qa.mjs)。
 - 无法以 Chrome 模拟器替代 iOS Safari 真机选区/输入法验收；这一点继续保留为 D27 证据缺口。
+
+
+## 需求草稿身份栏吸顶（PC，2026-11-16）
+
+用户希望固定「需求草稿 / 场景名称 · 仅在此标签页保存」这条文稿信息栏，而不是重新固定整张纸或整个页面。正式 /new 的 .delegation-paper-topline 在桌面（宽度 ≥981px）使用 position: sticky，top 取 Workspace Shell 的真实导航高度变量 --workspace-header-height（当前 58px）。层级低于 Workspace 顶栏，吸顶期间保留不透明度适中的 MiraDesign 背景，阅读原文时能持续确认草稿归属与保存范围。组件属于纸张 DOM，滚出纸张边界时正常退出，不额外建立全局固定栏；移动端不增加常驻的纵向占用。
+
+真实 Mac Chrome 复现：[draft-topline-qa.mjs](../../../prototypes/delegation-inline-review/draft-topline-qa.mjs)。1600×900 初始栏 top=407px；主体 scrollY=650/1750 时栏 top=58px；展开右侧批注后仍为 58px（批注栏 top=74px）；1280/1920px 桌面同样为 58px，无横向溢出；390px 手机端继续 position: static。浏览器测试使用一次性标签页和演示会话，未连接真实云端任务或修改线上数据。

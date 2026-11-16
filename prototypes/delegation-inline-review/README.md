@@ -19,3 +19,9 @@ The script opens an isolated Chrome tab, adds 24 local-only review notes and 100
     NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/selection-animation-qa.mjs
 
 Exercises the actual /new page in Chrome: ensures the unused Milkdown LaTeX popup is absent, selecting then collapsing a native DOM selection shows/hides the ephemeral comment action, and both opening and closing the desktop review rail interpolate the document width (1600px and 1920px). Confirms the 390px mobile bottom sheet is unchanged. All data remains local-only; no Task/API calls.
+
+## PC draft identity bar sticky under the Work header
+
+    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/draft-topline-qa.mjs
+
+Exercises the actual /new page in a disposable Chrome tab with a long Markdown fixture: before scroll, while scrolling, after opening the desktop review rail, and at desktop viewport widths 1280/1600/1920px. Confirms the bar stays precisely below the global 58px Work header and has no horizontal overflow. The mobile 390px version is deliberately nonsticky to preserve reading height.
