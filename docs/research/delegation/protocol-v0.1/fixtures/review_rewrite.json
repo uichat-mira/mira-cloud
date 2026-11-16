@@ -1,0 +1,46 @@
+{
+  "protocol": "mira.delegation.proposal",
+  "version": "0.1.0",
+  "title": "修订长期研究需求",
+  "summary": "只提供替代文稿建议，不表达已解决批注。",
+  "stages": [
+    {
+      "key": "scope",
+      "title": "研究目标",
+      "purpose": "示例为用户审阅的新版内容。",
+      "paragraphs": [
+        "将研究范围缩小到模型能力与独立开发者的真实产品证据。"
+      ],
+      "fields": [
+        {
+          "key": "focus",
+          "label": "研究重点",
+          "kind": "choice",
+          "options": [
+            {
+              "key": "models",
+              "label": "模型能力"
+            },
+            {
+              "key": "indie",
+              "label": "独立开发者"
+            }
+          ],
+          "suggestedValue": "indie",
+          "rationale": ""
+        }
+      ]
+    }
+  ],
+  "unknowns": [],
+  "assumptions": [],
+  "claims": [
+    {
+      "key": "user-instruction",
+      "statement": "用户明确要求优先关注独立开发者。",
+      "sourceRefs": [
+        "intent:1"
+      ]
+    }
+  ]
+}

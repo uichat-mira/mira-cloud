@@ -1,0 +1,11 @@
+{
+  "event": "draft.stage.preview",
+  "generationId": "g-01",
+  "sequence": 2,
+  "baseRevision": 4,
+  "stageKey": "scope",
+  "payload": {
+    "title": "研究目标"
+  },
+  "validation": "provisional"
+}

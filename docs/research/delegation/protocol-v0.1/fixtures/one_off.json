@@ -1,0 +1,53 @@
+{
+  "protocol": "mira.delegation.proposal",
+  "version": "0.1.0",
+  "title": "整理一次社区活动复盘",
+  "summary": "一次性整理，不假设需要调度器。",
+  "stages": [
+    {
+      "key": "scope",
+      "title": "目标与资料范围",
+      "purpose": "明确可读取的事实范围。",
+      "paragraphs": [
+        "整理一次活动的结果与需要改善的事项。"
+      ],
+      "fields": [
+        {
+          "key": "report-format",
+          "label": "成果形式",
+          "kind": "choice",
+          "options": [
+            {
+              "key": "brief",
+              "label": "简明摘要"
+            },
+            {
+              "key": "report",
+              "label": "详细报告"
+            }
+          ],
+          "suggestedValue": "brief",
+          "rationale": ""
+        }
+      ]
+    },
+    {
+      "key": "delivery",
+      "title": "成果交付",
+      "purpose": "由用户确认交付内容。",
+      "paragraphs": [
+        "先生成可审阅的复盘草稿，不自动发送。"
+      ],
+      "fields": []
+    }
+  ],
+  "unknowns": [
+    {
+      "key": "participant-data",
+      "question": "是否提供经过授权的活动数据？",
+      "impact": "无法核实参与数量和反馈"
+    }
+  ],
+  "assumptions": [],
+  "claims": []
+}

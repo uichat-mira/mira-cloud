@@ -1,0 +1,21 @@
+{
+  "protocol": "mira.delegation.revision_proposal",
+  "version": "0.1.0",
+  "baseRevision": 4,
+  "changes": [
+    {
+      "stageKey": "scope",
+      "targetKey": "focus",
+      "operation": "suggest-field-value",
+      "proposedValue": "indie",
+      "reason": "用户希望优先研究独立开发者的真实产品证据"
+    }
+  ],
+  "commentResponses": [
+    {
+      "commentRef": "comment-12",
+      "proposedHandling": "addressed",
+      "reason": "已经提出针对该批注的替代字段值，但尚未由用户确认解决"
+    }
+  ]
+}

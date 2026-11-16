@@ -1,0 +1,55 @@
+{
+  "protocol": "mira.delegation.proposal",
+  "version": "0.1.0",
+  "title": "研究海外市场机会",
+  "summary": "明确未知事项，不伪造来源或调查结果。",
+  "stages": [
+    {
+      "key": "scope",
+      "title": "调查边界",
+      "purpose": "先确认要研究的国家和目标客户。",
+      "paragraphs": [
+        "现有资料不足以声称发现了确定的市场机会。"
+      ],
+      "fields": [
+        {
+          "key": "region",
+          "label": "研究地区",
+          "kind": "text",
+          "options": [],
+          "suggestedValue": null,
+          "rationale": ""
+        }
+      ]
+    },
+    {
+      "key": "evidence",
+      "title": "证据收集",
+      "purpose": "仅在授权资料范围内采集。",
+      "paragraphs": [
+        "需要独立验证需求、竞争和成本。"
+      ],
+      "fields": []
+    }
+  ],
+  "unknowns": [
+    {
+      "key": "geography",
+      "question": "目标国家或地区尚未确定。",
+      "impact": "无法选择当地市场资料"
+    },
+    {
+      "key": "supply",
+      "question": "供应渠道是否真实可用？",
+      "impact": "不能估算交货和利润"
+    }
+  ],
+  "assumptions": [
+    {
+      "key": "market-unknown",
+      "statement": "目前不假定具备可靠市场份额数据。",
+      "impact": "不提供伪精确的市场规模预测"
+    }
+  ],
+  "claims": []
+}
