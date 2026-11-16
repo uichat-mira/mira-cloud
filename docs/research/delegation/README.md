@@ -19,6 +19,7 @@
 | 06 · 正式交代工作随文批注 UI 第一轮 | [批注 UI 整合与浏览器证据](./06-inline-review-ui.md) | 真实 Milkdown/ProseMirror 批注接入 /new，双向定位、桌面右栏与手机底部面板；**基础路径通过，密集布局／真机仍待验收** |
 | 07 · D02 最初意图进入 | [一句意图到需求草稿 UI](./07-intent-entry-ui.md) | 本地可交互入口与通用 Fixture 起稿、失败恢复、演示成果标题引用；**未接真实 AI 与云任务** |
 | 08 · Mira Delegation Protocol v0.1 | [模型无关起稿协议研究](./08-delegation-protocol-research.md) · [Schema/Fixture/验证脚本](./protocol-v0.1/README.md) | JSON Schema Draft 2020-12 + 研究性业务校验；**4/4 合法样例通过、10/10 反例被拒绝**。纯 Fixture 研究，**未接模型、未采纳为正式协议** |
+| 09 · Diff 集中修订与批注闭环 | [统一修订候选研究与 T1 实验](./09-diff-consolidated-revision-research.md) | 既有 Milkdown / 组件 Diff 复用 + 受控修订候选模型、批注映射/版本冲突测试；**独立 T1 研究，未接正式 UI 与模型** |
 
 ## 后续阶段及入库规则
 
