@@ -134,9 +134,13 @@ describe("AGT-054 Work workspace migration", () => {
     const sidebar = screen.getByRole("complementary", { name: "当前业务" });
     const trigger = within(sidebar).getByRole("button", { name: "交代工作" });
     await user.click(trigger);
-
+    // /new lazy-loads the Milkdown editor; assert the actual page, not its Suspense fallback.
     expect(
-      await screen.findByRole("heading", { level: 1, name: "交代一件值得持续完成的事" }),
+      await screen.findByRole(
+        "heading",
+        { level: 1, name: "交代一件值得持续完成的事" },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "交代工作" })).toBeNull();
     expect(screen.getByRole("region", { name: "交代工作原型" })).toBeInTheDocument();

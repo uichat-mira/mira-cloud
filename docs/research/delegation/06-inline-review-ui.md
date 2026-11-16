@@ -19,7 +19,10 @@
 - 命令：pnpm --filter @mira-cloud/web check → 19 个测试文件、203/203 项测试通过；MiraDesign、格式、Lint、TS、Vite 构建通过。
 - node scripts/check-docs.mjs → 文档合同检查通过。
 - 实际 macOS Chrome DevTools Protocol：真实 /new 页面，390px 选择文本后入口出现且不自动开栏；底部面板编辑保存后原文高亮；高亮→批注→原文双向定位；sessionStorage 刷新恢复；手动编辑时在锚点之前插入文字，范围由 11–31 正确映射到 16–36，完成编辑后仍有效。
-- 宽度 1365px 桌面：批注栏宽约 294px，画布宽约 628px；手机/桌面没有根级水平溢出。
+- 用户视觉复核后，PC 端 /new 改为使用完整的 Work 内容区：仅对该页面取消 Shell 的 1320px 最大宽度，适度缩减页面边缘留白；其他 Work 页面保持原最大宽度。
+- Chrome /new 开启右栏的实测：1600px 宽度时任务画布 1165px → 1200px，正文卡片 652px → 884px；1920px 任务画布 1208px → 1517px；2560px 任务画布 1208px → 2157px。
+- 在 1121–1760px 屏幕保持正文＋批注双栏，阶段主线收至顶部；更宽屏幕才使用阶段主线＋正文＋批注三栏。更新浏览器脚本持续检查 1280／1600／1920／2560px 正文最小宽度、画布利用率与横向溢出。
+- 手机布局和响应式断点低于 1121px 的逻辑保持不变。
 - [Chrome 复现脚本](../../../prototypes/delegation-inline-review/browser-qa.mjs)、[手机截图](./assets/inline-review-mobile-390.webp)、[桌面截图](./assets/inline-review-desktop.webp)。
 
 ## 未通过的合同（必须如实保留）

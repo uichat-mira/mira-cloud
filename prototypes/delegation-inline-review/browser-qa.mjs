@@ -66,5 +66,26 @@ try{
  const desktop=await run("JSON.stringify({w:innerWidth,scroll:document.documentElement.scrollWidth,pane:!!document.querySelector('[aria-label=\"随文批注\"]'),layout:getComputedStyle(document.querySelector('.delegation-layout')).gridTemplateColumns,panel:document.querySelector('.delegation-comments')?.getBoundingClientRect().toJSON()})");
  console.log("DESKTOP",desktop);if(JSON.parse(desktop).scroll>JSON.parse(desktop).w)throw Error("desktop overflow");
  const shot2=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});writeFileSync("/tmp/mira-inline-ui-desktop.png",Buffer.from(shot2.data,"base64"));
+ // Verify the formal new-task canvas uses available desktop width, including
+ // when the annotation rail is visible. This guards against the Shell 1320px cap.
+ for (const width of [1280, 1600, 1920, 2560]) {
+   await send("Emulation.setDeviceMetricsOverride", {
+     width, height: 900, deviceScaleFactor: 1, mobile: false,
+   });
+   await sleep(150);
+   const wide = JSON.parse(await run(
+     "(()=>{const box=s=>document.querySelector(s)?.getBoundingClientRect();" +
+     "return JSON.stringify({viewport:innerWidth,scroll:document.documentElement.scrollWidth," +
+     "main:box('.workspace-main')?.width,canvas:box('.delegation-page')?.width," +
+     "paper:box('.delegation-paper')?.width,notes:box('.delegation-comments')?.width})})()"
+   ));
+   console.log("DESKTOP_CANVAS", width, wide);
+   if (
+     wide.scroll > wide.viewport + 1 ||
+     wide.canvas < wide.main * 0.9 ||
+     wide.paper < 500 ||
+     wide.notes < 240
+   ) throw Error("Desktop /new no longer fills its work canvas at " + width);
+ }
  console.log("INLINE_REVIEW_BROWSER_PASS");
 }finally{try{await send("Page.close")}catch{}ws.close()}

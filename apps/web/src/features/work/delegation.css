@@ -953,8 +953,21 @@
   font-size: 11px;
   cursor: pointer;
 }
-/* Keep the actual document readable when the sidebar and comments are both open. */
-@media (min-width: 1121px) and (max-width: 1520px) {
+/* New work is a full desktop canvas. The generic Work shell retains its
+   normal 1320px reading limit for every other route. */
+@media (min-width: 1121px) {
+  .workspace-content:has(> .delegation-page) {
+    max-width: none;
+    padding-inline: clamp(20px, 2.4vw, 40px);
+  }
+  .delegation-page .delegation-introduction {
+    max-width: none;
+  }
+}
+
+/* Use the full canvas for the paper and optional review rail. Until there is
+   enough room for all three columns, fold the timeline into the stage header. */
+@media (min-width: 1121px) and (max-width: 1760px) {
   .delegation-layout {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
