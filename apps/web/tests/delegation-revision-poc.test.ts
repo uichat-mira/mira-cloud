@@ -154,6 +154,31 @@ describe("Diff review research — D04/D05/D06 proposal vs canonical draft", () 
     expect(commitRevision(changed, candidate)).toEqual({ ok: false, reason: "stale-base" });
   });
 
+  it("refuses a prepared candidate after any other-stage change to avoid lost updates", () => {
+    const before = draftWithComments();
+    const candidate = prepared(before);
+    const unrelatedStage = {
+      ...before,
+      stages: [
+        before.stages[0],
+        { ...before.stages[1], markdown: before.stages[1].markdown + "\n新说明" },
+        before.stages[2],
+      ] as DelegationDraft["stages"],
+    };
+    expect(commitRevision(unrelatedStage, candidate)).toEqual({
+      ok: false,
+      reason: "stale-base",
+    });
+    const anotherStageComment = updateReviewComments(before, (items) => [
+      ...items,
+      { id: 76, stage: 1, excerpt: "", text: "后续阶段的新意见", status: "open" },
+    ]);
+    expect(commitRevision(anotherStageComment, candidate)).toEqual({
+      ok: false,
+      reason: "stale-base",
+    });
+  });
+
   it("prevents stale commit after added/changed comment and duplicate commit after use", () => {
     const before = draftWithComments();
     const candidate = prepared(before);

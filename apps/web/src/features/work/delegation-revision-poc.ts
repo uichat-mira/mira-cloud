@@ -63,15 +63,10 @@ export type RevisionPreparation = RevisionFailure | RevisionCandidate;
 
 const reject = (reason: RevisionFailure["reason"]): RevisionFailure => ({ ok: false, reason });
 
-function fingerprint(draft: DelegationDraft, stage: DelegationStage): string {
-  // In-memory optimistic lock, not a cryptographic hash or persistence token.
-  return JSON.stringify({
-    stage,
-    record: draft.stages[stage],
-    acceptedCount: draft.acceptedCount,
-    editingHistorical: draft.editingHistorical,
-    comments: draft.comments.filter((c) => c.stage === stage),
-  });
+function fingerprint(draft: DelegationDraft): string {
+  // An old proposal must not overwrite unrelated changes in another stage or
+  // comment list. This is a whole-draft in-memory comparison, not server CAS.
+  return JSON.stringify(draft);
 }
 
 function fields(draft: DelegationDraft, stage: DelegationStage): ReviewField[] | null {
@@ -185,7 +180,7 @@ export function prepareRevision(draft: DelegationDraft, payload: unknown): Revis
     ok: true,
     stage,
     baseRevision: proposal.baseRevision,
-    sourceFingerprint: fingerprint(draft, stage),
+    sourceFingerprint: fingerprint(draft),
     baseline: {
       markdown: original.markdown,
       config: { ...original.config },
@@ -208,7 +203,7 @@ export function commitRevision(
   prepared: RevisionPreparation,
 ): RevisionPreparation {
   if (!prepared.ok) return prepared;
-  if (fingerprint(current, prepared.stage) !== prepared.sourceFingerprint) {
+  if (fingerprint(current) !== prepared.sourceFingerprint) {
     return reject("stale-base");
   }
   if (
