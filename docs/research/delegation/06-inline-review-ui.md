@@ -9,7 +9,7 @@
 
 - 保留原有 DelegationDraft / 阶段验收 / JSON UI / sessionStorage 作为状态真相。将正式 /new 正文阅读和编辑整合成同一套 Milkdown Crepe、ProseMirror 编辑器视图；只读与编辑通过显式按钮切换。
 - 复用 POC-B 文字锚点 Plugin、Transaction Mapping 和 Decoration，在原批注草稿中增加可选来源锚点（from/to、阶段与修订、active/lost）。未锚定的全文批注保持兼容。
-- 框选后只显示靠近选区的轻量「批注所选文字」入口，不自动展开批注栏。可选「改为本阶段整体意见」。
+- 框选后只显示靠近选区的轻量「批注所选文字」入口，不自动展开批注栏。可显式切换为「批注整个阶段」。
 - 正文高亮点击定位批注；批注点击「返回原文」通过 ProseMirror 坐标定位，readonly 状态使用同一文档的 DOM Range。删除／编辑导致无法可靠映射时标记定位失效，不搜索重复文字。
 - 桌面右侧随文批注栏按需出现；中等宽度改为双栏确保需求画布够宽；手机使用底部批注面板、可关闭并尝试恢复阅读位置。
 - 草稿仍明确为同标签页会话保存。接受阶段、集中修订、历史回溯状态语义不变；不连接 Cloud Pi / Auth。
@@ -51,7 +51,7 @@
 
 - 桌面 /new 打开和关闭批注栏会改变正文宽度，因此使 Grid 保留固定数量的轨道：从无批注轨道（0px）渐进到 294px；宽度和间距采用 220ms 过渡，右栏入场 180ms 淡入。遵守现有 prefers-reduced-motion 约束，非全局动画。
 - 用户截图中的孤立「✓」不是完成状态或阶段接受：浏览器 DOM 定位到 Crepe 自带的 milkdown-latex-inline-edit[data-show=false] 浮层，其确认按钮在只读正文下方错误露出。正式任务正文禁用未使用的 LaTeX 特性，避免仅靠 CSS 隐藏症状。
-- 旧选区入口由 ProseMirror 已过期选区和只增不减的 pendingAnchor 造成。现在以实际浏览器原生 Selection 为捕获依据；选区收起、点击正文外区域时清除临时入口。若用户已主动点击批注入口，才保留原锚点供输入区使用；页面仍支持不选文字、通过底部常驻「批注」入口提交**阶段整体意见**。
+- 旧选区入口由 ProseMirror 已过期选区和只增不减的 pendingAnchor 造成。现在以实际浏览器原生 Selection 为捕获依据；选区收起、点击正文外区域时清除临时入口。若用户已主动点击批注入口，才保留原锚点供输入区使用；在当时实现中，页面仍允许不选文字、从底部「批注」入口直接提交**阶段整体意见**；该自动降级行为已在后续视觉复核中纠正，见下方「随文批注目标必须明确」。
 - Mac Chrome /new 实测：1600px 展开批注时正文宽度约 1200→（中途 913）→884px，关闭时 884→（中途 1172）→1200px；已有完整批注 E2E 仍通过。1920px 和 390px 分别验证宽屏与手机布局，参见 [selection-animation-qa.mjs](../../../prototypes/delegation-inline-review/selection-animation-qa.mjs)。
 - 无法以 Chrome 模拟器替代 iOS Safari 真机选区/输入法验收；这一点继续保留为 D27 证据缺口。
 
@@ -61,3 +61,16 @@
 用户希望固定「需求草稿 / 场景名称 · 仅在此标签页保存」这条文稿信息栏，而不是重新固定整张纸或整个页面。正式 /new 的 .delegation-paper-topline 在桌面（宽度 ≥981px）使用 position: sticky，top 取 Workspace Shell 的真实导航高度变量 --workspace-header-height（当前 58px）。层级低于 Workspace 顶栏，吸顶期间保留不透明度适中的 MiraDesign 背景，阅读原文时能持续确认草稿归属与保存范围。组件属于纸张 DOM，滚出纸张边界时正常退出，不额外建立全局固定栏；移动端不增加常驻的纵向占用。
 
 真实 Mac Chrome 复现：[draft-topline-qa.mjs](../../../prototypes/delegation-inline-review/draft-topline-qa.mjs)。1600×900 初始栏 top=407px；主体 scrollY=650/1750 时栏 top=58px；展开右侧批注后仍为 58px（批注栏 top=74px）；1280/1920px 桌面同样为 58px，无横向溢出；390px 手机端继续 position: static。浏览器测试使用一次性标签页和演示会话，未连接真实云端任务或修改线上数据。
+
+## 随文批注目标必须明确（PC 视觉反馈，2026-11-16）
+
+用户在正式 /new 中未选中任何文字，直接点击底部「批注」就能填写并提交「本阶段整体」批注。这不是用户明确选择的目标，而是实现中 pendingAnchor 为 null 时自动退化到全文批注，违反了随文批注按需进入的交互直觉。
+
+按现行 D03 保留**文字批注与全文批注两种能力**，但不允许二者隐式切换：
+
+- 底部「批注」仅打开查看/处理面板；**未选中文字时，不展示输入框，也不展示「添加批注」**，已有批注仍然可以查看和解决。
+- 通过文字选区的轻量入口进入，只能对已验证的选区提交批注；文本坐标、阶段或修订发生变化时，不自动降级为整体批注。
+- 若确实希望针对整个阶段提意见，必须另外明确点击「批注整个阶段」，才能进入无文字锚点的编辑状态；取消后恢复只读列表；跨阶段切换与开始修订会清理临时意图。
+- UI 与提交处理函数都有门禁。空目标不会新建数据；明确选择整体目标后，仍可生成兼容旧数据格式的「本阶段整体」批注。
+
+验证：Mac Chrome /new 实测 [comment-intent-qa.mjs](../../../prototypes/delegation-inline-review/comment-intent-qa.mjs)：无选区打开面板时 composer=false、submit=false、comments=0；明确点击整体目标才出现输入区；取消并关闭仍 comments=0。现有 [browser-qa.mjs](../../../prototypes/delegation-inline-review/browser-qa.mjs) 继续确认文字选区 → 批注 → 锚点保存与定位的完整路径。JS DOM 新增无目标、显式整体批注及跨阶段意图清理的回归。该原型仍只使用 sessionStorage，没有真实 Agent 任务提交。

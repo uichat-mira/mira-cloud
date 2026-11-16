@@ -156,8 +156,8 @@ export default function DelegationPage() {
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [selectedExcerpt, setSelectedExcerpt] = useState("");
   const [pendingAnchor, setPendingAnchor] = useState<TextReviewAnchor | null>(null);
+  const [wholeStageComment, setWholeStageComment] = useState(false);
   const [selectionPosition, setSelectionPosition] = useState<{ left: number; top: number } | null>(
     null,
   );
@@ -257,8 +257,9 @@ export default function DelegationPage() {
     setTimelineOpen(false);
     setCommentsOpen(false);
     setCommentText("");
-    setSelectedExcerpt("");
     setPendingAnchor(null);
+    setWholeStageComment(false);
+    commentIntentRef.current = false;
     setActiveCommentId(null);
     setRevision(0);
     setStreamStep(0);
@@ -300,8 +301,9 @@ export default function DelegationPage() {
   const closeComments = (restoreReadingPosition = true) => {
     setCommentsOpen(false);
     commentIntentRef.current = false;
+    setWholeStageComment(false);
+    setCommentText("");
     setPendingAnchor(null);
-    setSelectedExcerpt("");
     setSelectionPosition(null);
     if (restoreReadingPosition && window.matchMedia?.("(max-width: 700px)").matches) {
       window.requestAnimationFrame(() => window.scrollTo(0, sheetScrollRef.current));
@@ -319,18 +321,24 @@ export default function DelegationPage() {
 
   const addComment = () => {
     const text = commentText.trim();
-    if (!text || streaming || historical) return;
+    // Opening the review list alone never authorizes a new comment. Even a
+    // programmatic submit needs either a proven text anchor or explicit
+    // whole-stage intent, not an implicit fallthrough to "本阶段整体".
+    if (!text || (!pendingAnchor && !wholeStageComment) || streaming || historical) return;
     const view = documentViewRef.current;
     if (
       pendingAnchor &&
       (!view ||
+        pendingAnchor.status !== "active" ||
         pendingAnchor.version.stage !== stage ||
+        pendingAnchor.version.revision !== record.revision ||
+        pendingAnchor.from >= pendingAnchor.to ||
+        pendingAnchor.to > view.state.doc.content.size ||
         view.state.doc.textBetween(pendingAnchor.from, pendingAnchor.to, " ") !==
           pendingAnchor.excerpt)
     ) {
       setMessage("所选原文已发生变化，请重新框选后再批注。不会猜测新位置。");
       setPendingAnchor(null);
-      setSelectedExcerpt("");
       return;
     }
     setDraft((previous) =>
@@ -341,7 +349,7 @@ export default function DelegationPage() {
           {
             id,
             stage,
-            excerpt: pendingAnchor?.excerpt ?? "本阶段整体",
+            excerpt: pendingAnchor ? pendingAnchor.excerpt : "本阶段整体",
             ...(pendingAnchor
               ? {
                   anchor: {
@@ -359,8 +367,9 @@ export default function DelegationPage() {
       }),
     );
     setCommentText("");
-    setSelectedExcerpt("");
     setPendingAnchor(null);
+    setWholeStageComment(false);
+    commentIntentRef.current = false;
     openComments();
     setMessage("批注已加入本次演示草稿。还没有提交给真实 Agent。");
   };
@@ -455,7 +464,6 @@ export default function DelegationPage() {
     // until they submit or dismiss it; focusing the textarea collapses Selection.
     if (commentsOpen || commentIntentRef.current) return;
     setPendingAnchor(null);
-    setSelectedExcerpt("");
     setSelectionPosition(null);
   };
 
@@ -467,7 +475,7 @@ export default function DelegationPage() {
       return;
     }
     setPendingAnchor(anchor);
-    setSelectedExcerpt(anchor.excerpt.slice(0, 140));
+    setWholeStageComment(false);
     const view = documentViewRef.current;
     const container = view?.dom.closest(".delegation-document-text");
     if (view && container) {
@@ -489,7 +497,9 @@ export default function DelegationPage() {
     if (streaming || historical) return;
     setEditingBody(false);
     setPendingAnchor(null);
-    setSelectedExcerpt("");
+    setWholeStageComment(false);
+    setCommentText("");
+    commentIntentRef.current = false;
     setStreamStep(0);
     setMessage("");
     setStreaming(true);
@@ -513,13 +523,16 @@ export default function DelegationPage() {
     )
       return;
     setDraft((previous) => acceptDocumentStage(previous, stage));
+    setPendingAnchor(null);
+    setWholeStageComment(false);
+    setCommentText("");
+    commentIntentRef.current = false;
     if (stage === 2) {
       setDemoFinished(true);
       setMessage("三个阶段已经验收（演示），没有创建真实任务，也没有启动执行。");
       return;
     }
     setStage((stage + 1) as DelegationStage);
-    setSelectedExcerpt("");
     setPendingAnchor(null);
     setRevision(0);
     setStreamStep(0);
@@ -533,8 +546,10 @@ export default function DelegationPage() {
     setRevision(0);
     setStreamStep(0);
     setEditingBody(false);
-    setSelectedExcerpt("");
     setPendingAnchor(null);
+    setWholeStageComment(false);
+    setCommentText("");
+    commentIntentRef.current = false;
     setCommentsOpen(false);
     setActiveCommentId(null);
     setTimelineOpen(false);
@@ -708,7 +723,6 @@ export default function DelegationPage() {
                   type="button"
                   onClick={() => {
                     setPendingAnchor(null);
-                    setSelectedExcerpt("");
                     setEditingBody(!editingBody);
                   }}
                   className="delegation-text-action"
@@ -994,40 +1008,55 @@ export default function DelegationPage() {
                   ))
                 ) : (
                   <p className="delegation-comment-empty">
-                    还没有批注。框选正文或在这里添加一条整体意见。
+                    还没有批注。请先框选正文；也可以明确选择批注整个阶段。
                   </p>
                 )}
               </div>
               {!streaming && !historical ? (
-                <div className="delegation-comment-compose">
-                  <label htmlFor="delegation-comment-input">
-                    {pendingAnchor ? "批注所选文字" : "对当前阶段提出意见"}
-                  </label>
-                  {selectedExcerpt ? <blockquote>{selectedExcerpt}</blockquote> : null}
-                  {pendingAnchor ? (
+                pendingAnchor || wholeStageComment ? (
+                  <div className="delegation-comment-compose">
+                    <label htmlFor="delegation-comment-input">
+                      {pendingAnchor ? "批注所选文字" : "批注整个阶段"}
+                    </label>
+                    {pendingAnchor ? <blockquote>{pendingAnchor.excerpt}</blockquote> : null}
                     <button
                       type="button"
                       className="delegation-comment-clear-selection"
                       onClick={() => {
+                        setWholeStageComment(!wholeStageComment);
                         setPendingAnchor(null);
-                        setSelectedExcerpt("");
                         setSelectionPosition(null);
+                        setCommentText("");
                       }}
                     >
-                      改为本阶段整体意见
+                      {pendingAnchor ? "改为批注整个阶段" : "取消全文批注"}
                     </button>
-                  ) : null}
-                  <textarea
-                    id="delegation-comment-input"
-                    value={commentText}
-                    onChange={(event) => setCommentText(event.target.value)}
-                    placeholder="例如：只关注有用户或商业证据的变化…"
-                    rows={3}
-                  />
-                  <button type="button" disabled={!commentText.trim()} onClick={addComment}>
-                    <Plus size={14} aria-hidden="true" /> 添加批注
-                  </button>
-                </div>
+                    <textarea
+                      id="delegation-comment-input"
+                      value={commentText}
+                      onChange={(event) => setCommentText(event.target.value)}
+                      placeholder="例如：只关注有用户或商业证据的变化…"
+                      rows={3}
+                    />
+                    <button type="button" disabled={!commentText.trim()} onClick={addComment}>
+                      <Plus size={14} aria-hidden="true" /> 添加批注
+                    </button>
+                  </div>
+                ) : (
+                  <div className="delegation-comment-compose delegation-comment-compose-empty">
+                    <p>先选中正文中的文字，才能添加随文批注。</p>
+                    <button
+                      type="button"
+                      className="delegation-comment-stage-target"
+                      onClick={() => {
+                        setWholeStageComment(true);
+                        setCommentText("");
+                      }}
+                    >
+                      批注整个阶段
+                    </button>
+                  </div>
+                )
               ) : null}
             </aside>
           </div>

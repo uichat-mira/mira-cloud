@@ -57,13 +57,15 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     const { fetcher } = renderPage();
     await user.click(screen.getByRole("button", { name: "批注" }));
     const comments = screen.getByRole("complementary", { name: "随文批注" });
+    expect(within(comments).queryByRole("textbox")).toBeNull();
+    await user.click(within(comments).getByRole("button", { name: "批注整个阶段" }));
     // A separately scrolling review list must remain keyboard reachable.
     expect(within(comments).getByRole("region", { name: "批注列表" })).toHaveAttribute(
       "tabindex",
       "0",
     );
     await user.type(
-      within(comments).getByRole("textbox", { name: "对当前阶段提出意见" }),
+      within(comments).getByRole("textbox", { name: "批注整个阶段" }),
       "请增加失败案例",
     );
     await user.click(within(comments).getByRole("button", { name: "添加批注" }));
@@ -75,6 +77,65 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
       screen.getByText("工作节奏", { selector: ".delegation-ui-intro h3" }),
     ).toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("opens the review panel in read-only list mode when nothing is selected", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "批注" }));
+    const panel = screen.getByRole("complementary", { name: "随文批注" });
+
+    expect(within(panel).getByText("先选中正文中的文字，才能添加随文批注。")).toBeInTheDocument();
+    expect(within(panel).queryByRole("textbox")).toBeNull();
+    expect(within(panel).queryByRole("button", { name: "添加批注" })).toBeNull();
+    expect(
+      JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!).comments,
+    ).toEqual([]);
+
+    await user.click(within(panel).getByRole("button", { name: "批注整个阶段" }));
+    expect(within(panel).getByRole("textbox", { name: "批注整个阶段" })).toBeInTheDocument();
+    await user.click(within(panel).getByRole("button", { name: "取消全文批注" }));
+    expect(within(panel).queryByRole("textbox")).toBeNull();
+    expect(
+      JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!).comments,
+    ).toEqual([]);
+  });
+
+  it("requires a separate explicit decision before making an unanchored whole-stage comment", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "批注" }));
+    const panel = screen.getByRole("complementary", { name: "随文批注" });
+    await user.click(within(panel).getByRole("button", { name: "批注整个阶段" }));
+    await user.type(
+      within(panel).getByRole("textbox", { name: "批注整个阶段" }),
+      "需要补充完整交付范围",
+    );
+    await user.click(within(panel).getByRole("button", { name: "添加批注" }));
+    const draft = JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!);
+    expect(draft.comments).toMatchObject([
+      { excerpt: "本阶段整体", text: "需要补充完整交付范围", status: "open" },
+    ]);
+    expect(draft.comments[0].anchor).toBeUndefined();
+    expect(within(panel).queryByRole("textbox")).toBeNull();
+    expect(screen.getByRole("button", { name: "接受本阶段" })).toBeDisabled();
+  });
+
+  it("does not carry an unsubmitted whole-stage comment target into the next stage", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "批注" }));
+    const panel = screen.getByRole("complementary", { name: "随文批注" });
+    await user.click(within(panel).getByRole("button", { name: "批注整个阶段" }));
+    expect(within(panel).getByRole("textbox", { name: "批注整个阶段" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "接受本阶段" }));
+    expect(screen.getByRole("button", { name: /研究目标.*已接受/ })).toBeInTheDocument();
+    expect(within(panel).queryByRole("textbox")).toBeNull();
+    expect(within(panel).getByRole("button", { name: "批注整个阶段" })).toBeInTheDocument();
+    expect(
+      JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!).comments,
+    ).toEqual([]);
   });
 
   it("saves a ProseMirror-backed text annotation in the existing draft and restores its highlight", async () => {

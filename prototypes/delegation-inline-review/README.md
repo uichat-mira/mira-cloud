@@ -25,3 +25,9 @@ Exercises the actual /new page in Chrome: ensures the unused Milkdown LaTeX popu
     NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/draft-topline-qa.mjs
 
 Exercises the actual /new page in a disposable Chrome tab with a long Markdown fixture: before scroll, while scrolling, after opening the desktop review rail, and at desktop viewport widths 1280/1600/1920px. Confirms the bar stays precisely below the global 58px Work header and has no horizontal overflow. The mobile 390px version is deliberately nonsticky to preserve reading height.
+
+## Explicit text or whole-stage annotation target
+
+    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/comment-intent-qa.mjs
+
+Verifies in real Chrome that opening review without text selection only permits reading existing notes; the composer and submit action do not appear. Creating an unanchored note requires an explicit second action ("批注整个阶段"), and cancelling that action leaves no draft comment. Selected-text annotation is separately covered by browser-qa.mjs. No real backend calls.

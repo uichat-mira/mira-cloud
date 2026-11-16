@@ -645,7 +645,8 @@
   outline: 2px solid rgb(var(--mira-color-primary) / 0.4);
   outline-offset: 2px;
 }
-.delegation-comment-compose > button {
+.delegation-comment-compose
+  > button:not(.delegation-comment-clear-selection):not(.delegation-comment-stage-target) {
   display: inline-flex;
   align-self: flex-end;
   align-items: center;
@@ -658,10 +659,40 @@
   font-size: 11px;
   cursor: pointer;
 }
-.delegation-comment-compose > button:disabled {
+.delegation-comment-compose
+  > button:not(.delegation-comment-clear-selection):not(.delegation-comment-stage-target):disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
+.delegation-comment-compose-empty {
+  gap: 12px;
+}
+
+.delegation-comment-compose-empty p {
+  margin: 0;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.delegation-comment-compose > .delegation-comment-stage-target {
+  display: inline-flex;
+  align-self: flex-start;
+  min-height: 38px;
+  align-items: center;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+  background: transparent;
+  padding: 7px 11px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.delegation-comment-compose > .delegation-comment-stage-target:hover {
+  background: rgb(var(--mira-color-surface-secondary));
+}
+
 @media (max-width: 1120px) {
   .delegation-layout,
   .delegation-layout.has-comments {
