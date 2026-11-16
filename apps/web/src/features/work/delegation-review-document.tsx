@@ -5,7 +5,6 @@ import { $prose } from "@milkdown/kit/utils";
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
 import { useCallback, useEffect, useRef } from "react";
 import {
-  captureTextAnchor,
   createReviewAnchorPlugin,
   reviewAnchorKey,
   type ReviewVersion,
@@ -19,6 +18,7 @@ type DelegationReviewDocumentProps = {
   version: ReviewVersion;
   onChange: (markdown: string) => void;
   onSelection: (anchor: TextReviewAnchor) => void;
+  onSelectionCleared: () => void;
   onAnchorsChange: (anchors: TextReviewAnchor[]) => void;
   onOpenAnchor: (id: string) => void;
   onReady: (view: EditorView | null) => void;
@@ -35,6 +35,7 @@ function ReviewEditor({
   version,
   onChange,
   onSelection,
+  onSelectionCleared,
   onAnchorsChange,
   onOpenAnchor,
   onReady,
@@ -43,52 +44,87 @@ function ReviewEditor({
   const viewRef = useRef<EditorView | null>(null);
   const initialMarkdownRef = useRef(markdown);
   const initialAnchorsRef = useRef(anchors);
-  const callbacksRef = useRef({ onChange, onSelection, onAnchorsChange, onOpenAnchor, onReady });
+  const callbacksRef = useRef({
+    onChange,
+    onSelection,
+    onSelectionCleared,
+    onAnchorsChange,
+    onOpenAnchor,
+    onReady,
+  });
   const versionRef = useRef(version);
   const editableRef = useRef(editable);
-  callbacksRef.current = { onChange, onSelection, onAnchorsChange, onOpenAnchor, onReady };
+  callbacksRef.current = {
+    onChange,
+    onSelection,
+    onSelectionCleared,
+    onAnchorsChange,
+    onOpenAnchor,
+    onReady,
+  };
   versionRef.current = version;
   editableRef.current = editable;
 
+  // A readonly ProseMirror selection can lag behind the native browser selection.
+  // Use only a live DOM selection to offer a *new* annotation; never resurrect a
+  // stale editor range after the browser selection has collapsed.
   const captureSelection = useCallback(() => {
     if (editableRef.current || !viewRef.current) return;
     const view = viewRef.current;
-    let anchor = captureTextAnchor(view.state, "pending", versionRef.current);
-    if (!anchor) {
-      // Readonly ProseMirror may not yet have synchronized the browser's long-press
-      // selection. Translate the real DOM Range through the editor's position map.
-      const selection = window.getSelection();
+    const selection = window.getSelection();
+    if (
+      !selection ||
+      selection.isCollapsed ||
+      !selection.anchorNode ||
+      !selection.focusNode ||
+      !view.dom.contains(selection.anchorNode) ||
+      !view.dom.contains(selection.focusNode)
+    ) {
+      callbacksRef.current.onSelectionCleared();
+      return;
+    }
+    try {
+      const a = view.posAtDOM(selection.anchorNode, selection.anchorOffset);
+      const b = view.posAtDOM(selection.focusNode, selection.focusOffset);
+      const from = Math.min(a, b);
+      const to = Math.max(a, b);
+      const excerpt = from < to ? view.state.doc.textBetween(from, to, " ") : "";
+      if (excerpt.trim().length < 2 || to > view.state.doc.content.size) {
+        callbacksRef.current.onSelectionCleared();
+        return;
+      }
+      callbacksRef.current.onSelection({
+        id: "pending",
+        version: versionRef.current,
+        from,
+        to,
+        excerpt,
+        status: "active",
+      });
+    } catch {
+      callbacksRef.current.onSelectionCleared();
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleSelectionChange = () => captureSelection();
+    const handleOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
       if (
-        !selection ||
-        selection.isCollapsed ||
-        !selection.anchorNode ||
-        !selection.focusNode ||
-        !view.dom.contains(selection.anchorNode) ||
-        !view.dom.contains(selection.focusNode)
+        target.closest(".delegation-review-editor") ||
+        target.closest(".delegation-selected-comment")
       )
         return;
-      try {
-        const a = view.posAtDOM(selection.anchorNode, selection.anchorOffset);
-        const b = view.posAtDOM(selection.focusNode, selection.focusOffset);
-        const from = Math.min(a, b);
-        const to = Math.max(a, b);
-        if (from === to || to > view.state.doc.content.size) return;
-        const excerpt = view.state.doc.textBetween(from, to, " ");
-        if (excerpt.trim().length < 2) return;
-        anchor = {
-          id: "pending",
-          version: versionRef.current,
-          from,
-          to,
-          excerpt,
-          status: "active",
-        };
-      } catch {
-        return; // The selection did not resolve to this document; never guess a position.
-      }
-    }
-    if (anchor.excerpt.trim().length >= 2) callbacksRef.current.onSelection(anchor);
-  }, []);
+      callbacksRef.current.onSelectionCleared();
+    };
+    document.addEventListener("selectionchange", handleSelectionChange);
+    document.addEventListener("pointerdown", handleOutsidePointer, true);
+    return () => {
+      document.removeEventListener("selectionchange", handleSelectionChange);
+      document.removeEventListener("pointerdown", handleOutsidePointer, true);
+    };
+  }, [captureSelection]);
 
   useEffect(() => {
     crepeRef.current?.setReadonly(!editable);
@@ -119,6 +155,9 @@ function ReviewEditor({
       defaultValue: initialMarkdownRef.current,
       features: {
         [CrepeFeature.Cursor]: false,
+        // The unused LaTeX feature mounted a hidden confirmation popup whose
+        // checkmark was visible below the otherwise read-only work description.
+        [CrepeFeature.Latex]: false,
         [CrepeFeature.BlockEdit]: false,
         [CrepeFeature.Toolbar]: false,
         [CrepeFeature.TopBar]: false,

@@ -108,6 +108,34 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     expect(screen.getByRole("button", { name: "批注 · 1" })).toBeInTheDocument();
   });
 
+  it("removes the selection-only comment action when selection collapses or the user clicks elsewhere", async () => {
+    renderPage();
+    await screen.findByText(/研究重点：模型、产品与开源/);
+    const editor = document.querySelector(".delegation-review-editor") as HTMLElement;
+    const paragraph = editor.querySelector(".ProseMirror p") as HTMLElement;
+    const selection = window.getSelection()!;
+    const selectText = () => {
+      const range = document.createRange();
+      range.selectNodeContents(paragraph);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      fireEvent.mouseUp(editor);
+    };
+    selectText();
+    expect(await screen.findByRole("button", { name: "批注所选文字" })).toBeInTheDocument();
+    selection.removeAllRanges();
+    fireEvent(document, new Event("selectionchange"));
+    expect(screen.queryByRole("button", { name: "批注所选文字" })).toBeNull();
+
+    selectText();
+    expect(await screen.findByRole("button", { name: "批注所选文字" })).toBeInTheDocument();
+    fireEvent.pointerDown(
+      screen.getByRole("heading", { level: 1, name: "交代一件值得持续完成的事" }),
+    );
+    expect(screen.queryByRole("button", { name: "批注所选文字" })).toBeNull();
+    expect(screen.queryByRole("complementary", { name: "随文批注" })).toBeNull();
+  });
+
   it("simulates streaming and abort without committing incomplete generated UI", async () => {
     const user = userEvent.setup();
     renderPage();

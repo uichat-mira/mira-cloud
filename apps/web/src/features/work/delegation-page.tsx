@@ -164,6 +164,7 @@ export default function DelegationPage() {
   const [activeCommentId, setActiveCommentId] = useState<number | null>(null);
   const documentViewRef = useRef<EditorView | null>(null);
   const sheetScrollRef = useRef(0);
+  const commentIntentRef = useRef(false);
   const [revision, setRevision] = useState(0);
   const [streamStep, setStreamStep] = useState(0);
   const [streaming, setStreaming] = useState(false);
@@ -298,6 +299,10 @@ export default function DelegationPage() {
 
   const closeComments = (restoreReadingPosition = true) => {
     setCommentsOpen(false);
+    commentIntentRef.current = false;
+    setPendingAnchor(null);
+    setSelectedExcerpt("");
+    setSelectionPosition(null);
     if (restoreReadingPosition && window.matchMedia?.("(max-width: 700px)").matches) {
       window.requestAnimationFrame(() => window.scrollTo(0, sheetScrollRef.current));
     }
@@ -445,7 +450,17 @@ export default function DelegationPage() {
     );
   };
 
+  const clearDocumentSelection = () => {
+    // Once the user explicitly opens the composer, preserve the chosen excerpt
+    // until they submit or dismiss it; focusing the textarea collapses Selection.
+    if (commentsOpen || commentIntentRef.current) return;
+    setPendingAnchor(null);
+    setSelectedExcerpt("");
+    setSelectionPosition(null);
+  };
+
   const selectDocumentText = (anchor: TextReviewAnchor) => {
+    if (commentsOpen || commentIntentRef.current) return;
     if (streaming || historical || editingBody) return;
     if (anchor.excerpt.length > 600) {
       setMessage("选区过长，请选择不超过 600 字的段落。");
@@ -730,6 +745,7 @@ export default function DelegationPage() {
                     setDraft((previous) => changeDocumentMarkdown(previous, stage, value))
                   }
                   onSelection={selectDocumentText}
+                  onSelectionCleared={clearDocumentSelection}
                   onAnchorsChange={updateAnchors}
                   onOpenAnchor={openAnchoredComment}
                 />
@@ -746,6 +762,10 @@ export default function DelegationPage() {
                         ? { left: selectionPosition.left, top: selectionPosition.top }
                         : undefined
                     }
+                    onPointerDown={(event) => {
+                      commentIntentRef.current = true;
+                      if (event.pointerType === "mouse") event.preventDefault();
+                    }}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={openComments}
                   >

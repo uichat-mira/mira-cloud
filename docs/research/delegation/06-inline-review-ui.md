@@ -45,3 +45,12 @@
 - 列表滚动 750px、跳转至第 24 条、滚到列表尽头再次使用滚轮后，正文 scrollY 不变；标题与输入框始终留在同一位置。
 - 1280×680 仍保有 286px 高的可滚动批注列表，1920px 桌面无横向溢出；390px 手机仍使用原固定底部面板，不受桌面布局影响。
 - [Chrome 独立复现脚本](../../../prototypes/delegation-inline-review/desktop-sticky-qa.mjs)、[修复后 1600px 截图](./assets/inline-review-sticky-desktop.webp)。此前的单中间位置 sticky 结论被本条取代；尚未进行跨浏览器、真机触控/键盘的完整验收。
+
+
+## 产品视觉复核：批注宽度动画／无意义 ✓／幽灵批注入口（2026-11-16）
+
+- 桌面 /new 打开和关闭批注栏会改变正文宽度，因此使 Grid 保留固定数量的轨道：从无批注轨道（0px）渐进到 294px；宽度和间距采用 220ms 过渡，右栏入场 180ms 淡入。遵守现有 prefers-reduced-motion 约束，非全局动画。
+- 用户截图中的孤立「✓」不是完成状态或阶段接受：浏览器 DOM 定位到 Crepe 自带的 milkdown-latex-inline-edit[data-show=false] 浮层，其确认按钮在只读正文下方错误露出。正式任务正文禁用未使用的 LaTeX 特性，避免仅靠 CSS 隐藏症状。
+- 旧选区入口由 ProseMirror 已过期选区和只增不减的 pendingAnchor 造成。现在以实际浏览器原生 Selection 为捕获依据；选区收起、点击正文外区域时清除临时入口。若用户已主动点击批注入口，才保留原锚点供输入区使用；页面仍支持不选文字、通过底部常驻「批注」入口提交**阶段整体意见**。
+- Mac Chrome /new 实测：1600px 展开批注时正文宽度约 1200→（中途 913）→884px，关闭时 884→（中途 1172）→1200px；已有完整批注 E2E 仍通过。1920px 和 390px 分别验证宽屏与手机布局，参见 [selection-animation-qa.mjs](../../../prototypes/delegation-inline-review/selection-animation-qa.mjs)。
+- 无法以 Chrome 模拟器替代 iOS Safari 真机选区/输入法验收；这一点继续保留为 D27 证据缺口。

@@ -1080,3 +1080,63 @@
     overscroll-behavior-y: contain;
   }
 }
+
+/* Preserve the same number of desktop grid tracks in both states so the
+   document releases/reserves the review rail smoothly instead of jumping.
+   The fixed review surface is animated separately from the document width. */
+@media (min-width: 1121px) {
+  .delegation-layout {
+    transition:
+      grid-template-columns 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      column-gap 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .delegation-layout.has-comments .delegation-comments {
+    animation: delegation-review-appear 180ms ease-out both;
+  }
+}
+
+@media (min-width: 1761px) {
+  .delegation-layout {
+    grid-template-columns: 188px minmax(0, 1fr) 0px;
+    column-gap: 0;
+  }
+
+  .delegation-layout.has-comments {
+    grid-template-columns: 175px minmax(0, 1fr) 294px;
+    column-gap: 22px;
+  }
+
+  .delegation-timeline {
+    margin-right: 22px;
+  }
+}
+
+@media (min-width: 1121px) and (max-width: 1760px) {
+  .delegation-layout {
+    grid-template-columns: minmax(0, 1fr) 0px;
+    column-gap: 0;
+  }
+
+  .delegation-layout.has-comments {
+    grid-template-columns: minmax(0, 1fr) 294px;
+    column-gap: 22px;
+  }
+}
+
+@keyframes delegation-review-appear {
+  from {
+    opacity: 0;
+    translate: 10px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delegation-layout.has-comments .delegation-comments {
+    animation: none;
+  }
+}
