@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import DelegationPage from "../src/features/work/delegation-page";
+import { DRAFT_STORAGE_KEY, createDelegationDraft } from "../src/features/work/delegation-document";
 
 beforeEach(() => {
   window.sessionStorage.clear();
@@ -14,16 +15,177 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderPage() {
+function renderPage({
+  startAtEntry = false,
+  fromArtifact = false,
+  fixtureScenario,
+}: {
+  startAtEntry?: boolean;
+  fromArtifact?: boolean;
+  fixtureScenario?: "radar" | "journey" | "venture";
+} = {}) {
+  // Older review contract tests start from a saved Fixture document. New D02
+  // tests intentionally start with no document to exercise the first entry.
+  if (!startAtEntry && !window.sessionStorage.getItem(DRAFT_STORAGE_KEY)) {
+    window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(createDelegationDraft()));
+  }
   const fetcher = vi.fn();
   vi.stubGlobal("fetch", fetcher);
   const view = render(
-    <MemoryRouter initialEntries={["/new"]}>
+    <MemoryRouter
+      initialEntries={[
+        fromArtifact
+          ? { pathname: "/new", state: { returnTo: "/artifacts/market-note" } }
+          : fixtureScenario
+            ? "/new?fixture=" + fixtureScenario
+            : "/new",
+      ]}
+    >
       <DelegationPage />
     </MemoryRouter>,
   );
   return { ...view, fetcher };
 }
+
+describe("D02: intent entry before a review document exists", () => {
+  it("keeps the legacy review fixture shortcut explicitly dev-only", () => {
+    const { fetcher } = renderPage({ startAtEntry: true, fixtureScenario: "journey" });
+    expect(import.meta.env.DEV).toBe(true);
+    expect(screen.queryByRole("textbox", { name: "你希望 Mira 做什么？" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "准备一段有余地的旅行" })).toBeInTheDocument();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("starts with an empty goal entry, not a prebuilt radar document", () => {
+    const { fetcher } = renderPage({ startAtEntry: true });
+    expect(screen.getByRole("heading", { name: "有什么事，想交给 Mira？" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "你希望 Mira 做什么？" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "整理需求草稿" })).toBeDisabled();
+    expect(screen.queryByRole("article", { name: "需求审阅画布" })).toBeNull();
+    expect(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("turns a free natural-language intent into a reviewable local template draft", async () => {
+    const user = userEvent.setup();
+    const { fetcher, unmount } = renderPage({ startAtEntry: true });
+    const goal = "帮我持续整理社区活动的用户反馈，只在出现重要问题时提醒";
+    await user.type(screen.getByRole("textbox", { name: "你希望 Mira 做什么？" }), goal);
+    await user.click(screen.getByRole("button", { name: "整理需求草稿" }));
+    expect(screen.getByRole("status")).toHaveTextContent("正在整理演示草稿");
+    expect(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
+    expect(await screen.findByRole("heading", { name: "把这件事交代清楚" })).toBeInTheDocument();
+    expect(await screen.findByText(/先确认这件事的范围与关键前提/)).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "优先从哪里开始" })).toBeInTheDocument();
+    const saved = JSON.parse(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)!);
+    expect(saved).toMatchObject({ scenarioId: "custom", intent: goal, acceptedCount: 0 });
+    expect(saved.stages[0].markdown).toContain(goal);
+    expect(fetcher).not.toHaveBeenCalled();
+    unmount();
+    renderPage({ startAtEntry: true });
+    expect(screen.queryByRole("textbox", { name: "你希望 Mira 做什么？" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "把这件事交代清楚" })).toBeInTheDocument();
+  });
+
+  it("offers opt-in demo examples without claiming to infer real context", async () => {
+    const user = userEvent.setup();
+    renderPage({ startAtEntry: true });
+    await user.click(screen.getByRole("button", { name: "旅行规划" }));
+    expect(
+      await screen.findByRole("heading", { name: "准备一段有余地的旅行" }),
+    ).toBeInTheDocument();
+    expect(JSON.parse(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)!).intent).toBe(
+      "帮我规划一次节奏从容的旅行，优先文化、街区和当地生活。",
+    );
+  });
+
+  it("offers an explicitly bounded Fixture artifact continuation when entered from its detail", async () => {
+    const user = userEvent.setup();
+    const { fetcher } = renderPage({ startAtEntry: true, fromArtifact: true });
+    expect(screen.getByText("市场机会研究摘要")).toBeInTheDocument();
+    expect(screen.getByText(/只引用演示成果的标题和版本/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "以此起稿" }));
+    expect(await screen.findByRole("heading", { name: "把这件事交代清楚" })).toBeInTheDocument();
+    const saved = JSON.parse(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)!);
+    expect(saved.scenarioId).toBe("custom");
+    expect(saved.intent).toContain("市场机会研究摘要");
+    expect(saved.intent).toContain("v1");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("can cancel drafting without losing the typed goal or creating a document", async () => {
+    const user = userEvent.setup();
+    renderPage({ startAtEntry: true });
+    await user.type(
+      screen.getByRole("textbox", { name: "你希望 Mira 做什么？" }),
+      "帮我每周整理社区运营问题",
+    );
+    await user.click(screen.getByRole("button", { name: "整理需求草稿" }));
+    await user.click(screen.getByRole("button", { name: "取消" }));
+    expect(screen.getByRole("textbox", { name: "你希望 Mira 做什么？" })).toHaveValue(
+      "帮我每周整理社区运营问题",
+    );
+    expect(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("shows a recoverable error when browser storage rejects the new draft", async () => {
+    const user = userEvent.setup();
+    renderPage({ startAtEntry: true });
+    await user.type(
+      screen.getByRole("textbox", { name: "你希望 Mira 做什么？" }),
+      "帮我持续跟进重要需求",
+    );
+    const original = Storage.prototype.setItem;
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage denied");
+    });
+    try {
+      await user.click(screen.getByRole("button", { name: "整理需求草稿" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent("未能保存草稿");
+      expect(screen.getByRole("textbox", { name: "你希望 Mira 做什么？" })).toHaveValue(
+        "帮我持续跟进重要需求",
+      );
+      expect(screen.queryByRole("heading", { name: "把这件事交代清楚" })).toBeNull();
+    } finally {
+      spy.mockRestore();
+      Storage.prototype.setItem = original;
+    }
+    await user.click(screen.getByRole("button", { name: "整理需求草稿" }));
+    expect(await screen.findByRole("heading", { name: "把这件事交代清楚" })).toBeInTheDocument();
+  });
+
+  it("keeps the existing draft when browser storage refuses deletion", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const before = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
+    await user.click(screen.getByRole("button", { name: "新交代" }));
+    const denied = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new Error("storage denied");
+    });
+    try {
+      await user.click(screen.getByRole("button", { name: "放弃并重新交代" }));
+      expect(screen.getByText("会话保存失败")).toBeInTheDocument();
+      expect(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)).toBe(before);
+      expect(screen.queryByRole("heading", { name: "有什么事，想交给 Mira？" })).toBeNull();
+    } finally {
+      denied.mockRestore();
+    }
+    await user.click(screen.getByRole("button", { name: "放弃并重新交代" }));
+    expect(screen.getByRole("heading", { name: "有什么事，想交给 Mira？" })).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
+  });
+
+  it("asks before discarding a drafted task and returns to the intent start", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "新交代" }));
+    expect(screen.getByText("放弃这份演示草稿？")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "放弃并重新交代" }));
+    expect(screen.getByRole("heading", { name: "有什么事，想交给 Mira？" })).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
+  });
+});
 
 describe("delegation Intelligent UI fixture / json-render integration", () => {
   it("renders actual catalog components and three distinct task scenarios", async () => {
@@ -61,6 +223,7 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "false");
     expect(trigger).toHaveAttribute("aria-controls", "delegation-comments-panel");
     expect(trigger.querySelector("svg")).toBeInTheDocument();
+    expect(trigger.querySelector(".delegation-comment-count")).toBeNull();
     expect(trigger.textContent?.trim()).toBe("");
     expect(within(footer).queryByRole("button", { name: "批注" })).toBeNull();
     expect(within(header).queryByText("仅在此标签页保存")).toBeNull();
@@ -92,11 +255,17 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
       "请增加失败案例",
     );
     await user.click(within(comments).getByRole("button", { name: "添加批注" }));
+    const triggerWithCount = screen.getByRole("button", { name: "批注 · 1" });
+    expect(triggerWithCount.querySelector(".delegation-comment-count")).toHaveTextContent("1");
     expect(screen.getByRole("button", { name: "接受本阶段" })).toBeDisabled();
+    // The review count is visible in the header: don't repeat it below the actions.
+    expect(screen.queryByText(/条批注需要你确认解决或放弃/)).toBeNull();
     await user.click(within(comments).getByRole("button", { name: "放弃此批注" }));
     expect(within(comments).queryByText("请增加失败案例")).toBeNull();
     expect(within(comments).getByRole("heading", { name: "随文批注 0" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "批注" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "批注" }).querySelector(".delegation-comment-count"),
+    ).toBeNull();
     expect(screen.getByRole("button", { name: "接受本阶段" })).toBeEnabled();
     expect(
       JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!).comments,

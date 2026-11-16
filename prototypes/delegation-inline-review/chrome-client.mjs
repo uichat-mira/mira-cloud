@@ -42,7 +42,11 @@ export async function openChrome() {
       awaitPromise: true,
     });
     if (result.exceptionDetails) {
-      throw new Error(result.exceptionDetails.text ?? "Chrome evaluation exception");
+      throw new Error(
+        result.exceptionDetails.exception?.description ??
+          result.exceptionDetails.text ??
+          "Chrome evaluation exception",
+      );
     }
     return result.result.value;
   };

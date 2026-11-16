@@ -20,7 +20,7 @@ try {
     deviceScaleFactor: 1,
     mobile: false,
   });
-  await send("Page.navigate", { url: "http://127.0.0.1:5173/new" });
+  await send("Page.navigate", { url: "http://127.0.0.1:5173/new?fixture=radar" });
   await pause(3400);
   const populated = await run(
     "(()=>{const k='mira-cloud-delegation-fixture-v1';const value=sessionStorage.getItem(k);if(!value)return 'missing session fixture';const d=JSON.parse(value);d.comments=Array.from({length:24},(_,i)=>({id:i+1,stage:0,excerpt:'需要核实的原文摘录 '+(i+1),text:'第 '+(i+1)+' 条：请确认引用和来源是否可靠，并补充必要证据。',status:'open'}));d.stages[0].markdown+='\\n\\n'+Array.from({length:100},(_,i)=>'长期研究背景段落 '+(i+1)+'：该条仅用于验证长页面滚动行为。').join('\\n\\n');sessionStorage.setItem(k,JSON.stringify(d));return 'fixture loaded'})()",

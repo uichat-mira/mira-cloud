@@ -25,7 +25,7 @@ try {
     deviceScaleFactor: 1,
     mobile: false,
   });
-  await call("Page.navigate", { url: "http://127.0.0.1:5173/new" });
+  await call("Page.navigate", { url: "http://127.0.0.1:5173/new?fixture=radar" });
   await pause(3500);
   const fixture = await evaluate(
     "(()=>{const k='mira-cloud-delegation-fixture-v1';const raw=sessionStorage.getItem(k);if(!raw)return 'no fixture';const d=JSON.parse(raw);d.stages[0].markdown+='\\n\\n'+Array.from({length:85},(_,i)=>'长期工作说明段落 '+i+'：文档较长，要求固定显示草稿归属与保存状态。').join('\\n\\n');sessionStorage.setItem(k,JSON.stringify(d));return 'ready'})()",

@@ -55,7 +55,7 @@
 .delegation-introduction h1,
 .delegation-paper-title h2 {
   margin: 0;
-  font-family: "Iowan Old Style", "Baskerville", "Songti SC", Georgia, serif;
+  font-family: var(--mira-font-serif);
   font-weight: 400;
   letter-spacing: -0.035em;
 }
@@ -235,13 +235,22 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 34px;
+  gap: 5px;
+  min-width: 34px;
   height: 34px;
+  padding: 0 9px;
   border: 0;
   border-radius: var(--mira-radius-ui-control);
   background: transparent;
   color: rgb(var(--mira-color-text-secondary));
   cursor: pointer;
+}
+
+.delegation-comment-count {
+  color: rgb(var(--mira-color-primary));
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .delegation-comment-trigger:hover,
@@ -257,7 +266,7 @@
 
 @media (max-width: 700px) {
   .delegation-comment-trigger {
-    width: 44px;
+    min-width: 44px;
     height: 44px;
   }
 }
@@ -1224,4 +1233,294 @@
   .delegation-layout.has-comments .delegation-comments {
     animation: none;
   }
+}
+
+/* D02: intent precedes the document. The first screen is deliberately not
+   another form wizard or a second miniature review canvas. */
+.delegation-entry-page {
+  min-height: min(900px, calc(100dvh - var(--workspace-header-height, 58px) - 24px));
+}
+
+.delegation-entry {
+  width: min(100%, 790px);
+  margin: clamp(40px, 11vh, 130px) auto 0;
+  padding: 0 clamp(10px, 2vw, 24px) 48px;
+}
+
+.delegation-entry-content {
+  min-width: 0;
+}
+
+.delegation-entry-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: rgb(var(--mira-color-primary));
+  font-size: 12px;
+}
+
+.delegation-entry h1 {
+  margin: 21px 0 0;
+  font-family: var(--mira-font-serif);
+  font-size: clamp(30px, 3.8vw, 48px);
+  font-weight: 400;
+  line-height: 1.28;
+  letter-spacing: -0.035em;
+}
+
+.delegation-entry-description {
+  margin: 16px 0 0;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.delegation-entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  margin-top: 34px;
+}
+
+.delegation-entry-form label {
+  color: rgb(var(--mira-color-text-primary));
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.delegation-entry-form textarea {
+  width: 100%;
+  min-height: 166px;
+  resize: vertical;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-surface);
+  background: rgb(var(--mira-color-surface-primary));
+  padding: 19px 21px;
+  color: rgb(var(--mira-color-text-primary));
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.9;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.delegation-entry-form textarea::placeholder {
+  color: rgb(var(--mira-color-text-tertiary));
+}
+
+.delegation-entry-form textarea:focus-visible {
+  border-color: rgb(var(--mira-color-primary));
+  outline: 2px solid rgb(var(--mira-color-primary) / 0.12);
+  outline-offset: 2px;
+}
+
+.delegation-entry-form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.delegation-entry-form-footer > span {
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+}
+
+.delegation-entry-form-footer .delegation-accept {
+  min-height: 40px;
+}
+
+.delegation-entry-progress {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 18px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+}
+
+.delegation-entry-progress > button {
+  margin-left: auto;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--mira-color-text-secondary));
+  cursor: pointer;
+}
+
+.delegation-entry-spinner {
+  color: rgb(var(--mira-color-primary));
+  animation: delegation-entry-rotate 950ms linear infinite;
+}
+
+@keyframes delegation-entry-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.delegation-entry-error {
+  margin: 16px 0 0;
+  color: rgb(var(--mira-color-danger-text));
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.delegation-entry-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 74px;
+}
+
+.delegation-entry-examples > span {
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+}
+
+.delegation-entry-examples > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.delegation-entry-examples button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+  background: transparent;
+  color: rgb(var(--mira-color-text-secondary));
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.delegation-entry-examples button:hover {
+  border-color: rgb(var(--mira-color-primary) / 0.4);
+  color: rgb(var(--mira-color-text-primary));
+}
+
+.delegation-entry-examples button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.delegation-entry-form button:focus-visible,
+.delegation-entry-examples button:focus-visible,
+.delegation-entry-progress button:focus-visible {
+  outline: 2px solid rgb(var(--mira-color-primary));
+  outline-offset: 2px;
+}
+
+.delegation-entry-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 44px 0 0;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.delegation-entry-disclaimer svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.delegation-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+}
+
+@media (max-width: 700px) {
+  .delegation-entry-page {
+    min-height: calc(100dvh - var(--workspace-header-height, 58px) - 28px);
+  }
+  .delegation-entry {
+    margin-top: clamp(35px, 8vh, 90px);
+    padding: 0 0 calc(45px + env(safe-area-inset-bottom, 0px));
+  }
+  .delegation-entry h1 {
+    font-size: clamp(30px, 8vw, 38px);
+  }
+  .delegation-entry-form {
+    margin-top: 27px;
+  }
+  .delegation-entry-form textarea {
+    min-height: 152px;
+    padding: 14px 16px;
+  }
+  .delegation-entry-form-footer .delegation-accept {
+    margin-left: auto;
+    min-height: 44px;
+  }
+  .delegation-entry-examples {
+    margin-top: 45px;
+  }
+  .delegation-entry-examples button {
+    min-height: 44px;
+  }
+  .delegation-header-actions {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delegation-entry-spinner {
+    animation: none;
+  }
+  .delegation-entry-form textarea {
+    transition: none;
+  }
+}
+
+.delegation-entry-context {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 38px;
+  padding: 19px 0 21px;
+  border-top: 1px solid rgb(var(--mira-color-border));
+  border-bottom: 1px solid rgb(var(--mira-color-border));
+}
+
+.delegation-entry-context > span {
+  color: rgb(var(--mira-color-primary));
+  font-size: 11px;
+}
+
+.delegation-entry-context > strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.delegation-entry-context > p {
+  margin: 0;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.delegation-entry-context > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+  padding: 7px 0;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--mira-color-primary));
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.delegation-entry-context > button:focus-visible {
+  outline: 2px solid rgb(var(--mira-color-primary));
+  outline-offset: 3px;
 }

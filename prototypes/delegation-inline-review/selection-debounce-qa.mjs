@@ -13,7 +13,7 @@ try {
     deviceScaleFactor: 1,
     mobile: false,
   });
-  await send("Page.navigate", { url: "http://127.0.0.1:5173/new" });
+  await send("Page.navigate", { url: "http://127.0.0.1:5173/new?fixture=radar" });
   await pause(3300);
   await ev(
     "(()=>{const ed=document.querySelector('.delegation-review-editor');if(!ed)throw Error('editor not mounted');ed.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'mouse'}));const n=ed.querySelector('.ProseMirror p').firstChild;const s=getSelection();const r=document.createRange();r.setStart(n,2);r.setEnd(n,9);s.removeAllRanges();s.addRange(r);document.dispatchEvent(new Event('selectionchange'));})()",

@@ -5,7 +5,6 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
-  CircleHelp,
   CornerUpLeft,
   FileText,
   MessageSquare,
@@ -22,10 +21,12 @@ import { TextSelection } from "@milkdown/kit/prose/state";
 import type { EditorView } from "@milkdown/kit/prose/view";
 import type { TextReviewAnchor } from "./delegation-review-poc";
 import MarkdownText from "../../components/mira-design/MarkdownText";
+import DelegationIntentEntry from "./delegation-intent-entry";
 import ConfirmDialog from "../../components/mira-design/ConfirmDialog";
 import { ModalShell } from "../../components/mira-design/Modal";
 import { useLocation, useNavigate } from "react-router";
 import { delegationRegistry } from "./delegation-catalog";
+import { findPreviewArtifact } from "./fixture-data";
 import {
   DRAFT_STORAGE_KEY,
   acceptDocumentStage,
@@ -135,17 +136,34 @@ function parseReturnTo(value: unknown): string {
 export default function DelegationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [draft, setDraft] = useState(() => {
-    if (typeof window === "undefined") return createDelegationDraft();
+  const [storedDraft] = useState(() => {
+    if (typeof window === "undefined") return null;
     try {
-      return (
-        parseDelegationDraft(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)) ??
-        createDelegationDraft()
-      );
+      return parseDelegationDraft(window.sessionStorage.getItem(DRAFT_STORAGE_KEY));
     } catch {
-      return createDelegationDraft();
+      return null;
     }
   });
+  // Old review CDP scripts use a dev-only fixture shortcut. A shipped build
+  // must never bypass D02 just because a query parameter was supplied.
+  const fixtureQuery = import.meta.env.DEV
+    ? new URLSearchParams(location.search).get("fixture")
+    : null;
+  const fixtureScenario =
+    fixtureQuery === "radar" || fixtureQuery === "journey" || fixtureQuery === "venture"
+      ? fixtureQuery
+      : null;
+  const [entryPhase, setEntryPhase] = useState<"entry" | "drafting" | "error" | "review">(() =>
+    storedDraft || fixtureScenario ? "review" : "entry",
+  );
+  const [pendingStart, setPendingStart] = useState<{
+    scenario: DelegationScenarioId;
+    intent: string;
+  } | null>(null);
+  const [restartRequested, setRestartRequested] = useState(false);
+  const [draft, setDraft] = useState(
+    () => storedDraft ?? createDelegationDraft(fixtureScenario ?? "radar"),
+  );
   const [saveStatus, setSaveStatus] = useState<"saved" | "failed">("saved");
   const scenarioId = draft.scenarioId;
   const [stage, setStage] = useState<DelegationStage>(
@@ -175,6 +193,10 @@ export default function DelegationPage() {
   const [pendingScenario, setPendingScenario] = useState<DelegationScenarioId | null>(null);
   const scenario = delegationScenarios[scenarioId];
   const returnTo = parseReturnTo((location.state as { returnTo?: unknown } | null)?.returnTo);
+  // Only a known, explicitly opened Fixture artifact may seed this local demo.
+  // The title is not the artifact's body, and this grants no access rights.
+  const artifactMatch = returnTo.split("?")[0]?.match(/^\/artifacts\/([^/]+)$/);
+  const exampleArtifact = artifactMatch ? findPreviewArtifact(artifactMatch[1]) : undefined;
   const comments = draft.comments;
   const acceptedCount = draft.acceptedCount;
   const record = draft.stages[stage];
@@ -219,15 +241,45 @@ export default function DelegationPage() {
     draft.editingHistorical !== null ||
     draft.stages.some((item) => item.revision > 0);
 
-  // Prototype-only session storage, never a Cloud save receipt.
+  // The entry is not a created task or a saved draft. Only commit the
+  // document to browser session storage once the user explicitly asks to draft.
   useEffect(() => {
+    if (entryPhase !== "review") return;
     try {
       window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
       setSaveStatus("saved");
     } catch {
       setSaveStatus("failed");
     }
-  }, [draft]);
+  }, [draft, entryPhase]);
+
+  useEffect(() => {
+    if (entryPhase !== "drafting" || !pendingStart) return;
+    // This is a local template demonstration, not a fake AI request.
+    const timer = window.setTimeout(() => {
+      try {
+        const next = createDelegationDraft(pendingStart.scenario, pendingStart.intent);
+        window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
+        setDraft(next);
+        setStage(0);
+        setCommentsOpen(false);
+        setCommentText("");
+        setPendingAnchor(null);
+        setWholeStageComment(false);
+        setRevision(0);
+        setStreamStep(0);
+        setStreaming(false);
+        setEditingBody(false);
+        setMessage("");
+        setDemoFinished(false);
+        setEntryPhase("review");
+        if (window.scrollY > 0) window.scrollTo(0, 0);
+      } catch {
+        setEntryPhase("error");
+      }
+    }, 520);
+    return () => window.clearTimeout(timer);
+  }, [entryPhase, pendingStart]);
 
   useEffect(() => {
     if (!streaming) return;
@@ -280,6 +332,31 @@ export default function DelegationPage() {
       return;
     }
     setScenario(next);
+  };
+
+  const startFromIntent = (scenario: DelegationScenarioId, intent: string) => {
+    if (entryPhase === "drafting" || intent.trim().length < 2) return;
+    setPendingStart({ scenario, intent: intent.trim().slice(0, 500) });
+    setEntryPhase("drafting");
+  };
+
+  const returnToIntent = () => {
+    // A denied storage operation must not pretend that this draft was cleared.
+    try {
+      window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+      setSaveStatus("failed");
+      return;
+    }
+    setDraft(createDelegationDraft());
+    setPendingStart(null);
+    setEntryPhase("entry");
+    setRestartRequested(false);
+    setStreaming(false);
+    setCommentsOpen(false);
+    setPendingAnchor(null);
+    setWholeStageComment(false);
+    setMessage("");
   };
 
   const handleConfigChanges = (changes: Array<{ path: string; value: unknown }>) => {
@@ -584,13 +661,44 @@ export default function DelegationPage() {
     setMessage("历史修改已提交，本阶段与后续阶段需要依次重新验收。旧版本仍可追溯。");
   };
 
+  if (entryPhase !== "review") {
+    return (
+      <section
+        className="workspace-page-body delegation-page delegation-entry-page"
+        aria-label="交代工作原型"
+      >
+        <header className="delegation-header">
+          <button type="button" className="delegation-back" onClick={() => navigate(returnTo)}>
+            <ArrowLeft size={16} aria-hidden="true" /> 返回
+          </button>
+          <span className="delegation-prototype-label">交代工作 · 交互原型</span>
+        </header>
+        <DelegationIntentEntry
+          phase={entryPhase}
+          onStart={startFromIntent}
+          onCancel={() => setEntryPhase("entry")}
+          exampleArtifact={exampleArtifact}
+        />
+      </section>
+    );
+  }
+
   return (
     <section className="workspace-page-body delegation-page" aria-label="交代工作原型">
       <header className="delegation-header">
         <button type="button" className="delegation-back" onClick={() => navigate(returnTo)}>
           <ArrowLeft size={16} aria-hidden="true" /> 返回
         </button>
-        <span className="delegation-prototype-label">交代工作 · 交互原型</span>
+        <div className="delegation-header-actions">
+          <button
+            type="button"
+            className="delegation-text-action"
+            onClick={() => setRestartRequested(true)}
+          >
+            <Plus size={14} aria-hidden="true" /> 新交代
+          </button>
+          <span className="delegation-prototype-label">交代工作 · 交互原型</span>
+        </div>
       </header>
 
       <div className="delegation-introduction">
@@ -601,22 +709,24 @@ export default function DelegationPage() {
         </div>
       </div>
 
-      <div className="delegation-scenarios" aria-label="试用不同委托情境">
-        <span>体验一种工作</span>
-        {Object.values(delegationScenarios).map((item) => (
-          <button
-            type="button"
-            key={item.id}
-            className={
-              item.id === scenarioId ? "delegation-scenario is-active" : "delegation-scenario"
-            }
-            aria-pressed={item.id === scenarioId}
-            onClick={() => requestScenario(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      {scenarioId !== "custom" ? (
+        <div className="delegation-scenarios" aria-label="试用不同委托情境">
+          <span>体验一种工作</span>
+          {(["radar", "journey", "venture"] as const).map((id) => (
+            <button
+              type="button"
+              key={id}
+              className={
+                id === scenarioId ? "delegation-scenario is-active" : "delegation-scenario"
+              }
+              aria-pressed={id === scenarioId}
+              onClick={() => requestScenario(id)}
+            >
+              {delegationScenarios[id].label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className={commentsOpen ? "delegation-layout has-comments" : "delegation-layout"}>
         <aside className="delegation-timeline" aria-label="工作主时间轴">
@@ -701,6 +811,11 @@ export default function DelegationPage() {
                 }
               >
                 <MessageSquare size={16} aria-hidden="true" />
+                {currentComments.length > 0 ? (
+                  <span className="delegation-comment-count" aria-hidden="true">
+                    {currentComments.length}
+                  </span>
+                ) : null}
               </button>
             </div>
           </div>
@@ -931,12 +1046,6 @@ export default function DelegationPage() {
           {editingBody && !historical ? (
             <p className="delegation-accept-hint">请先完成正文编辑，再接受这一阶段。</p>
           ) : null}
-          {unresolved > 0 ? (
-            <p className="delegation-accept-hint">
-              <CircleHelp size={13} aria-hidden="true" /> 还有 {unresolved}{" "}
-              条批注需要你确认解决或放弃。
-            </p>
-          ) : null}
         </article>
 
         {commentsOpen ? (
@@ -1087,6 +1196,23 @@ export default function DelegationPage() {
         <CornerUpLeft size={13} aria-hidden="true" />
         交互演示 · 仅在当前浏览器标签页保存，不会创建或运行真实任务。
       </p>
+      <ModalShell
+        open={restartRequested}
+        title="重新交代工作"
+        width={440}
+        footer={null}
+        onClose={() => setRestartRequested(false)}
+      >
+        <ConfirmDialog
+          title="放弃这份演示草稿？"
+          description="重新开始将清空当前标签页中的正文、批注与阶段验收记录，无法撤销。"
+          tone="warning"
+          cancelText="继续审阅"
+          confirmText="放弃并重新交代"
+          onCancel={() => setRestartRequested(false)}
+          onConfirm={returnToIntent}
+        />
+      </ModalShell>
       <ModalShell
         open={pendingScenario !== null}
         title="切换体验情境"

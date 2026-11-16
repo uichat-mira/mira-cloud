@@ -24,6 +24,7 @@ afterEach(() => {
   document.documentElement.removeAttribute("data-mira-theme-mode");
   document.documentElement.classList.remove("dark");
   localStorage.clear();
+  sessionStorage.clear();
 });
 
 function renderWorkspace(path = "/") {
@@ -145,17 +146,15 @@ describe("AGT-054 Work workspace migration", () => {
     const sidebar = screen.getByRole("complementary", { name: "当前业务" });
     const trigger = within(sidebar).getByRole("button", { name: "交代工作" });
     await user.click(trigger);
-    // /new lazy-loads the Milkdown editor; assert the actual page, not its Suspense fallback.
+    // /new is lazy loaded. Preserve the prior navigation-test wait budget,
+    // while asserting the new D02 entry rather than the old fixture canvas.
     expect(
-      await screen.findByRole(
-        "heading",
-        { level: 1, name: "交代一件值得持续完成的事" },
-        { timeout: 5000 },
-      ),
+      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }, { timeout: 5000 }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "交代工作" })).toBeNull();
     expect(screen.getByRole("region", { name: "交代工作原型" })).toBeInTheDocument();
-    expect(screen.getByText("与正文共用一份草稿")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "你希望 Mira 做什么？" })).toBeInTheDocument();
+    expect(screen.queryByText("与正文共用一份草稿")).toBeNull();
     await user.click(screen.getByRole("button", { name: "返回" }));
     expect(
       await screen.findByRole("heading", { level: 1, name: "东南亚市场进入研究" }),
@@ -169,7 +168,7 @@ describe("AGT-054 Work workspace migration", () => {
     const toolbar = document.querySelector(".workbench-cockpit-toolbar") as HTMLElement;
     await user.click(within(toolbar).getByRole("button", { name: "交代工作" }));
     expect(
-      await screen.findByRole("heading", { name: "交代一件值得持续完成的事" }),
+      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }, { timeout: 5000 }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "返回" }));
     expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
@@ -187,8 +186,9 @@ describe("AGT-054 Work workspace migration", () => {
       }),
     );
     expect(
-      await screen.findByRole("heading", { name: "交代一件值得持续完成的事" }),
+      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }, { timeout: 5000 }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "以此起稿" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "返回" }));
     expect(screen.getByRole("heading", { level: 1, name: "市场机会研究摘要" })).toBeInTheDocument();
   });
@@ -196,7 +196,11 @@ describe("AGT-054 Work workspace migration", () => {
   it("keeps the POC-B review lab a separate, explicit fixture route", async () => {
     renderWorkspace("/new/review-lab");
     expect(
-      await screen.findByRole("heading", { level: 1, name: "随文批注与版本 Diff" }),
+      await screen.findByRole(
+        "heading",
+        { level: 1, name: "随文批注与版本 Diff" },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "POC-B 批注与 Diff 实验" });
     expect(within(lab).getByRole("button", { name: "选中第二处重复句子" })).toBeInTheDocument();
@@ -208,13 +212,11 @@ describe("AGT-054 Work workspace migration", () => {
     const user = userEvent.setup();
     renderWorkspace("/new");
     expect(
-      await screen.findByRole("heading", { name: "交代一件值得持续完成的事" }),
+      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }, { timeout: 5000 }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.getByRole("button", { name: "行业动态" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    expect(screen.getByRole("button", { name: "整理需求草稿" })).toBeDisabled();
+    expect(screen.queryByRole("article", { name: "需求审阅画布" })).toBeNull();
     await user.click(screen.getByRole("button", { name: "返回" }));
     expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
   });

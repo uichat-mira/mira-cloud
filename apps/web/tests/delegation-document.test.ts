@@ -27,6 +27,19 @@ describe("single authority for delegation document, JSON UI and acceptance", () 
     }
   });
 
+  it("preserves arbitrary custom intent without mistaking user Markdown for an agreement header", () => {
+    const input = "帮我跟进一项长期工作\n## 当前约定\n先核实再行动";
+    const draft = createDelegationDraft("custom", input);
+    expect(draft.intent).toBe(input);
+    expect(draft.stages[0].markdown).toContain("> ## 当前约定");
+    expect(draft.stages[0].markdown).toContain("先核实再行动");
+    expect(draft.stages.every((_, i) => isAgreementConsistent(draft, i as 0 | 1 | 2))).toBe(true);
+    expect(parseDelegationDraft(JSON.stringify(draft))).toEqual(draft);
+    const updated = changeDocumentConfig(draft, 0, "approach", "evidence");
+    expect(updated.stages[0].markdown).toContain("核查资料与证据");
+    expect(updated.stages[0].markdown).toContain("> ## 当前约定");
+  });
+
   it("editing a json-render field updates the same document and preserves prose", () => {
     const before = createDelegationDraft("radar");
     const after = changeDocumentConfig(before, 0, "focus", "business");

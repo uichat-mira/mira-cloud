@@ -13,7 +13,7 @@ try {
     deviceScaleFactor: 1,
     mobile: false,
   });
-  await send("Page.navigate", { url: "http://127.0.0.1:5173/new" });
+  await send("Page.navigate", { url: "http://127.0.0.1:5173/new?fixture=radar" });
   await pause(3200);
   await run("document.querySelector('button.delegation-comment-trigger')?.click()");
   await pause(170);

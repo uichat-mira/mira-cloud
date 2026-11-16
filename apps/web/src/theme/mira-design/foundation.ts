@@ -45,12 +45,14 @@ export const styleTokens = {
   "--mira-shadow-xl": "0 24px 60px rgba(15, 23, 42, 0.18)",
   "--mira-font-sans":
     '"IBM Plex Sans", "Noto Sans SC", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  // Cloud editorial titles use the system serif already established on /new.
+  // Keep the pinned Desktop-derived CJK serif fallbacks; do not ship font binaries.
   "--mira-font-serif":
-    '"Source Han Serif CN", "Source Han Serif", "Noto Serif SC", ui-serif, Georgia, serif',
+    '"Iowan Old Style", Baskerville, "Source Han Serif CN", "Source Han Serif", "Songti SC", "Noto Serif SC", ui-serif, Georgia, serif',
   "--mira-font-mono":
     '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
   "--mira-type-display-size": "28px",
-  "--mira-type-display-weight": "600",
+  "--mira-type-display-weight": "400",
   "--mira-type-display-line-height": "1.2",
   "--mira-type-heading-1-size": "20px",
   "--mira-type-heading-1-weight": "600",
