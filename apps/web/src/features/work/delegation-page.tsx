@@ -178,11 +178,15 @@ export default function DelegationPage() {
   const comments = draft.comments;
   const acceptedCount = draft.acceptedCount;
   const record = draft.stages[stage];
-  const currentComments = comments.filter((comment) => comment.stage === stage);
+  // Abandoning closes a review item. Retain its status in the session draft
+  // for version provenance, but never show it as active work or a text mark.
+  const currentComments = comments.filter(
+    (comment) => comment.stage === stage && comment.status !== "abandoned",
+  );
   const documentAnchors = useMemo(
     () =>
       comments.flatMap((comment): TextReviewAnchor[] =>
-        comment.stage === stage && comment.anchor
+        comment.stage === stage && comment.status !== "abandoned" && comment.anchor
           ? [
               {
                 id: String(comment.id),
@@ -1008,7 +1012,7 @@ export default function DelegationPage() {
                   ))
                 ) : (
                   <p className="delegation-comment-empty">
-                    还没有批注。请先框选正文；也可以明确选择批注整个阶段。
+                    当前没有需要查看的批注。请先框选正文；也可以明确选择批注整个阶段。
                   </p>
                 )}
               </div>

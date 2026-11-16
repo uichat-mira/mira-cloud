@@ -71,7 +71,13 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     await user.click(within(comments).getByRole("button", { name: "添加批注" }));
     expect(screen.getByRole("button", { name: "接受本阶段" })).toBeDisabled();
     await user.click(within(comments).getByRole("button", { name: "放弃此批注" }));
+    expect(within(comments).queryByText("请增加失败案例")).toBeNull();
+    expect(within(comments).getByRole("heading", { name: "随文批注 0" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "批注" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "接受本阶段" })).toBeEnabled();
+    expect(
+      JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!).comments,
+    ).toMatchObject([{ text: "请增加失败案例", status: "abandoned" }]);
     await user.click(screen.getByRole("button", { name: "接受本阶段" }));
     expect(
       screen.getByText("工作节奏", { selector: ".delegation-ui-intro h3" }),
@@ -167,6 +173,43 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     await screen.findByText(/研究重点：模型、产品与开源/);
     expect(document.querySelectorAll(".delegation-review-poc-anchor")).toHaveLength(1);
     expect(screen.getByRole("button", { name: "批注 · 1" })).toBeInTheDocument();
+  });
+
+  it("removes abandoned anchored comments from the review list and document decorations without deleting their history", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/研究重点：模型、产品与开源/);
+    const editor = document.querySelector(".delegation-review-editor") as HTMLElement;
+    const paragraph = editor.querySelector(".ProseMirror p") as HTMLElement;
+    const range = document.createRange();
+    range.selectNodeContents(paragraph);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    fireEvent.mouseUp(editor);
+    await user.click(await screen.findByRole("button", { name: "批注所选文字" }));
+    const panel = screen.getByRole("complementary", { name: "随文批注" });
+    await user.type(
+      within(panel).getByRole("textbox", { name: "批注所选文字" }),
+      "这段内容不需要继续追踪",
+    );
+    await user.click(within(panel).getByRole("button", { name: "添加批注" }));
+    expect(document.querySelectorAll(".delegation-review-poc-anchor")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "批注 · 1" })).toBeInTheDocument();
+
+    await user.click(within(panel).getByRole("button", { name: "放弃此批注" }));
+    expect(within(panel).queryByText("这段内容不需要继续追踪")).toBeNull();
+    expect(within(panel).getByRole("heading", { name: "随文批注 0" })).toBeInTheDocument();
+    expect(document.querySelectorAll(".delegation-review-poc-anchor")).toHaveLength(0);
+    expect(screen.getByRole("button", { name: "批注" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "接受本阶段" })).toBeEnabled();
+    const stored = JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!);
+    expect(stored.comments).toHaveLength(1);
+    expect(stored.comments[0]).toMatchObject({
+      status: "abandoned",
+      text: "这段内容不需要继续追踪",
+      anchor: { status: "active" },
+    });
   });
 
   it("removes the selection-only comment action when selection collapses or the user clicks elsewhere", async () => {

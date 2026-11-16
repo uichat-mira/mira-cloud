@@ -74,3 +74,11 @@
 - UI 与提交处理函数都有门禁。空目标不会新建数据；明确选择整体目标后，仍可生成兼容旧数据格式的「本阶段整体」批注。
 
 验证：Mac Chrome /new 实测 [comment-intent-qa.mjs](../../../prototypes/delegation-inline-review/comment-intent-qa.mjs)：无选区打开面板时 composer=false、submit=false、comments=0；明确点击整体目标才出现输入区；取消并关闭仍 comments=0。现有 [browser-qa.mjs](../../../prototypes/delegation-inline-review/browser-qa.mjs) 继续确认文字选区 → 批注 → 锚点保存与定位的完整路径。JS DOM 新增无目标、显式整体批注及跨阶段意图清理的回归。该原型仍只使用 sessionStorage，没有真实 Agent 任务提交。
+
+## 放弃批注退出工作视图（PC 视觉反馈，2026-11-16）
+
+现行 D06 / D25 要求用户明确放弃批注，并保留原版本处理结果和来源；但放弃不应继续成为待维护的 UI 项。当前阶段右侧列表不再渲染 abandoned 状态的批注，其计数、正文下划线高亮和双向定位入口同步去除；不再占用阶段验收待处理数量。数据层仍保留状态和来源锚点，避免破坏版本审计或历史回溯。
+
+这与彻底删除不同：abandoned 保留在同标签页演示草稿，但不再投影到日常审阅界面。当前仅过滤放弃状态，已确认解决的批注展示行为未在本轮擅自改变。没有为隐藏的历史创建第二个列表、额外计数或维护入口。
+
+验证：Mac Chrome /new [abandoned-comment-qa.mjs](../../../prototypes/delegation-inline-review/abandoned-comment-qa.mjs) 从真实文字选区创建有原文锚点的批注，放弃前右栏 1 条、正文高亮 1 条、阻塞验收；放弃后右栏 0 条、高亮 0 条、验收恢复可用，而 sessionStorage 记录仍为 abandoned。重新加载后仍隐藏且保持一致。Vitest 覆盖无锚点整体批注、带锚点的放弃隐藏与数据保留。

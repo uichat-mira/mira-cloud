@@ -31,3 +31,9 @@ Exercises the actual /new page in a disposable Chrome tab with a long Markdown f
     NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/comment-intent-qa.mjs
 
 Verifies in real Chrome that opening review without text selection only permits reading existing notes; the composer and submit action do not appear. Creating an unanchored note requires an explicit second action ("批注整个阶段"), and cancelling that action leaves no draft comment. Selected-text annotation is separately covered by browser-qa.mjs. No real backend calls.
+
+## Abandoned comments leave the active review UI
+
+    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/abandoned-comment-qa.mjs
+
+This real Chrome test makes a selected-text comment in the /new fixture, then abandons it and checks that its card, count and text highlight disappear immediately, stage acceptance is no longer blocked, and refreshing the page does not restore it to the active view. The decision and source anchor remain only in the local session draft for provenance; no service-side actions are performed.
