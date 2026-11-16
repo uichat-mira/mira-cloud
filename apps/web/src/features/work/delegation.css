@@ -1015,29 +1015,32 @@
   outline-offset: 2px;
 }
 
-/* Desktop review rail: keep the rail in the reading viewport, scroll only
-   existing notes, and retain the composer as the last fixed section. Sticky
-   belongs to the grid item rather than the nested aside: the grid item's
-   available scroll range is determined by the document column. */
+/* Desktop /new review is a viewport rail, not a sticky section of the
+   document. Grid keeps its column reserved for the rail, while the panel
+   itself remains visible from the first viewport through the document end. */
 @media (min-width: 1121px) {
   .delegation-layout.has-comments > .delegation-comment-overlay {
-    position: sticky;
-    top: calc(var(--workspace-header-height, 58px) + 16px);
+    position: static;
     align-self: start;
     min-height: 0;
-    height: calc(100dvh - var(--workspace-header-height, 58px) - 32px);
+    height: 0;
   }
 
   .delegation-comment-overlay .delegation-comments {
-    position: relative;
-    top: auto;
+    position: fixed;
+    z-index: 19;
+    top: calc(var(--workspace-header-height, 58px) + 16px);
+    right: clamp(20px, 2.4vw, 40px);
+    bottom: 16px;
     display: flex;
-    height: 100%;
+    width: min(294px, calc(100vw - 40px));
+    height: auto;
     max-height: none;
     min-height: 0;
     flex-direction: column;
     overflow: hidden;
     padding: 0 0 12px;
+    background: rgb(var(--mira-color-surface-primary));
   }
 
   .delegation-comments-header,
@@ -1057,6 +1060,13 @@
     overflow-y: auto;
     overscroll-behavior-y: contain;
     scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .delegation-comment-list:hover,
+  .delegation-comment-list:focus-visible {
+    scrollbar-color: rgb(var(--mira-color-border)) transparent;
   }
 
   .delegation-comment-compose {

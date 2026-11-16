@@ -66,14 +66,20 @@ try {
   if (first.count !== 24) throw Error("Expected 24 rendered comments, got " + first.count);
   if (first.listScrollHeight <= first.listClientHeight + 100)
     throw Error("Comments list is not independently scrollable");
-  if (first.overlayPosition !== "sticky") throw Error("Desktop grid rail is not sticky");
-  // Before the document reaches the sticky threshold the panel still follows
-  // its natural document position. Visibility is asserted after it docks.
+  // Regression: the previous sticky grid rail was pushed below the fold
+  // before its threshold and moved offscreen again near the document end.
+  if (
+    first.panelPosition !== "fixed" ||
+    Math.abs(first.panel.top - 74) > 2 ||
+    first.panel.bottom > first.viewport + 2
+  )
+    throw Error("Desktop review is not viewport-fixed from the beginning");
   await run("window.scrollTo(0,700)");
   await pause(250);
   const sticky = JSON.parse(await inspect());
   console.log("SCROLLED_PAGE", JSON.stringify(sticky));
-  if (Math.abs(sticky.overlay.top - 74) > 4) throw Error("Rail did not stick under topbar");
+  if (Math.abs(sticky.panel.top - first.panel.top) > 2)
+    throw Error("Review rail moved with the document");
   if (sticky.panel.bottom > sticky.viewport + 2) throw Error("Panel escaped viewport");
   const pt = {
     x: sticky.list.x + sticky.list.width / 2,
@@ -137,6 +143,39 @@ try {
     captureBeyondViewport: false,
   });
   writeFileSync("/tmp/mira-inline-review-sticky-1600.png", Buffer.from(shot.data, "base64"));
+  await run("window.scrollTo(0, document.documentElement.scrollHeight)");
+  await pause(200);
+  const documentEnd = JSON.parse(await inspect());
+  console.log(
+    "DOCUMENT_END",
+    JSON.stringify({
+      pageY: documentEnd.pageY,
+      panelTop: documentEnd.panel.top,
+      headerTop: documentEnd.header.top,
+      composerTop: documentEnd.composer.top,
+    }),
+  );
+  if (
+    documentEnd.pageY <= sticky.pageY ||
+    Math.abs(documentEnd.panel.top - first.panel.top) > 2 ||
+    Math.abs(documentEnd.header.top - first.header.top) > 2 ||
+    Math.abs(documentEnd.composer.top - first.composer.top) > 2
+  )
+    throw Error("Review rail moved when the document approached its end");
+  await send("Emulation.setDeviceMetricsOverride", {
+    width: 1920,
+    height: 900,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+  await pause(180);
+  const wide = JSON.parse(await inspect());
+  if (
+    Math.abs(wide.panel.top - first.panel.top) > 2 ||
+    wide.panel.bottom > wide.viewport + 2 ||
+    wide.documentWidth > wide.innerWidth
+  )
+    throw Error("Review rail regression on wide desktop");
   await send("Emulation.setDeviceMetricsOverride", {
     width: 1280,
     height: 680,
@@ -169,7 +208,7 @@ try {
     mobile.panel.height > mobile.viewport * 0.76
   )
     throw Error("Mobile bottom sheet regression");
-  console.log("STICKY_REVIEW_BROWSER_PASS");
+  console.log("FIXED_REVIEW_BROWSER_PASS");
 } finally {
   try {
     await send("Page.close");
