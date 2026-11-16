@@ -1014,3 +1014,59 @@
   outline: 2px solid rgb(var(--mira-color-primary));
   outline-offset: 2px;
 }
+
+/* Desktop review rail: keep the rail in the reading viewport, scroll only
+   existing notes, and retain the composer as the last fixed section. Sticky
+   belongs to the grid item rather than the nested aside: the grid item's
+   available scroll range is determined by the document column. */
+@media (min-width: 1121px) {
+  .delegation-layout.has-comments > .delegation-comment-overlay {
+    position: sticky;
+    top: calc(var(--workspace-header-height, 58px) + 16px);
+    align-self: start;
+    min-height: 0;
+    height: calc(100dvh - var(--workspace-header-height, 58px) - 32px);
+  }
+
+  .delegation-comment-overlay .delegation-comments {
+    position: relative;
+    top: auto;
+    display: flex;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0 0 12px;
+  }
+
+  .delegation-comments-header,
+  .delegation-comment-caption {
+    flex: 0 0 auto;
+  }
+
+  .delegation-comments-header {
+    padding-top: 14px;
+  }
+
+  .delegation-comment-list {
+    flex: 1 1 0;
+    min-height: 0;
+    margin: 12px 0 0;
+    padding: 2px 5px 12px 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .delegation-comment-compose {
+    flex: 0 0 auto;
+    max-height: min(39dvh, 338px);
+    min-height: 0;
+    margin-top: 0;
+    padding: 14px 4px 0 0;
+    border-top: 1px solid rgb(var(--mira-color-border));
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+}

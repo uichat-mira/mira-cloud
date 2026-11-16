@@ -911,7 +911,12 @@ export default function DelegationPage() {
               <p className="delegation-comment-caption">
                 批注属于当前阶段。Mira 提出处理建议后，仍由你确认是否解决。
               </p>
-              <div className="delegation-comment-list">
+              <div
+                className="delegation-comment-list"
+                role="region"
+                aria-label="批注列表"
+                tabIndex={0}
+              >
                 {currentComments.length ? (
                   currentComments.map((comment) => (
                     <article

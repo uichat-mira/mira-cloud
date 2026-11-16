@@ -57,6 +57,11 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     const { fetcher } = renderPage();
     await user.click(screen.getByRole("button", { name: "批注" }));
     const comments = screen.getByRole("complementary", { name: "随文批注" });
+    // A separately scrolling review list must remain keyboard reachable.
+    expect(within(comments).getByRole("region", { name: "批注列表" })).toHaveAttribute(
+      "tabindex",
+      "0",
+    );
     await user.type(
       within(comments).getByRole("textbox", { name: "对当前阶段提出意见" }),
       "请增加失败案例",
