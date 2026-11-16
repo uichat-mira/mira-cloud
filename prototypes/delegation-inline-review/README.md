@@ -8,6 +8,8 @@
 
 | 脚本 | 要证明的风险 |
 | --- | --- |
+| [intent-entry-qa.mjs](./intent-entry-qa.mjs) | 默认 /new 首次意图输入、演示起稿、恢复、重新交代、手机窄屏 |
+| [typography-qa.mjs](./typography-qa.mjs) | 首页、工作/成果列表与详情、设置、/new 的衬线标题 Token 和 400 字重；正文保持 Sans；390/320px 无横向溢出 |
 | [browser-qa.mjs](./browser-qa.mjs) | 批注→原文双向定位、刷新、编辑后锚点重映射、桌面与手机视口 |
 | [sequential-selection-qa.mjs](./sequential-selection-qa.mjs) | 右栏保持开启后对不同段落连续创建有来源的批注 |
 | [selection-debounce-qa.mjs](./selection-debounce-qa.mjs) | 180ms 稳定选区、防误弹、改选和取消 |
@@ -21,3 +23,5 @@
 [chrome-client.mjs](./chrome-client.mjs) 只复用 CDP 连接、求值与清理生命周期，不包含审阅领域行为断言。新增浏览器场景应复用此模块。
 
 **限制**：Chrome 模拟视口不是 Android/iOS 真机验收；Fixture 交互验证也不能证明云端任务服务已可用。任何脚本的失败都应如实记录，不能沿用旧版测试日志代替。
+
+旧批注脚本显式访问 /new?fixture=radar 以在一次性 QA 标签页中进入原有演示审阅画布；普通 /new 不会自动注入此示例。

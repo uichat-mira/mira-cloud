@@ -14,7 +14,7 @@ try {
     deviceScaleFactor: 1,
     mobile: false,
   });
-  await send("Page.navigate", { url: "http://127.0.0.1:5173/new" });
+  await send("Page.navigate", { url: "http://127.0.0.1:5173/new?fixture=radar" });
   await pause(3400);
   await run(
     "(()=>{const ed=document.querySelector('.delegation-review-editor');const t=ed.querySelector('.ProseMirror p').firstChild;const r=document.createRange();r.setStart(t,4);r.setEnd(t,22);const s=getSelection();s.removeAllRanges();s.addRange(r);ed.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));})()",

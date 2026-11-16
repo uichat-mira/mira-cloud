@@ -40,7 +40,7 @@ const commentSchema = z.object({
 });
 const draftSchema = z.object({
   schemaVersion: z.literal(1),
-  scenarioId: z.enum(["radar", "journey", "venture"]),
+  scenarioId: z.enum(["radar", "journey", "venture", "custom"]),
   intent: z.string().max(500),
   stages: z.tuple([stageSchema, stageSchema, stageSchema]),
   acceptedCount: z.number().int().min(0).max(3),
@@ -91,9 +91,17 @@ export function createDelegationDraft(
 ): DelegationDraft {
   const scenario = delegationScenarios[scenarioId];
   const config = { ...scenario.initialConfig };
+  const normalizedIntent = (intentOverride?.trim() || scenario.intent).slice(0, 500);
   const makeStage = (stage: DelegationStage): StageDocument => ({
     markdown: buildMarkdown(
-      stage === 0 ? scenario.text : scenario.sections[stage].description,
+      stage === 0 && scenarioId === "custom"
+        ? `你交代的目标：\n\n${normalizedIntent
+            .split(/\r?\n/)
+            .map((line) => `> ${line}`)
+            .join("\n")}\n\n先确认这件事的范围与关键前提；资料、权限和执行条件仍需逐步核实。`
+        : stage === 0
+          ? scenario.text
+          : scenario.sections[stage].description,
       delegationSummary(scenarioId, stage, config),
     ),
     config: { ...config },
@@ -105,7 +113,7 @@ export function createDelegationDraft(
   return {
     schemaVersion: 1,
     scenarioId,
-    intent: (intentOverride?.trim() || scenario.intent).slice(0, 500),
+    intent: normalizedIntent,
     stages,
     acceptedCount: 0,
     editingHistorical: null,

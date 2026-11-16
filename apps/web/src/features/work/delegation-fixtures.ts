@@ -1,6 +1,6 @@
 import type { Spec } from "@json-render/core";
 
-export type DelegationScenarioId = "radar" | "journey" | "venture";
+export type DelegationScenarioId = "radar" | "journey" | "venture" | "custom";
 export type DelegationStage = 0 | 1 | 2;
 
 type Choice = { value: string; label: string };
@@ -25,6 +25,91 @@ export interface DelegationScenario {
 }
 
 export const delegationScenarios: Record<DelegationScenarioId, DelegationScenario> = {
+  custom: {
+    id: "custom",
+    label: "我的委托",
+    title: "把这件事交代清楚",
+    tagline: "先明确目标，再决定如何持续推进。",
+    intent: "请先帮我整理一件需要持续完成的工作。",
+    text: "请从这件事情的目标出发，辨明需要核实的材料和关键决定。不替我假定事实、权限或外部行动。",
+    initialConfig: {
+      approach: "clarify",
+      askOnDecisions: true,
+      frequency: "24h",
+      importantOnly: true,
+      deliverable: "summary",
+      externalActions: false,
+    },
+    stages: ["工作目标", "工作节奏", "交付与边界"],
+    sections: [
+      {
+        description: "先把目标整理成可以审阅的工作约定，不替你擅自补全未知事实。",
+        fields: [
+          {
+            kind: "choice",
+            id: "approach",
+            label: "优先从哪里开始",
+            options: [
+              { value: "clarify", label: "梳理目标与范围" },
+              { value: "evidence", label: "核查资料与证据" },
+              { value: "plan", label: "整理可执行方案" },
+            ],
+          },
+          {
+            kind: "toggle",
+            id: "askOnDecisions",
+            label: "重要决定先由我确认",
+            description: "对范围、费用与外部副作用不做默许推断。",
+          },
+        ],
+        note: "当前仅整理演示草稿，材料和可执行能力尚未得到验证。",
+      },
+      {
+        description: "持续工作不等于反复提醒；先选择检查节奏，再决定何时打扰。",
+        fields: [
+          {
+            kind: "choice",
+            id: "frequency",
+            label: "检查频率",
+            options: [
+              { value: "1h", label: "每小时" },
+              { value: "24h", label: "每天" },
+              { value: "weekly", label: "每周" },
+            ],
+          },
+          {
+            kind: "toggle",
+            id: "importantOnly",
+            label: "仅有重要变化时通知",
+            description: "没有值得报告的发现时保持安静。",
+          },
+        ],
+        note: "这是计划偏好的示例控件，没有创建真实定时任务。",
+      },
+      {
+        description: "明确你要收到什么，以及哪些行为必须获得单独许可。",
+        fields: [
+          {
+            kind: "choice",
+            id: "deliverable",
+            label: "期望成果",
+            options: [
+              { value: "summary", label: "要点摘要" },
+              { value: "plan", label: "行动方案" },
+              { value: "report", label: "完整报告" },
+            ],
+          },
+          {
+            kind: "toggle",
+            id: "externalActions",
+            label: "涉及对外操作",
+            description: "本开关不构成授权；真实操作仍需逐项明确批准。",
+          },
+        ],
+        note: "任务不会在此原型中提交、发送、扣费或启动。",
+      },
+    ],
+  },
   radar: {
     id: "radar",
     label: "行业动态",
@@ -353,6 +438,39 @@ export function delegationSummary(
   stage: DelegationStage,
   config: Record<string, unknown>,
 ): string {
+  if (scenario === "custom") {
+    if (stage === 0)
+      return (
+        "优先" +
+        (config["approach"] === "evidence"
+          ? "核查资料与证据"
+          : config["approach"] === "plan"
+            ? "整理可执行方案"
+            : "梳理目标与范围") +
+        (config["askOnDecisions"] ? "；重要决定需要你确认。" : "；不替你授权外部行为。")
+      );
+    if (stage === 1)
+      return (
+        "按" +
+        (config["frequency"] === "1h"
+          ? "每小时"
+          : config["frequency"] === "weekly"
+            ? "每周"
+            : "每天") +
+        "检查；" +
+        (config["importantOnly"] ? "仅有重点时通知。" : "按约定整理进展。")
+      );
+    return (
+      "交付" +
+      (config["deliverable"] === "plan"
+        ? "行动方案"
+        : config["deliverable"] === "report"
+          ? "完整报告"
+          : "要点摘要") +
+      "；" +
+      (config["externalActions"] ? "所有对外操作仍需单独确认。" : "不主动执行对外操作。")
+    );
+  }
   if (scenario === "radar") {
     if (stage === 0)
       return (

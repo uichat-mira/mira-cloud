@@ -9,7 +9,7 @@ try {
     deviceScaleFactor: 1,
     mobile: true,
   });
-  await send("Page.navigate", { url: "http://127.0.0.1:5173/new" });
+  await send("Page.navigate", { url: "http://127.0.0.1:5173/new?fixture=radar" });
   await sleep(4400);
   const b = await run(
     "JSON.stringify({title:document.querySelector('h1')?.textContent,scroll:document.documentElement.scrollWidth,inner:innerWidth,editor:!!document.querySelector('.delegation-document-text .ProseMirror'),readonly:document.querySelector('.delegation-document-text .ProseMirror')?.getAttribute('contenteditable'),pane:!!document.querySelector('[aria-label=\"随文批注\"]')})",

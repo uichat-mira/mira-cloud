@@ -18,7 +18,11 @@ The files under `upstream/` are unaltered snapshots. Do not edit them by hand.
 Where those initial CSS values differ slightly, the generated Foundation follows
 `colorThemes.ts`. Desktop derives primary scales with `@ant-design/colors@8.0.1`; the
 package is a Web devDependency used only by generation/tests and is not shipped to the
-browser. Font binaries are not migrated; only the Desktop font stacks are kept.
+browser. Font binaries are not migrated. The Cloud-owned Foundation retains the
+Desktop-derived sans/mono and CJK serif fallback contracts; editorial headings use a
+system-first Iowan Old Style/Baskerville serif extension at weight 400, consistent
+across /new and the Work page titles. This is a Cloud consumption decision, not a
+modification of the pinned Desktop source snapshot.
 
 ## Generated artifacts
 

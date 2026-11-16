@@ -24,6 +24,7 @@
 .workbench-page-header h1 {
   margin: 0;
   color: rgb(var(--mira-color-text-primary));
+  font-family: var(--mira-font-serif);
   font-size: var(--mira-type-display-size);
   font-weight: var(--mira-type-display-weight);
   line-height: var(--mira-type-display-line-height);
@@ -599,8 +600,9 @@ button.workbench-secondary-link {
 .workbench-artifact-preview h2 {
   margin: 6px 0 8px;
   color: rgb(var(--mira-color-text-primary));
+  font-family: var(--mira-font-serif);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: var(--mira-type-display-weight);
 }
 
 .workbench-artifact-preview p {
@@ -657,8 +659,9 @@ button.workbench-secondary-link {
 .workbench-empty h1 {
   margin: 0;
   color: rgb(var(--mira-color-text-primary));
+  font-family: var(--mira-font-serif);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: var(--mira-type-display-weight);
 }
 
 .workbench-empty p {
@@ -944,8 +947,9 @@ button.workbench-secondary-link {
 .workbench-cockpit-card-header h2 {
   margin: 0;
   color: rgb(var(--mira-color-text-primary));
+  font-family: var(--mira-font-serif);
   font-size: var(--mira-type-heading-2-size);
-  font-weight: 600;
+  font-weight: var(--mira-type-display-weight);
   line-height: 1.45;
 }
 

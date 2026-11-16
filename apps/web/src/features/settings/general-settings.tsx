@@ -25,7 +25,7 @@ export function GeneralSettingsPage() {
     <div className="workspace-page-body">
       <header className="mb-8 border-b border-border pb-5">
         <p className="mb-1 text-xs font-medium text-text-tertiary">设置</p>
-        <h1 className="text-heading-1 font-semibold text-text-primary">通用</h1>
+        <h1 className="font-serif text-heading-1 font-normal text-text-primary">通用</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
           管理 Mira Cloud 的本地视觉偏好。这些设置只影响当前浏览器，不代表账号或其它运行时已经同步。
         </p>

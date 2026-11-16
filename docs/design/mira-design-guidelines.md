@@ -185,6 +185,14 @@ Use semantic hierarchy before color.
 - Heading 1/2: page and section hierarchy.
 - Body / body-small / caption: content and metadata.
 - Mono: code, paths, IDs, logs and structured technical values.
+- Serif is an editorial title role, not the default body font: Work page headings,
+  prominent section titles, Work empty-state headlines, and the /new document/entry
+  headings consume the Cloud-owned --mira-font-serif Token. Display titles use
+  --mira-type-display-weight (400). Body text, dense lists, navigation, controls,
+  captions, and technical metadata remain sans.
+- Cloud uses a system-first Iowan Old Style / Baskerville serif stack with the pinned
+  Desktop-derived CJK serif fallbacks; no font files are bundled or exposed. This
+  Cloud editorial adaptation does not change the pinned Desktop snapshot or its runtime.
 
 Avoid arbitrary one-off font sizes in reusable components when an existing semantic role
 fits. Long-form Markdown may use a slightly roomier reading rhythm without redefining the
