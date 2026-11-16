@@ -82,3 +82,14 @@
 这与彻底删除不同：abandoned 保留在同标签页演示草稿，但不再投影到日常审阅界面。当前仅过滤放弃状态，已确认解决的批注展示行为未在本轮擅自改变。没有为隐藏的历史创建第二个列表、额外计数或维护入口。
 
 验证：Mac Chrome /new [abandoned-comment-qa.mjs](../../../prototypes/delegation-inline-review/abandoned-comment-qa.mjs) 从真实文字选区创建有原文锚点的批注，放弃前右栏 1 条、正文高亮 1 条、阻塞验收；放弃后右栏 0 条、高亮 0 条、验收恢复可用，而 sessionStorage 记录仍为 abandoned。重新加载后仍隐藏且保持一致。Vitest 覆盖无锚点整体批注、带锚点的放弃隐藏与数据保留。
+
+
+## 文字框选交互防抖（PC 视觉反馈，2026-11-16）
+
+用户反馈拖动选择正文时，悬浮「批注所选文字」会在选区仍变化时出现、挡住附近文字。已在正式 /new 的 Milkdown/ProseMirror 选区捕获入口增加轻量防抖，不改变来源锚点、版本合同或批注持久化。
+
+- 鼠标或触控按下并拖动时不弹 CTA；松开后，原生 Selection 连续稳定 180ms 才生成动作入口。期间继续调整范围会取消此前计时并重新等待，不依赖有延迟的 ProseMirror 旧选区。
+- 无效、收起或跨编辑器的原生选区立即撤销待定入口；在编辑器外部点击取消；用户明确进入批注输入时继续保留已确认的选区来源，不会因为 textarea 获取焦点而丢失锚点。
+- 键盘修改选区也通过 selectionchange / keyup 走同一稳定等待。保留原有 touchend + pointerup 监听；真正的 iOS Safari 长按与系统菜单仍需真机实测，不以 Chrome 模拟替代。
+- Vitest 增加拖动按住 220ms 不弹、松开后 65ms 不弹、稳定后出现、再次改动和取消即隐藏的回归。Mac Chrome 实测 [selection-debounce-qa.mjs](../../../prototypes/delegation-inline-review/selection-debounce-qa.mjs) 使用实际文档 DOM Range + pointerdown/up/selectionchange，长拖动不弹、松开后 80ms 不弹、稳定约 265ms 弹出；再次变动 45ms 不弹、稳定后显示；点击后侧栏摘录严格等于最后选区。
+- 既有 [browser-qa.mjs](../../../prototypes/delegation-inline-review/browser-qa.mjs) 整条文字批注 E2E 通过；同步更新 [selection-animation-qa.mjs](../../../prototypes/delegation-inline-review/selection-animation-qa.mjs) 的稳定选区等待断言，不能再期待选择即刻弹窗。

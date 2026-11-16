@@ -212,6 +212,40 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     });
   });
 
+  it("debounces the selection action until dragging ends and the range settles", async () => {
+    renderPage();
+    await screen.findByText(/研究重点：模型、产品与开源/);
+    const editor = document.querySelector(".delegation-review-editor") as HTMLElement;
+    const paragraph = editor.querySelector(".ProseMirror p") as HTMLElement;
+    const selection = window.getSelection()!;
+    const range = document.createRange();
+    range.selectNodeContents(paragraph);
+
+    // Simulate a dragged mouse range, including a rapid selectionchange while
+    // the pointer is held down. Even a long drag must never show the action.
+    fireEvent.pointerDown(editor);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    fireEvent(document, new Event("selectionchange"));
+    await new Promise((resolve) => setTimeout(resolve, 220));
+    expect(screen.queryByRole("button", { name: "批注所选文字" })).toBeNull();
+
+    fireEvent.pointerUp(document);
+    fireEvent.mouseUp(editor);
+    await new Promise((resolve) => setTimeout(resolve, 65));
+    expect(screen.queryByRole("button", { name: "批注所选文字" })).toBeNull();
+    expect(await screen.findByRole("button", { name: "批注所选文字" })).toBeInTheDocument();
+
+    // A changed selection cancels the previous offer immediately. It must
+    // settle again instead of showing the old range while the user adjusts it.
+    fireEvent(document, new Event("selectionchange"));
+    expect(screen.queryByRole("button", { name: "批注所选文字" })).toBeNull();
+    selection.removeAllRanges();
+    fireEvent(document, new Event("selectionchange"));
+    await new Promise((resolve) => setTimeout(resolve, 220));
+    expect(screen.queryByRole("button", { name: "批注所选文字" })).toBeNull();
+  });
+
   it("removes the selection-only comment action when selection collapses or the user clicks elsewhere", async () => {
     renderPage();
     await screen.findByText(/研究重点：模型、产品与开源/);

@@ -37,3 +37,9 @@ Verifies in real Chrome that opening review without text selection only permits 
     NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/abandoned-comment-qa.mjs
 
 This real Chrome test makes a selected-text comment in the /new fixture, then abandons it and checks that its card, count and text highlight disappear immediately, stage acceptance is no longer blocked, and refreshing the page does not restore it to the active view. The decision and source anchor remain only in the local session draft for provenance; no service-side actions are performed.
+
+## Selection debounce: avoid annotation popover during drag
+
+    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/selection-debounce-qa.mjs
+
+In a disposable real Chrome tab on the formal /new page, a selected DOM range stays hidden while the pointer is down, becomes actionable only after 180ms of stability following release, resets when the range changes, hides immediately when collapsed, and supplies the *latest* range to the comment composer. Existing browser-qa.mjs and selection-animation-qa.mjs cover the adjacent flows. Mobile long-press still requires hardware verification.

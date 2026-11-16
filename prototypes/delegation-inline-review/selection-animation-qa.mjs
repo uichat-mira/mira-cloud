@@ -53,13 +53,15 @@ try {
   await ev(
     "(()=>{const p=document.querySelector('.delegation-review-editor .ProseMirror p');const n=p.firstChild;const r=document.createRange();r.setStart(n,3);r.setEnd(n,20);const s=getSelection();s.removeAllRanges();s.addRange(r);document.dispatchEvent(new Event('selectionchange'));p.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));})()",
   );
-  await pause(180);
-  console.log(
-    "SELECTED_CTA",
+  // The action is intentionally held until the selection has settled.
+  await pause(260);
+  const selected = JSON.parse(
     await ev(
       "JSON.stringify({cta:!!document.querySelector('.delegation-selected-comment'),selection:window.getSelection()?.toString()})",
     ),
   );
+  console.log("SELECTED_CTA", selected);
+  if (!selected.cta) throw Error("Settled selection never exposed its comment action");
   await ev(
     "(()=>{const p=document.querySelector('.delegation-review-editor .ProseMirror p');const r=document.createRange();r.setStart(p.firstChild,2);r.collapse(true);const s=getSelection();s.removeAllRanges();s.addRange(r);document.dispatchEvent(new Event('selectionchange'));p.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));})()",
   );

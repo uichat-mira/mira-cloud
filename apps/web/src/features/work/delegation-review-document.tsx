@@ -24,6 +24,9 @@ type DelegationReviewDocumentProps = {
   onReady: (view: EditorView | null) => void;
 };
 
+// An annotation affordance should follow a settled selection, not a dragging finger.
+const SELECTION_SETTLE_MS = 180;
+
 function sameAnchors(a: readonly TextReviewAnchor[], b: readonly TextReviewAnchor[]) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
@@ -42,6 +45,8 @@ function ReviewEditor({
 }: DelegationReviewDocumentProps) {
   const crepeRef = useRef<Crepe | null>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const selectingRef = useRef(false);
+  const selectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialMarkdownRef = useRef(markdown);
   const initialAnchorsRef = useRef(anchors);
   const callbacksRef = useRef({
@@ -106,8 +111,52 @@ function ReviewEditor({
     }
   }, []);
 
+  const cancelSelectionTimer = useCallback(() => {
+    if (selectionTimerRef.current !== null) {
+      clearTimeout(selectionTimerRef.current);
+      selectionTimerRef.current = null;
+    }
+  }, []);
+
+  const queueSelection = useCallback(() => {
+    cancelSelectionTimer();
+    if (editableRef.current) return;
+    const selection = window.getSelection();
+    const view = viewRef.current;
+    if (
+      selectingRef.current ||
+      !selection ||
+      selection.isCollapsed ||
+      !view ||
+      !selection.anchorNode ||
+      !selection.focusNode ||
+      !view.dom.contains(selection.anchorNode) ||
+      !view.dom.contains(selection.focusNode)
+    ) {
+      callbacksRef.current.onSelectionCleared();
+      return;
+    }
+
+    // Reset on every selectionchange: a range isn't actionable until it stops
+    // moving. Invalid/collapsed selections still clear immediately.
+    callbacksRef.current.onSelectionCleared();
+    selectionTimerRef.current = setTimeout(() => {
+      selectionTimerRef.current = null;
+      if (!selectingRef.current) captureSelection();
+    }, SELECTION_SETTLE_MS);
+  }, [cancelSelectionTimer, captureSelection]);
+
   useEffect(() => {
-    const handleSelectionChange = () => captureSelection();
+    const handlePointerEnd = () => {
+      if (!selectingRef.current) return;
+      selectingRef.current = false;
+      queueSelection();
+    };
+    const handlePointerCancel = () => {
+      selectingRef.current = false;
+      cancelSelectionTimer();
+      callbacksRef.current.onSelectionCleared();
+    };
     const handleOutsidePointer = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
@@ -116,15 +165,22 @@ function ReviewEditor({
         target.closest(".delegation-selected-comment")
       )
         return;
+      selectingRef.current = false;
+      cancelSelectionTimer();
       callbacksRef.current.onSelectionCleared();
     };
-    document.addEventListener("selectionchange", handleSelectionChange);
+    document.addEventListener("selectionchange", queueSelection);
+    document.addEventListener("pointerup", handlePointerEnd);
+    document.addEventListener("pointercancel", handlePointerCancel);
     document.addEventListener("pointerdown", handleOutsidePointer, true);
     return () => {
-      document.removeEventListener("selectionchange", handleSelectionChange);
+      cancelSelectionTimer();
+      document.removeEventListener("selectionchange", queueSelection);
+      document.removeEventListener("pointerup", handlePointerEnd);
+      document.removeEventListener("pointercancel", handlePointerCancel);
       document.removeEventListener("pointerdown", handleOutsidePointer, true);
     };
-  }, [captureSelection]);
+  }, [cancelSelectionTimer, queueSelection]);
 
   useEffect(() => {
     crepeRef.current?.setReadonly(!editable);
@@ -187,7 +243,7 @@ function ReviewEditor({
       });
       listener.selectionUpdated(() => {
         // Preserves the selected range even if a subsequent toolbar click moves focus.
-        captureSelection();
+        queueSelection();
       });
     });
     return crepe;
@@ -196,8 +252,15 @@ function ReviewEditor({
   return (
     <div
       className={editable ? "delegation-review-editor is-editing" : "delegation-review-editor"}
-      onMouseUp={captureSelection}
-      onTouchEnd={() => window.requestAnimationFrame(captureSelection)}
+      onPointerDownCapture={() => {
+        if (editableRef.current) return;
+        selectingRef.current = true;
+        cancelSelectionTimer();
+        callbacksRef.current.onSelectionCleared();
+      }}
+      onMouseUp={queueSelection}
+      onTouchEnd={() => window.requestAnimationFrame(queueSelection)}
+      onKeyUp={queueSelection}
       onClickCapture={(event) => {
         if (editableRef.current) return;
         const target = event.target;
