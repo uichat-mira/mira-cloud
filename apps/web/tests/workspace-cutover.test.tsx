@@ -146,9 +146,10 @@ describe("AGT-054 Work workspace migration", () => {
     const sidebar = screen.getByRole("complementary", { name: "当前业务" });
     const trigger = within(sidebar).getByRole("button", { name: "交代工作" });
     await user.click(trigger);
-    // A fresh /new must ask for intent before a review document is created.
+    // /new is lazy loaded. Preserve the prior navigation-test wait budget,
+    // while asserting the new D02 entry rather than the old fixture canvas.
     expect(
-      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }),
+      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }, { timeout: 5000 }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "交代工作" })).toBeNull();
     expect(screen.getByRole("region", { name: "交代工作原型" })).toBeInTheDocument();
@@ -167,7 +168,7 @@ describe("AGT-054 Work workspace migration", () => {
     const toolbar = document.querySelector(".workbench-cockpit-toolbar") as HTMLElement;
     await user.click(within(toolbar).getByRole("button", { name: "交代工作" }));
     expect(
-      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }),
+      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }, { timeout: 5000 }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "返回" }));
     expect(screen.getByRole("heading", { level: 1, name: "工作台" })).toBeInTheDocument();
@@ -185,7 +186,7 @@ describe("AGT-054 Work workspace migration", () => {
       }),
     );
     expect(
-      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }),
+      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }, { timeout: 5000 }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "以此起稿" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "返回" }));
@@ -195,7 +196,11 @@ describe("AGT-054 Work workspace migration", () => {
   it("keeps the POC-B review lab a separate, explicit fixture route", async () => {
     renderWorkspace("/new/review-lab");
     expect(
-      await screen.findByRole("heading", { level: 1, name: "随文批注与版本 Diff" }),
+      await screen.findByRole(
+        "heading",
+        { level: 1, name: "随文批注与版本 Diff" },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
     const lab = screen.getByRole("region", { name: "POC-B 批注与 Diff 实验" });
     expect(within(lab).getByRole("button", { name: "选中第二处重复句子" })).toBeInTheDocument();
@@ -207,7 +212,7 @@ describe("AGT-054 Work workspace migration", () => {
     const user = userEvent.setup();
     renderWorkspace("/new");
     expect(
-      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }),
+      await screen.findByRole("heading", { name: "有什么事，想交给 Mira？" }, { timeout: 5000 }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("button", { name: "整理需求草稿" })).toBeDisabled();
