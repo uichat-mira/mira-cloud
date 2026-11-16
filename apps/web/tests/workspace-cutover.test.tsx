@@ -3,6 +3,17 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
+import type { ReactNode } from "react";
+
+// These tests exercise Work navigation, not the Milkdown runtime. Let /new and
+// the POC lab render their actual page chrome without starting asynchronous
+// Crepe timers that outlive an abruptly unmounted jsdom route. The real editor
+// and review behavior is exercised separately by delegation-page tests and CDP.
+vi.mock("@milkdown/react", () => ({
+  Milkdown: () => <div data-testid="navigation-only-milkdown" />,
+  MilkdownProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useEditor: () => ({ loading: false, get: () => undefined }),
+}));
 
 import { WorkspaceShell } from "../src/pages/workspace";
 
