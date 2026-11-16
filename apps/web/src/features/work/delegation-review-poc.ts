@@ -3,7 +3,7 @@ import type { Node as ProseNode } from "@milkdown/kit/prose/model";
 import { Plugin, PluginKey, type EditorState, type Transaction } from "@milkdown/kit/prose/state";
 import { Decoration, DecorationSet } from "@milkdown/kit/prose/view";
 
-// POC-B only: live document editing, not cross-version anchor migration or cloud persistence.
+// Shared by the /new review prototype and POC-B; no cross-version migration or cloud persistence.
 export type ReviewVersion = { stage: number; revision: number };
 export type TextReviewAnchor = {
   id: string;

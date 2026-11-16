@@ -1,39 +1,6 @@
 import { writeFileSync } from "node:fs";
-const target = await fetch("http://127.0.0.1:9222/json/new?about:blank", { method: "PUT" }).then(
-  (r) => r.json(),
-);
-const ws = new WebSocket(target.webSocketDebuggerUrl);
-let seq = 0;
-const pending = new Map();
-ws.addEventListener("message", (ev) => {
-  const x = JSON.parse(ev.data);
-  if (x.id && pending.has(x.id)) {
-    const h = pending.get(x.id);
-    pending.delete(x.id);
-    x.error ? h.reject(Error(x.error.message)) : h.resolve(x.result);
-  }
-});
-await new Promise((resolve, reject) => {
-  ws.addEventListener("open", resolve, { once: true });
-  ws.addEventListener("error", reject, { once: true });
-});
-function send(method, params = {}) {
-  const id = ++seq;
-  return new Promise((resolve, reject) => {
-    pending.set(id, { resolve, reject });
-    ws.send(JSON.stringify({ id, method, params }));
-  });
-}
-async function run(expression) {
-  const ret = await send("Runtime.evaluate", {
-    expression,
-    returnByValue: true,
-    awaitPromise: true,
-  });
-  if (ret.exceptionDetails) throw Error(ret.exceptionDetails.text);
-  return ret.result.value;
-}
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+import { openChrome, pause as sleep } from "./chrome-client.mjs";
+const { send, evaluate: run, close } = await openChrome();
 try {
   await send("Page.enable");
   await send("Emulation.setDeviceMetricsOverride", {
@@ -204,8 +171,5 @@ try {
   }
   console.log("INLINE_REVIEW_BROWSER_PASS");
 } finally {
-  try {
-    await send("Page.close");
-  } catch {}
-  ws.close();
+  await close();
 }

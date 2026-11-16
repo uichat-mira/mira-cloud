@@ -1,32 +1,5 @@
-const target = await fetch("http://127.0.0.1:9222/json/new?about:blank", { method: "PUT" }).then(
-  (r) => r.json(),
-);
-const ws = new WebSocket(target.webSocketDebuggerUrl);
-let id = 0;
-const pending = new Map();
-ws.addEventListener("message", (ev) => {
-  const d = JSON.parse(ev.data);
-  const h = pending.get(d.id);
-  if (!h) return;
-  pending.delete(d.id);
-  d.error ? h.reject(Error(d.error.message)) : h.resolve(d.result);
-});
-await new Promise((resolve, reject) => {
-  ws.addEventListener("open", resolve, { once: true });
-  ws.addEventListener("error", reject, { once: true });
-});
-const send = (method, params = {}) =>
-  new Promise((resolve, reject) => {
-    const n = ++id;
-    pending.set(n, { resolve, reject });
-    ws.send(JSON.stringify({ id: n, method, params }));
-  });
-const ev = async (expression) => {
-  const r = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-  if (r.exceptionDetails) throw Error(r.exceptionDetails.text);
-  return r.result.value;
-};
-const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+import { openChrome, pause } from "./chrome-client.mjs";
+const { send, evaluate: ev, close } = await openChrome();
 const metrics = () =>
   ev(
     "(()=>{const p=document.querySelector('.delegation-paper');const a=document.querySelector('.delegation-layout');const b=document.querySelector('.delegation-comments');return JSON.stringify({paper:p?.getBoundingClientRect().width,tracks:a&&getComputedStyle(a).gridTemplateColumns,gap:a&&getComputedStyle(a).columnGap,open:!!b,overflow:document.documentElement.scrollWidth>innerWidth})})()",
@@ -166,8 +139,5 @@ try {
     throw Error("Mobile sheet changed unexpectedly");
   console.log("SELECTION_AND_ANIMATION_PASS");
 } finally {
-  try {
-    await send("Page.close");
-  } catch {}
-  ws.close();
+  await close();
 }

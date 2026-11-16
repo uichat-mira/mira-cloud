@@ -1,113 +1,32 @@
 # 06 · 正式交代工作随文批注 UI 第一轮
 
 **日期**：2026-11-16
-**性质**：Mira Cloud /new 产品原型的交互接线与浏览器证据；不是云任务服务或生产能力。
-**基线**：dev 合并 POC-B 后的 acf157930523ce17b75ab2ac641b41b97f0f6344。
-**决议**：[D01–D31](../../product/delegation-intelligent-ui.md) 的 D03、D22–D25、D27；[POC-B](./05-review-anchor-diff-poc.md)。
+**性质**：Mira Cloud /new 的 Fixture 原型 UI；不是已经接通云端任务或 Agent 的服务。
+**依据**：[D01–D31 产品合同](../../product/delegation-intelligent-ui.md)、[POC-B](./05-review-anchor-diff-poc.md)、[PR #114](https://github.com/uichat-mira/mira-cloud/pull/114)。
+**视觉结论**：用户有条件接受第一轮，Office 式完整审阅仍存在缺口。
 
-## 实施范围
+## 当前实现
 
-- 保留原有 DelegationDraft / 阶段验收 / JSON UI / sessionStorage 作为状态真相。将正式 /new 正文阅读和编辑整合成同一套 Milkdown Crepe、ProseMirror 编辑器视图；只读与编辑通过显式按钮切换。
-- 复用 POC-B 文字锚点 Plugin、Transaction Mapping 和 Decoration，在原批注草稿中增加可选来源锚点（from/to、阶段与修订、active/lost）。未锚定的全文批注保持兼容。
-- 框选后只显示靠近选区的轻量「批注所选文字」入口，不自动展开批注栏。可显式切换为「批注整个阶段」。
-- 正文高亮点击定位批注；批注点击「返回原文」通过 ProseMirror 坐标定位，readonly 状态使用同一文档的 DOM Range。删除／编辑导致无法可靠映射时标记定位失效，不搜索重复文字。
-- 桌面右侧随文批注栏按需出现；中等宽度改为双栏确保需求画布够宽；手机使用底部批注面板、可关闭并尝试恢复阅读位置。
-- 草稿仍明确为同标签页会话保存。接受阶段、集中修订、历史回溯状态语义不变；不连接 Cloud Pi / Auth。
+- **单一数据来源**：现有 DelegationDraft 包含阶段、正文、动态 UI 配置、版本、批注；Milkdown Crepe/ProseMirror 共用同一文档视图，显式切换阅读和编辑。会话草稿仍只保存于当前标签页 sessionStorage，保存失败明确提示。
+- **选区批注**：鼠标或触屏拖动期间不显示入口，原生 Selection 停止变化约 180ms 才出现；取消立即隐藏。侧栏关闭时点击轻量入口进入，侧栏已展开时可直接连续为不同段落批注。
+- **批注对象明确**：草稿信息栏右上角只有一个 Lucide MessageSquare 图标负责开关审阅面板。无选区时默认只看已有批注；创建整个阶段的意见必须明确点击「批注整个阶段」，不能隐式降级。
+- **锚点安全**：保存来源阶段、修订、from/to、摘录。ProseMirror Mapping 处理同版本内编辑；原文删除或不再匹配时标记失效，不搜索相同字符串猜测位置。正文高亮与侧栏批注支持双向定位。
+- **处理闭环**：未处理批注阻止接受阶段；放弃批注立即从当前列表、数量与正文高亮中移除，但数据及来源记录保留用于历史。已解决条目展示规则未擅自扩张。
+- **桌面布局**：仅 /new 放开通用 Work 1320px 宽度上限；PC 草稿栏贴 Work 顶栏吸顶，唯一批注图标位于其右侧。已删除常驻「仅在此标签页保存」文案；发生保存失败仍警示。
+- **独立滚动**：右侧批注栏相对视口固定，顶部标题、中部列表、底部编辑器分层；列表局部滚动。桌面画布开关以约 220ms 过渡。手机沿用底部批注面板。Crepe 多余 LaTeX 编辑浮层已禁用。
 
-## 可复现证据
+## 验证与证据
 
-- 命令：pnpm --filter @mira-cloud/web check → 19 个测试文件、203/203 项测试通过；MiraDesign、格式、Lint、TS、Vite 构建通过。
-- node scripts/check-docs.mjs → 文档合同检查通过。
-- 实际 macOS Chrome DevTools Protocol：真实 /new 页面，390px 选择文本后入口出现且不自动开栏；底部面板编辑保存后原文高亮；高亮→批注→原文双向定位；sessionStorage 刷新恢复；手动编辑时在锚点之前插入文字，范围由 11–31 正确映射到 16–36，完成编辑后仍有效。
-- 用户视觉复核后，PC 端 /new 改为使用完整的 Work 内容区：仅对该页面取消 Shell 的 1320px 最大宽度，适度缩减页面边缘留白；其他 Work 页面保持原最大宽度。
-- Chrome /new 开启右栏的实测：1600px 宽度时任务画布 1165px → 1200px，正文卡片 652px → 884px；1920px 任务画布 1208px → 1517px；2560px 任务画布 1208px → 2157px。
-- 在 1121–1760px 屏幕保持正文＋批注双栏，阶段主线收至顶部；更宽屏幕才使用阶段主线＋正文＋批注三栏。更新浏览器脚本持续检查 1280／1600／1920／2560px 正文最小宽度、画布利用率与横向溢出。
-- 手机布局和响应式断点低于 1121px 的逻辑保持不变。
-- [Chrome 复现脚本](../../../prototypes/delegation-inline-review/browser-qa.mjs)、[手机截图](./assets/inline-review-mobile-390.webp)、[桌面截图](./assets/inline-review-desktop.webp)。
+- 本地 Fast Gate：pnpm --filter @mira-cloud/web check；包括 MiraDesign、Prettier、ESLint、TypeScript、Vitest 与 Vite 构建。GitHub Mira Gate 应以对应 PR 最新提交的实际结果为准。
+- 文档与补丁：node scripts/check-docs.mjs、git diff --check。
+- Mac 真实 Chrome CDP： [浏览器复现脚本及运行说明](../../../prototypes/delegation-inline-review/README.md)。覆盖文字批注和刷新、正文编辑后锚点映射、关闭栏时选区防抖、右栏开启时连续添加两条、无选区不能直接提交、放弃后隐藏、长文首屏至末尾右栏固定、批注独立滚动、桌面宽度过渡和手机模拟宽度。
+- 截图：[桌面](./assets/inline-review-desktop.webp)、[手机 390px](./assets/inline-review-mobile-390.webp)、[桌面独立批注栏](./assets/inline-review-sticky-desktop.webp)。
 
-## 未通过的合同（必须如实保留）
+## 明确保留的缺口
 
-- D24 仍未完成随文卡片的纵向对应、密集避让与折叠；本轮证明的是可用的基础高亮和双向定位，不宣称 Office 式批注体验全部通过。
-- D27 只有 Chrome 390px 模拟视口，未通过 Android/iOS 真机长按选择、输入法/视觉视口变化、Safe Area 和复杂长文滚动恢复。
-- D25 保存来源版本及明确失效，但不做跨已接受版本自动迁移；原版本完整可视化留给第二轮。
-- D04–D06 的集中修订与轻量 Diff 仍为演示或待接入，本轮未解决；真实模型生成、服务端持久化、Agent 运行、正式委托及部署均未进行。
+- **D24**：完整 Office 式的纵向随文排列、密集卡片避让与折叠尚未验收；本轮只覆盖基础高亮、双向定位、滚动分离。
+- **D25 / D05**：保留了来源版本和失效状态，但跨版本完整历史回看与轻量 Diff 仍未集成完成。
+- **D27**：Chrome 窄屏模拟不能代替 iOS/Android 真机；长按选区、键盘/视觉视口、Safe Area、长文滚动恢复仍需实际设备验证。
+- **D04 / D30**：集中修订与流式生成仍为原型演示，不代表真实模型、Cloud Auth/Pi、后端持久化、持续托管或委托提交的闭环。
 
-**判定**：第一轮基础 UI 接线可进入真实手机的产品视觉复核。后续针对体验差距小步修复，再启动第二轮集中修订与 Diff 整合，不能把本轮等同于 D01–D31 全部验收。
-
-
-## 桌面批注栏滚动问题复核与修复（2026-11-16）
-
-用户在真实 PC 端观察到：右侧批注栏会随正文滚动，页面和批注列表的两条滚动条同时明显出现。此前「sticky 通过」的断言只在正文滚动到中间位置验证了 top=74px，漏掉了打开批注的**首屏**及滚动到正文**末尾**两个反例，因此不能视为完成这项验收。
-
-现将桌面版（宽度 ≥1121px）批注栏从受文档 Grid 约束的 sticky 改为真正的**视口固定** fixed；Grid 子项保留在原位置占列，右栏自己只固定标题与输入区，中间列表滚动。内层列表的滚动条默认隐藏轨道，在鼠标悬停或键盘聚焦时显示细轨道；正文主滚动条仍负责主页面。两种**独立滚动能力**仍存在，这不是将所有内容合并到一个滚动容器。
-
-- 在 1600×900 的 Mac Chrome 真实浏览器中，使用 24 条批注和 100 段正文复测：初始正文 scrollY=0 时右栏 top=74px；正文滚至 700px 时仍为 74px；正文滚至文档末尾 scrollY=4224px 时仍为 74px。
-- 列表滚动 750px、跳转至第 24 条、滚到列表尽头再次使用滚轮后，正文 scrollY 不变；标题与输入框始终留在同一位置。
-- 1280×680 仍保有 286px 高的可滚动批注列表，1920px 桌面无横向溢出；390px 手机仍使用原固定底部面板，不受桌面布局影响。
-- [Chrome 独立复现脚本](../../../prototypes/delegation-inline-review/desktop-sticky-qa.mjs)、[修复后 1600px 截图](./assets/inline-review-sticky-desktop.webp)。此前的单中间位置 sticky 结论被本条取代；尚未进行跨浏览器、真机触控/键盘的完整验收。
-
-
-## 产品视觉复核：批注宽度动画／无意义 ✓／幽灵批注入口（2026-11-16）
-
-- 桌面 /new 打开和关闭批注栏会改变正文宽度，因此使 Grid 保留固定数量的轨道：从无批注轨道（0px）渐进到 294px；宽度和间距采用 220ms 过渡，右栏入场 180ms 淡入。遵守现有 prefers-reduced-motion 约束，非全局动画。
-- 用户截图中的孤立「✓」不是完成状态或阶段接受：浏览器 DOM 定位到 Crepe 自带的 milkdown-latex-inline-edit[data-show=false] 浮层，其确认按钮在只读正文下方错误露出。正式任务正文禁用未使用的 LaTeX 特性，避免仅靠 CSS 隐藏症状。
-- 旧选区入口由 ProseMirror 已过期选区和只增不减的 pendingAnchor 造成。现在以实际浏览器原生 Selection 为捕获依据；选区收起、点击正文外区域时清除临时入口。若用户已主动点击批注入口，才保留原锚点供输入区使用；在当时实现中，页面仍允许不选文字、从底部「批注」入口直接提交**阶段整体意见**；该自动降级行为已在后续视觉复核中纠正，见下方「随文批注目标必须明确」。
-- Mac Chrome /new 实测：1600px 展开批注时正文宽度约 1200→（中途 913）→884px，关闭时 884→（中途 1172）→1200px；已有完整批注 E2E 仍通过。1920px 和 390px 分别验证宽屏与手机布局，参见 [selection-animation-qa.mjs](../../../prototypes/delegation-inline-review/selection-animation-qa.mjs)。
-- 无法以 Chrome 模拟器替代 iOS Safari 真机选区/输入法验收；这一点继续保留为 D27 证据缺口。
-
-
-## 需求草稿身份栏吸顶（PC，2026-11-16）
-
-用户希望固定「需求草稿 / 场景名称 · 仅在此标签页保存」这条文稿信息栏，而不是重新固定整张纸或整个页面。正式 /new 的 .delegation-paper-topline 在桌面（宽度 ≥981px）使用 position: sticky，top 取 Workspace Shell 的真实导航高度变量 --workspace-header-height（当前 58px）。层级低于 Workspace 顶栏，吸顶期间保留不透明度适中的 MiraDesign 背景，阅读原文时能持续确认草稿归属与保存范围。组件属于纸张 DOM，滚出纸张边界时正常退出，不额外建立全局固定栏；移动端不增加常驻的纵向占用。
-
-真实 Mac Chrome 复现：[draft-topline-qa.mjs](../../../prototypes/delegation-inline-review/draft-topline-qa.mjs)。1600×900 初始栏 top=407px；主体 scrollY=650/1750 时栏 top=58px；展开右侧批注后仍为 58px（批注栏 top=74px）；1280/1920px 桌面同样为 58px，无横向溢出；390px 手机端继续 position: static。浏览器测试使用一次性标签页和演示会话，未连接真实云端任务或修改线上数据。
-
-## 随文批注目标必须明确（PC 视觉反馈，2026-11-16）
-
-用户在正式 /new 中未选中任何文字，直接点击底部「批注」就能填写并提交「本阶段整体」批注。这不是用户明确选择的目标，而是实现中 pendingAnchor 为 null 时自动退化到全文批注，违反了随文批注按需进入的交互直觉。
-
-按现行 D03 保留**文字批注与全文批注两种能力**，但不允许二者隐式切换：
-
-- 底部「批注」仅打开查看/处理面板；**未选中文字时，不展示输入框，也不展示「添加批注」**，已有批注仍然可以查看和解决。
-- 通过文字选区的轻量入口进入，只能对已验证的选区提交批注；文本坐标、阶段或修订发生变化时，不自动降级为整体批注。
-- 若确实希望针对整个阶段提意见，必须另外明确点击「批注整个阶段」，才能进入无文字锚点的编辑状态；取消后恢复只读列表；跨阶段切换与开始修订会清理临时意图。
-- UI 与提交处理函数都有门禁。空目标不会新建数据；明确选择整体目标后，仍可生成兼容旧数据格式的「本阶段整体」批注。
-
-验证：Mac Chrome /new 实测 [comment-intent-qa.mjs](../../../prototypes/delegation-inline-review/comment-intent-qa.mjs)：无选区打开面板时 composer=false、submit=false、comments=0；明确点击整体目标才出现输入区；取消并关闭仍 comments=0。现有 [browser-qa.mjs](../../../prototypes/delegation-inline-review/browser-qa.mjs) 继续确认文字选区 → 批注 → 锚点保存与定位的完整路径。JS DOM 新增无目标、显式整体批注及跨阶段意图清理的回归。该原型仍只使用 sessionStorage，没有真实 Agent 任务提交。
-
-## 放弃批注退出工作视图（PC 视觉反馈，2026-11-16）
-
-现行 D06 / D25 要求用户明确放弃批注，并保留原版本处理结果和来源；但放弃不应继续成为待维护的 UI 项。当前阶段右侧列表不再渲染 abandoned 状态的批注，其计数、正文下划线高亮和双向定位入口同步去除；不再占用阶段验收待处理数量。数据层仍保留状态和来源锚点，避免破坏版本审计或历史回溯。
-
-这与彻底删除不同：abandoned 保留在同标签页演示草稿，但不再投影到日常审阅界面。当前仅过滤放弃状态，已确认解决的批注展示行为未在本轮擅自改变。没有为隐藏的历史创建第二个列表、额外计数或维护入口。
-
-验证：Mac Chrome /new [abandoned-comment-qa.mjs](../../../prototypes/delegation-inline-review/abandoned-comment-qa.mjs) 从真实文字选区创建有原文锚点的批注，放弃前右栏 1 条、正文高亮 1 条、阻塞验收；放弃后右栏 0 条、高亮 0 条、验收恢复可用，而 sessionStorage 记录仍为 abandoned。重新加载后仍隐藏且保持一致。Vitest 覆盖无锚点整体批注、带锚点的放弃隐藏与数据保留。
-
-
-## 文字框选交互防抖（PC 视觉反馈，2026-11-16）
-
-用户反馈拖动选择正文时，悬浮「批注所选文字」会在选区仍变化时出现、挡住附近文字。已在正式 /new 的 Milkdown/ProseMirror 选区捕获入口增加轻量防抖，不改变来源锚点、版本合同或批注持久化。
-
-- 鼠标或触控按下并拖动时不弹 CTA；松开后，原生 Selection 连续稳定 180ms 才生成动作入口。期间继续调整范围会取消此前计时并重新等待，不依赖有延迟的 ProseMirror 旧选区。
-- 无效、收起或跨编辑器的原生选区立即撤销待定入口；在编辑器外部点击取消；用户明确进入批注输入时继续保留已确认的选区来源，不会因为 textarea 获取焦点而丢失锚点。
-- 键盘修改选区也通过 selectionchange / keyup 走同一稳定等待。保留原有 touchend + pointerup 监听；真正的 iOS Safari 长按与系统菜单仍需真机实测，不以 Chrome 模拟替代。
-- Vitest 增加拖动按住 220ms 不弹、松开后 65ms 不弹、稳定后出现、再次改动和取消即隐藏的回归。Mac Chrome 实测 [selection-debounce-qa.mjs](../../../prototypes/delegation-inline-review/selection-debounce-qa.mjs) 使用实际文档 DOM Range + pointerdown/up/selectionchange，长拖动不弹、松开后 80ms 不弹、稳定约 265ms 弹出；再次变动 45ms 不弹、稳定后显示；点击后侧栏摘录严格等于最后选区。
-- 既有 [browser-qa.mjs](../../../prototypes/delegation-inline-review/browser-qa.mjs) 整条文字批注 E2E 通过；同步更新 [selection-animation-qa.mjs](../../../prototypes/delegation-inline-review/selection-animation-qa.mjs) 的稳定选区等待断言，不能再期待选择即刻弹窗。
-
-
-## 顶部单图标批注入口与文案减法（2026-11-16）
-
-按照 Mac 桌面视觉反馈，正式 /new 将底部左侧「批注」按钮移至已吸顶的草稿信息栏右侧，只保留一个 Lucide MessageSquare 图标。保留无障碍名称、悬停 title 与展开状态；点击图标可以打开或关闭右侧批注区。工作底栏现在只包含阶段修订/接受等主要操作。
-
-再次反馈要求删除冗余的「仅在此标签页保存」常驻文案，已从 UI 移除，不改变会话内演示草稿的实际保存语义；发生保存失败时，顶部仍显式提示「会话保存失败」，避免隐藏真实故障。整个顶部区域的宽度分配和吸顶偏移保持不变；移动端继续采用 44px 触控目标。
-
-浏览器验证：[review-icon-topline-qa.mjs](../../../prototypes/delegation-inline-review/review-icon-topline-qa.mjs)；已有浏览器回归中打开批注的入口已统一迁移至此唯一图标，不再依赖旧底部按钮。
-
-
-## 修复右栏开启时不能批注第二段（2026-11-16）
-
-Mac 视觉验收发现：正文已有一条批注并且右侧栏仍打开时，继续框选第二段文字，浏览器选区显示正常，却无法创建下一条批注。实际根因在正式 /new 页 selectDocumentText 的 commentsOpen 短路，误将「打开审阅栏」视为「禁止捕获新的文字选区」。该逻辑也屏蔽了用户首次打开空白审阅栏后再选择原文的场景。
-
-现已移除此错误门禁，同时保留 streaming / historical / editingBody 的禁止编辑约束。右栏开启时，新的稳定选区直接更新右侧输入区的原文对象；不会重复浮出页面上的批注入口。右栏关闭时，延续既有选区防抖与悬浮 CTA，只有用户主动点击才展开审阅栏。输入区正在编辑时，浏览器取消原生选区不应清掉已明确选择的原文，提交时仍通过阶段、修订、坐标与 excerpt 完整校验。
-
-新增 Vitest 回归：右栏预先开启，逐次选中第二段、第一段、分别保存，验证两份不同来源锚点、两处正文高亮及独立批注。真实 macOS Chrome /new [sequential-selection-qa.mjs](../../../prototypes/delegation-inline-review/sequential-selection-qa.mjs) 实测侧栏一直开启，从第一段到第二段连续提交成功，两条批注对应不同的摘录；并保持无需关闭右栏、重新打开后再批注。没有真实服务调用或跨端验收。
+**判定**：本轮仅作为基础批注 UI 原型的 feat → dev 集成候选。视觉有条件接受、代码/浏览器测试和真实云端运行能力是三种不同证据，不可互相替代。

@@ -1,34 +1,6 @@
 // Regression for successive paragraph annotations with a visible review sidebar.
-const target = await fetch("http://127.0.0.1:9222/json/new?about:blank", { method: "PUT" }).then(
-  (r) => r.json(),
-);
-const socket = new WebSocket(target.webSocketDebuggerUrl);
-let seq = 0;
-const pending = new Map();
-socket.addEventListener("message", (e) => {
-  const d = JSON.parse(e.data),
-    h = pending.get(d.id);
-  if (h) {
-    pending.delete(d.id);
-    d.error ? h.reject(Error(d.error.message)) : h.resolve(d.result);
-  }
-});
-await new Promise((resolve, reject) => {
-  socket.addEventListener("open", resolve, { once: true });
-  socket.addEventListener("error", reject, { once: true });
-});
-const send = (method, params = {}) =>
-  new Promise((resolve, reject) => {
-    const id = ++seq;
-    pending.set(id, { resolve, reject });
-    socket.send(JSON.stringify({ id, method, params }));
-  });
-const ev = async (expression) => {
-  const r = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-  if (r.exceptionDetails) throw Error(r.exceptionDetails.text);
-  return r.result.value;
-};
-const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+import { openChrome, pause } from "./chrome-client.mjs";
+const { send, evaluate: ev, close } = await openChrome();
 const state = () =>
   ev(
     "(()=>{const p=document.querySelector('[aria-label=\"随文批注\"]');const draft=JSON.parse(sessionStorage.getItem('mira-cloud-delegation-fixture-v1'));return JSON.stringify({open:!!p,field:!!p?.querySelector('textarea'),quote:p?.querySelector('.delegation-comment-compose blockquote')?.textContent,commentCount:document.querySelectorAll('.delegation-comment-item').length,highlights:document.querySelectorAll('.delegation-review-poc-anchor').length,cta:!!document.querySelector('.delegation-selected-comment'),stored:draft.comments.map(x=>({excerpt:x.excerpt,anchor:x.anchor}))})})()",
@@ -89,8 +61,5 @@ try {
     throw Error("Sequential annotations failed to bind distinct source ranges");
   console.log("SECOND_PARAGRAPH_REVIEW_BROWSER_PASS");
 } finally {
-  try {
-    await send("Page.close");
-  } catch {}
-  socket.close();
+  await close();
 }

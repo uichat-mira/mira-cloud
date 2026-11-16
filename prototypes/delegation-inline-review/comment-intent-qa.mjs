@@ -1,37 +1,6 @@
 // CDP regression: opening the review list does not implicitly authorize annotation.
-const tab = await fetch("http://127.0.0.1:9222/json/new?about:blank", { method: "PUT" }).then((r) =>
-  r.json(),
-);
-const ws = new WebSocket(tab.webSocketDebuggerUrl);
-let id = 0;
-const pending = new Map();
-ws.addEventListener("message", (e) => {
-  const d = JSON.parse(e.data);
-  const next = pending.get(d.id);
-  if (!next) return;
-  pending.delete(d.id);
-  d.error ? next.reject(Error(d.error.message)) : next.resolve(d.result);
-});
-await new Promise((resolve, reject) => {
-  ws.addEventListener("open", resolve, { once: true });
-  ws.addEventListener("error", reject, { once: true });
-});
-const send = (method, params = {}) =>
-  new Promise((resolve, reject) => {
-    const n = ++id;
-    pending.set(n, { resolve, reject });
-    ws.send(JSON.stringify({ id: n, method, params }));
-  });
-const run = async (expression) => {
-  const result = await send("Runtime.evaluate", {
-    expression,
-    returnByValue: true,
-    awaitPromise: true,
-  });
-  if (result.exceptionDetails) throw Error(result.exceptionDetails.text);
-  return result.result.value;
-};
-const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+import { openChrome, pause } from "./chrome-client.mjs";
+const { send, evaluate: run, close } = await openChrome();
 const snapshot = () =>
   run(
     "(()=>{const panel=document.querySelector('[aria-label=\"随文批注\"]');const draft=JSON.parse(sessionStorage.getItem('mira-cloud-delegation-fixture-v1'));return JSON.stringify({opened:!!panel,entries:draft.comments.length,composer:!!panel?.querySelector('textarea'),submit:[...(panel?.querySelectorAll('button')||[])].some(x=>x.textContent.includes('添加批注')),targetAction:[...(panel?.querySelectorAll('button')||[])].some(x=>x.textContent.trim()==='批注整个阶段'),width:document.documentElement.scrollWidth,viewport:innerWidth})})()",
@@ -82,8 +51,5 @@ try {
     throw Error("Review close not clean");
   console.log("EXPLICIT_COMMENT_INTENT_PASS");
 } finally {
-  try {
-    await send("Page.close");
-  } catch {}
-  ws.close();
+  await close();
 }

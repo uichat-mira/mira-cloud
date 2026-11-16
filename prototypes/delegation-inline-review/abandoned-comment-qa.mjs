@@ -1,34 +1,7 @@
 // Chrome CDP regression for hiding abandoned annotations while retaining their
 // provenance in the local prototype draft.
-const target = await fetch("http://127.0.0.1:9222/json/new?about:blank", { method: "PUT" }).then(
-  (r) => r.json(),
-);
-const socket = new WebSocket(target.webSocketDebuggerUrl);
-let sequence = 0;
-const pending = new Map();
-socket.addEventListener("message", (e) => {
-  const d = JSON.parse(e.data);
-  const p = pending.get(d.id);
-  if (!p) return;
-  pending.delete(d.id);
-  d.error ? p.reject(Error(d.error.message)) : p.resolve(d.result);
-});
-await new Promise((resolve, reject) => {
-  socket.addEventListener("open", resolve, { once: true });
-  socket.addEventListener("error", reject, { once: true });
-});
-const send = (method, params = {}) =>
-  new Promise((resolve, reject) => {
-    const id = ++sequence;
-    pending.set(id, { resolve, reject });
-    socket.send(JSON.stringify({ id, method, params }));
-  });
-const run = async (expression) => {
-  const r = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-  if (r.exceptionDetails) throw Error(r.exceptionDetails.text);
-  return r.result.value;
-};
-const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+import { openChrome, pause } from "./chrome-client.mjs";
+const { send, evaluate: run, close } = await openChrome();
 const inspect = () =>
   run(
     "(()=>{const draft=JSON.parse(sessionStorage.getItem('mira-cloud-delegation-fixture-v1')||'{}');const aside=document.querySelector('[aria-label=\"随文批注\"]');return JSON.stringify({saved:draft.comments?.map(x=>({status:x.status,text:x.text,anchor:!!x.anchor})),shown:document.querySelectorAll('.delegation-comment-item').length,count:aside?.querySelector('h3')?.textContent,highlights:document.querySelectorAll('.delegation-review-poc-anchor').length,acceptDisabled:[...document.querySelectorAll('button')].find(x=>x.textContent.includes('接受本阶段'))?.disabled,docWidth:document.documentElement.scrollWidth,viewport:innerWidth})})()",
@@ -46,7 +19,8 @@ try {
   await run(
     "(()=>{const ed=document.querySelector('.delegation-review-editor');const t=ed.querySelector('.ProseMirror p').firstChild;const r=document.createRange();r.setStart(t,4);r.setEnd(t,22);const s=getSelection();s.removeAllRanges();s.addRange(r);ed.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));})()",
   );
-  await pause(130);
+  // Selection CTA appears only after the 180ms no-drag stabilization window.
+  await pause(300);
   const cta = await run("!!document.querySelector('.delegation-selected-comment')");
   if (!cta) throw Error("Text selection CTA missing");
   await run("document.querySelector('.delegation-selected-comment')?.click()");
@@ -98,8 +72,5 @@ try {
     throw Error("Abandoned comment reappeared after reload");
   console.log("ABANDONED_REVIEW_BROWSER_PASS");
 } finally {
-  try {
-    await send("Page.close");
-  } catch {}
-  socket.close();
+  await close();
 }

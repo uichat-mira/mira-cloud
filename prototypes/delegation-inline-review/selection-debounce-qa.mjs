@@ -1,38 +1,6 @@
 // Real Chrome /new selection stability regression.
-const target = await fetch("http://127.0.0.1:9222/json/new?about:blank", { method: "PUT" }).then(
-  (r) => r.json(),
-);
-const ws = new WebSocket(target.webSocketDebuggerUrl);
-let seq = 0;
-const pending = new Map();
-ws.addEventListener("message", (e) => {
-  const x = JSON.parse(e.data);
-  const p = pending.get(x.id);
-  if (p) {
-    pending.delete(x.id);
-    x.error ? p.reject(Error(x.error.message)) : p.resolve(x.result);
-  }
-});
-await new Promise((resolve, reject) => {
-  ws.addEventListener("open", resolve, { once: true });
-  ws.addEventListener("error", reject, { once: true });
-});
-const send = (method, params = {}) =>
-  new Promise((resolve, reject) => {
-    const id = ++seq;
-    pending.set(id, { resolve, reject });
-    ws.send(JSON.stringify({ id, method, params }));
-  });
-const ev = async (expr) => {
-  const r = await send("Runtime.evaluate", {
-    expression: expr,
-    returnByValue: true,
-    awaitPromise: true,
-  });
-  if (r.exceptionDetails) throw Error(r.exceptionDetails.text);
-  return r.result.value;
-};
-const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+import { openChrome, pause } from "./chrome-client.mjs";
+const { send, evaluate: ev, close } = await openChrome();
 const metrics = () =>
   ev(
     "(()=>{const x=document.querySelector('.delegation-selected-comment');return JSON.stringify({visible:!!x,selection:window.getSelection()?.toString(),label:x?.textContent,open:!!document.querySelector('[aria-label=\"随文批注\"]')})})()",
@@ -100,8 +68,5 @@ try {
   if (cleared.visible) throw Error("CTA did not clear when native selection collapsed");
   console.log("SELECTION_DEBOUNCE_BROWSER_PASS");
 } finally {
-  try {
-    await send("Page.close");
-  } catch {}
-  ws.close();
+  await close();
 }

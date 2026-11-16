@@ -1,51 +1,23 @@
-# Formal /new inline review browser regression
+# /new 随文批注 Chrome 回归
 
-Developer-only Chrome CDP regression against the formal /new page, not the POC-B lab. Needs Mira Cloud Vite at 127.0.0.1:5173, Chrome remote-debug port 9222, Node 24.
+仅验证正式 /new 的本地 Fixture 原型。需要 Mac Node 24、Vite 127.0.0.1:5173 和 Chrome CDP 127.0.0.1:9222。每个脚本创建独立临时浏览器标签页，使用本地草稿，结束后关闭；截图仅输出 /tmp，不调用真实 Cloud Auth、Pi、Task 或收费模型。
+
+从仓库根目录运行任一脚本：
 
     NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/browser-qa.mjs
 
-Exercises text selection, annotation entry, mobile sheet, precise highlight, bidirectional navigation, same-tab session recovery, live ProseMirror mapping after edits, responsive widths and desktop sidebar. Screenshots only go to /tmp. No real Cloud Task, Auth or paid API; not a substitute for Android/iOS hardware acceptance.
+| 脚本 | 要证明的风险 |
+| --- | --- |
+| [browser-qa.mjs](./browser-qa.mjs) | 批注→原文双向定位、刷新、编辑后锚点重映射、桌面与手机视口 |
+| [sequential-selection-qa.mjs](./sequential-selection-qa.mjs) | 右栏保持开启后对不同段落连续创建有来源的批注 |
+| [selection-debounce-qa.mjs](./selection-debounce-qa.mjs) | 180ms 稳定选区、防误弹、改选和取消 |
+| [comment-intent-qa.mjs](./comment-intent-qa.mjs) | 无选区只读；整体意见必须明确指定范围 |
+| [abandoned-comment-qa.mjs](./abandoned-comment-qa.mjs) | 放弃后列表、高亮、验收、刷新一致 |
+| [desktop-sticky-qa.mjs](./desktop-sticky-qa.mjs) | 右栏**视口固定**，24 条批注/长文独立滚动；沿用早期文件名 |
+| [draft-topline-qa.mjs](./draft-topline-qa.mjs) | PC 草稿栏吸顶，移动端不新增吸顶 |
+| [review-icon-topline-qa.mjs](./review-icon-topline-qa.mjs) | 唯一右上角批注图标、开关、窄屏溢出 |
+| [selection-animation-qa.mjs](./selection-animation-qa.mjs) | 桌面宽度过渡、选区与禁用多余 LaTeX 浮层 |
 
+[chrome-client.mjs](./chrome-client.mjs) 只复用 CDP 连接、求值与清理生命周期，不包含审阅领域行为断言。新增浏览器场景应复用此模块。
 
-## Desktop viewport-fixed review rail + independently scrolling notes
-
-    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/desktop-sticky-qa.mjs
-
-The script opens an isolated Chrome tab, adds 24 local-only review notes and 100 paragraphs to a disposable session fixture, then checks that the desktop review rail remains fixed below the Work topbar from the first viewport through the document end, only its note list responds to wheel and comment-navigation scrolling (including at the scroll boundary), and its header and composer remain in place. Also checks 1280x680 and mobile 390px responsiveness. This is live browser evidence, not a jsdom-only computed-style assertion.
-
-
-## Selection affordance and review-width animation
-
-    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/selection-animation-qa.mjs
-
-Exercises the actual /new page in Chrome: ensures the unused Milkdown LaTeX popup is absent, selecting then collapsing a native DOM selection shows/hides the ephemeral comment action, and both opening and closing the desktop review rail interpolate the document width (1600px and 1920px). Confirms the 390px mobile bottom sheet is unchanged. All data remains local-only; no Task/API calls.
-
-## PC draft identity bar sticky under the Work header
-
-    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/draft-topline-qa.mjs
-
-Exercises the actual /new page in a disposable Chrome tab with a long Markdown fixture: before scroll, while scrolling, after opening the desktop review rail, and at desktop viewport widths 1280/1600/1920px. Confirms the bar stays precisely below the global 58px Work header and has no horizontal overflow. The mobile 390px version is deliberately nonsticky to preserve reading height.
-
-## Explicit text or whole-stage annotation target
-
-    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/comment-intent-qa.mjs
-
-Verifies in real Chrome that opening review without text selection only permits reading existing notes; the composer and submit action do not appear. Creating an unanchored note requires an explicit second action ("批注整个阶段"), and cancelling that action leaves no draft comment. Selected-text annotation is separately covered by browser-qa.mjs. No real backend calls.
-
-## Abandoned comments leave the active review UI
-
-    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/abandoned-comment-qa.mjs
-
-This real Chrome test makes a selected-text comment in the /new fixture, then abandons it and checks that its card, count and text highlight disappear immediately, stage acceptance is no longer blocked, and refreshing the page does not restore it to the active view. The decision and source anchor remain only in the local session draft for provenance; no service-side actions are performed.
-
-## Selection debounce: avoid annotation popover during drag
-
-    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/selection-debounce-qa.mjs
-
-In a disposable real Chrome tab on the formal /new page, a selected DOM range stays hidden while the pointer is down, becomes actionable only after 180ms of stability following release, resets when the range changes, hides immediately when collapsed, and supplies the *latest* range to the comment composer. Existing browser-qa.mjs and selection-animation-qa.mjs cover the adjacent flows. Mobile long-press still requires hardware verification.
-
-## Sequential selected-text comments with an already-open review rail
-
-    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/sequential-selection-qa.mjs
-
-Regression for the previous commentsOpen selection guard: open the review rail, select and annotate a paragraph, then select and annotate another paragraph without closing the rail. The script checks both source excerpts, persisted anchors and document marks in the actual Chrome /new page. When the rail is open, selection goes straight to the visible composer; it does not duplicate the closed-mode floating action.
+**限制**：Chrome 模拟视口不是 Android/iOS 真机验收；Fixture 交互验证也不能证明云端任务服务已可用。任何脚本的失败都应如实记录，不能沿用旧版测试日志代替。

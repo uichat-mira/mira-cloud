@@ -1,38 +1,6 @@
 import { writeFileSync } from "node:fs";
-const target = await fetch("http://127.0.0.1:9222/json/new?about:blank", { method: "PUT" }).then(
-  (r) => r.json(),
-);
-const ws = new WebSocket(target.webSocketDebuggerUrl);
-let n = 0;
-const map = new Map();
-ws.addEventListener("message", (event) => {
-  const r = JSON.parse(event.data);
-  const h = map.get(r.id);
-  if (h) {
-    map.delete(r.id);
-    r.error ? h.reject(Error(r.error.message)) : h.resolve(r.result);
-  }
-});
-await new Promise((resolve, reject) => {
-  ws.addEventListener("open", resolve, { once: true });
-  ws.addEventListener("error", reject, { once: true });
-});
-const call = (method, params = {}) =>
-  new Promise((resolve, reject) => {
-    const id = ++n;
-    map.set(id, { resolve, reject });
-    ws.send(JSON.stringify({ id, method, params }));
-  });
-const evaluate = async (expr) => {
-  const a = await call("Runtime.evaluate", {
-    expression: expr,
-    returnByValue: true,
-    awaitPromise: true,
-  });
-  if (a.exceptionDetails) throw Error(a.exceptionDetails.text);
-  return a.result.value;
-};
-const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+import { openChrome, pause } from "./chrome-client.mjs";
+const { send: call, evaluate, close } = await openChrome();
 const inspect = () =>
   evaluate(
     "(()=>{const select=s=>document.querySelector(s);const rect=s=>{const r=select(s)?.getBoundingClientRect();return r?{top:Math.round(r.top),bottom:Math.round(r.bottom),left:Math.round(r.left),width:Math.round(r.width)}:null};return JSON.stringify({scrollY:scrollY,viewport:innerHeight,pageWidth:document.documentElement.scrollWidth,width:innerWidth,bar:rect('.delegation-paper-topline'),paper:rect('.delegation-paper'),nav:rect('.workspace-topbar'),notes:rect('.delegation-comments'),position:getComputedStyle(select('.delegation-paper-topline')).position})})()",
@@ -102,8 +70,5 @@ try {
   if (mobile.position !== "static") throw Error("Mobile should not gain a fixed draft bar");
   console.log("DRAFT_TOPLINE_STICKY_PASS");
 } finally {
-  try {
-    await call("Page.close");
-  } catch {}
-  ws.close();
+  await close();
 }

@@ -1,38 +1,6 @@
 import { writeFileSync } from "node:fs";
-const target = await fetch("http://127.0.0.1:9222/json/new?about:blank", { method: "PUT" }).then(
-  (r) => r.json(),
-);
-const ws = new WebSocket(target.webSocketDebuggerUrl);
-let id = 0;
-const waiting = new Map();
-ws.addEventListener("message", (e) => {
-  const d = JSON.parse(e.data);
-  const h = waiting.get(d.id);
-  if (h) {
-    waiting.delete(d.id);
-    d.error ? h.reject(Error(d.error.message)) : h.resolve(d.result);
-  }
-});
-await new Promise((resolve, reject) => {
-  ws.addEventListener("open", resolve, { once: true });
-  ws.addEventListener("error", reject, { once: true });
-});
-const send = (method, params = {}) =>
-  new Promise((resolve, reject) => {
-    const n = ++id;
-    waiting.set(n, { resolve, reject });
-    ws.send(JSON.stringify({ id: n, method, params }));
-  });
-const run = async (expression) => {
-  const response = await send("Runtime.evaluate", {
-    expression,
-    returnByValue: true,
-    awaitPromise: true,
-  });
-  if (response.exceptionDetails) throw Error(response.exceptionDetails.text);
-  return response.result.value;
-};
-const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+import { openChrome, pause } from "./chrome-client.mjs";
+const { send, evaluate: run, close } = await openChrome();
 const inspect = () =>
   run(
     "(()=>{const select=s=>document.querySelector(s);const rect=s=>{const r=select(s)?.getBoundingClientRect();return r?{x:r.x,top:r.top,bottom:r.bottom,width:r.width,height:r.height}:null};const list=select('.delegation-comment-list');return JSON.stringify({pageY:scrollY,viewport:innerHeight,innerWidth,documentWidth:document.documentElement.scrollWidth,totalScroll:document.documentElement.scrollHeight,grid:rect('.delegation-layout'),panel:rect('.delegation-comments'),overlay:rect('.delegation-comment-overlay'),header:rect('.delegation-comments-header'),list:rect('.delegation-comment-list'),composer:rect('.delegation-comment-compose'),listScrollTop:list?.scrollTop,listScrollHeight:list?.scrollHeight,listClientHeight:list?.clientHeight,count:document.querySelectorAll('.delegation-comment-item').length,panelPosition:select('.delegation-comments')&&getComputedStyle(select('.delegation-comments')).position,overlayPosition:select('.delegation-comment-overlay')&&getComputedStyle(select('.delegation-comment-overlay')).position})})()",
@@ -210,8 +178,5 @@ try {
     throw Error("Mobile bottom sheet regression");
   console.log("FIXED_REVIEW_BROWSER_PASS");
 } finally {
-  try {
-    await send("Page.close");
-  } catch {}
-  ws.close();
+  await close();
 }
