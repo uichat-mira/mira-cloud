@@ -17,7 +17,10 @@ import {
   X,
 } from "lucide-react";
 import { Renderer, JSONUIProvider } from "@json-render/react";
-import { lazy, Suspense, useEffect, useMemo, useState, type MouseEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { TextSelection } from "@milkdown/kit/prose/state";
+import type { EditorView } from "@milkdown/kit/prose/view";
+import type { TextReviewAnchor } from "./delegation-review-poc";
 import MarkdownText from "../../components/mira-design/MarkdownText";
 import ConfirmDialog from "../../components/mira-design/ConfirmDialog";
 import { ModalShell } from "../../components/mira-design/Modal";
@@ -45,7 +48,7 @@ import {
   type DelegationStage,
 } from "./delegation-fixtures";
 
-const MarkdownEditor = lazy(() => import("../../components/mira-design/MarkdownEditor"));
+const DelegationReviewDocument = lazy(() => import("./delegation-review-document"));
 
 type CommentStatus = "open" | "suggested" | "resolved" | "abandoned";
 const statusLabels: Record<CommentStatus, string> = {
@@ -153,7 +156,15 @@ export default function DelegationPage() {
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [selectedExcerpt, setSelectedExcerpt] = useState("");
+  const [pendingAnchor, setPendingAnchor] = useState<TextReviewAnchor | null>(null);
+  const [wholeStageComment, setWholeStageComment] = useState(false);
+  const [selectionPosition, setSelectionPosition] = useState<{ left: number; top: number } | null>(
+    null,
+  );
+  const [activeCommentId, setActiveCommentId] = useState<number | null>(null);
+  const documentViewRef = useRef<EditorView | null>(null);
+  const sheetScrollRef = useRef(0);
+  const commentIntentRef = useRef(false);
   const [revision, setRevision] = useState(0);
   const [streamStep, setStreamStep] = useState(0);
   const [streaming, setStreaming] = useState(false);
@@ -167,7 +178,29 @@ export default function DelegationPage() {
   const comments = draft.comments;
   const acceptedCount = draft.acceptedCount;
   const record = draft.stages[stage];
-  const currentComments = comments.filter((comment) => comment.stage === stage);
+  // Abandoning closes a review item. Retain its status in the session draft
+  // for version provenance, but never show it as active work or a text mark.
+  const currentComments = comments.filter(
+    (comment) => comment.stage === stage && comment.status !== "abandoned",
+  );
+  const documentAnchors = useMemo(
+    () =>
+      comments.flatMap((comment): TextReviewAnchor[] =>
+        comment.stage === stage && comment.status !== "abandoned" && comment.anchor
+          ? [
+              {
+                id: String(comment.id),
+                version: comment.anchor.version,
+                from: comment.anchor.from,
+                to: comment.anchor.to,
+                excerpt: comment.excerpt,
+                status: comment.anchor.status,
+              },
+            ]
+          : [],
+      ),
+    [comments, stage],
+  );
   const unresolved = currentComments.filter(
     (comment) => comment.status === "open" || comment.status === "suggested",
   ).length;
@@ -228,7 +261,10 @@ export default function DelegationPage() {
     setTimelineOpen(false);
     setCommentsOpen(false);
     setCommentText("");
-    setSelectedExcerpt("");
+    setPendingAnchor(null);
+    setWholeStageComment(false);
+    commentIntentRef.current = false;
+    setActiveCommentId(null);
     setRevision(0);
     setStreamStep(0);
     setEditingBody(false);
@@ -261,25 +297,161 @@ export default function DelegationPage() {
     );
   };
 
+  const openComments = () => {
+    if (!commentsOpen) sheetScrollRef.current = window.scrollY;
+    setCommentsOpen(true);
+  };
+
+  const closeComments = (restoreReadingPosition = true) => {
+    setCommentsOpen(false);
+    commentIntentRef.current = false;
+    setWholeStageComment(false);
+    setCommentText("");
+    setPendingAnchor(null);
+    setSelectionPosition(null);
+    if (restoreReadingPosition && window.matchMedia?.("(max-width: 700px)").matches) {
+      window.requestAnimationFrame(() => window.scrollTo(0, sheetScrollRef.current));
+    }
+  };
+
+  useEffect(() => {
+    if (!commentsOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeComments();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [commentsOpen]);
+
   const addComment = () => {
     const text = commentText.trim();
-    if (!text || streaming || historical) return;
+    // Opening the review list alone never authorizes a new comment. Even a
+    // programmatic submit needs either a proven text anchor or explicit
+    // whole-stage intent, not an implicit fallthrough to "本阶段整体".
+    if (!text || (!pendingAnchor && !wholeStageComment) || streaming || historical) return;
+    const view = documentViewRef.current;
+    if (
+      pendingAnchor &&
+      (!view ||
+        pendingAnchor.status !== "active" ||
+        pendingAnchor.version.stage !== stage ||
+        pendingAnchor.version.revision !== record.revision ||
+        pendingAnchor.from >= pendingAnchor.to ||
+        pendingAnchor.to > view.state.doc.content.size ||
+        view.state.doc.textBetween(pendingAnchor.from, pendingAnchor.to, " ") !==
+          pendingAnchor.excerpt)
+    ) {
+      setMessage("所选原文已发生变化，请重新框选后再批注。不会猜测新位置。");
+      setPendingAnchor(null);
+      return;
+    }
     setDraft((previous) =>
-      updateReviewComments(previous, (items) => [
-        ...items,
-        {
-          id: Math.max(0, ...items.map((item) => item.id)) + 1,
-          stage,
-          excerpt: selectedExcerpt || "本阶段整体",
-          text,
-          status: "open",
-        },
-      ]),
+      updateReviewComments(previous, (items) => {
+        const id = Math.max(0, ...items.map((item) => item.id)) + 1;
+        return [
+          ...items,
+          {
+            id,
+            stage,
+            excerpt: pendingAnchor ? pendingAnchor.excerpt : "本阶段整体",
+            ...(pendingAnchor
+              ? {
+                  anchor: {
+                    from: pendingAnchor.from,
+                    to: pendingAnchor.to,
+                    version: pendingAnchor.version,
+                    status: "active" as const,
+                  },
+                }
+              : {}),
+            text,
+            status: "open" as const,
+          },
+        ];
+      }),
     );
     setCommentText("");
-    setSelectedExcerpt("");
-    setCommentsOpen(true);
+    setPendingAnchor(null);
+    setWholeStageComment(false);
+    commentIntentRef.current = false;
+    openComments();
     setMessage("批注已加入本次演示草稿。还没有提交给真实 Agent。");
+  };
+
+  const updateAnchors = (nextAnchors: TextReviewAnchor[]) => {
+    setDraft((previous) => {
+      let changed = false;
+      const byId = new Map(nextAnchors.map((anchor) => [anchor.id, anchor]));
+      const updated = previous.comments.map((comment) => {
+        if (comment.stage !== stage || !comment.anchor) return comment;
+        const next = byId.get(String(comment.id));
+        if (
+          !next ||
+          (next.from === comment.anchor.from &&
+            next.to === comment.anchor.to &&
+            next.status === comment.anchor.status)
+        )
+          return comment;
+        changed = true;
+        return {
+          ...comment,
+          anchor: {
+            ...comment.anchor,
+            from: next.from,
+            to: next.to,
+            status: next.status,
+          },
+        };
+      });
+      return changed ? { ...previous, comments: updated } : previous;
+    });
+  };
+
+  const openAnchoredComment = (id: string) => {
+    const index = Number(id);
+    if (!Number.isSafeInteger(index)) return;
+    setActiveCommentId(index);
+    openComments();
+    window.requestAnimationFrame(() =>
+      document.getElementById("delegation-comment-" + id)?.scrollIntoView({ block: "nearest" }),
+    );
+  };
+
+  const jumpToCommentSource = (commentId: number) => {
+    const entry = currentComments.find((item) => item.id === commentId);
+    const anchor = entry?.anchor;
+    const view = documentViewRef.current;
+    if (!anchor || anchor.status !== "active" || !view) return;
+    if (
+      anchor.to > view.state.doc.content.size ||
+      view.state.doc.textBetween(anchor.from, anchor.to, " ") !== entry.excerpt
+    ) {
+      setMessage("原文定位已失效，无法安全跳转。");
+      return;
+    }
+    setActiveCommentId(commentId);
+    closeComments(false);
+    window.requestAnimationFrame(() => {
+      view.focus();
+      view.dispatch(
+        view.state.tr
+          .setSelection(TextSelection.create(view.state.doc, anchor.from, anchor.to))
+          .scrollIntoView(),
+      );
+      // The read-only editor may not paint its internal selection into the native
+      // browser Selection. Resolve it via ProseMirror DOM coordinates, not text search.
+      const start = view.domAtPos(anchor.from);
+      const end = view.domAtPos(anchor.to);
+      const range = document.createRange();
+      range.setStart(start.node, start.offset);
+      range.setEnd(end.node, end.offset);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      view.dom
+        .querySelector('[data-anchor-id="' + commentId + '"]')
+        ?.scrollIntoView({ block: "center" });
+    });
   };
 
   const updateComment = (id: number, status: "resolved" | "abandoned") => {
@@ -291,18 +463,49 @@ export default function DelegationPage() {
     );
   };
 
-  const selectText = (event: MouseEvent<HTMLElement>) => {
-    if (streaming || editingBody || historical) return;
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || !event.currentTarget.contains(selection.anchorNode))
+  const clearDocumentSelection = () => {
+    // Once the user explicitly opens the composer, preserve the chosen excerpt
+    // until they submit or dismiss it; focusing the textarea collapses Selection.
+    if (commentsOpen || commentIntentRef.current) return;
+    setPendingAnchor(null);
+    setSelectionPosition(null);
+  };
+
+  const selectDocumentText = (anchor: TextReviewAnchor) => {
+    // A visible review rail must continue accepting new source selections.
+    // The sidebar composer uses the latest stable range; the floating entry
+    // is only needed while the review rail is closed.
+    if (streaming || historical || editingBody) return;
+    if (anchor.excerpt.length > 600) {
+      setMessage("选区过长，请选择不超过 600 字的段落。");
       return;
-    const text = selection.toString().trim().slice(0, 140);
-    if (text.length >= 2) setSelectedExcerpt(text);
+    }
+    setPendingAnchor(anchor);
+    setWholeStageComment(false);
+    const view = documentViewRef.current;
+    const container = view?.dom.closest(".delegation-document-text");
+    if (view && container) {
+      try {
+        const pos = view.coordsAtPos(anchor.to);
+        const box = container.getBoundingClientRect();
+        setSelectionPosition({
+          left: Math.max(0, Math.min(box.width - 155, pos.left - box.left)),
+          top: Math.max(0, Math.min(box.height - 12, pos.bottom - box.top + 8)),
+        });
+      } catch {
+        // Browser-less unit runners have no text geometry; the entry stays in flow.
+        setSelectionPosition(null);
+      }
+    }
   };
 
   const beginRevision = () => {
     if (streaming || historical) return;
     setEditingBody(false);
+    setPendingAnchor(null);
+    setWholeStageComment(false);
+    setCommentText("");
+    commentIntentRef.current = false;
     setStreamStep(0);
     setMessage("");
     setStreaming(true);
@@ -326,13 +529,17 @@ export default function DelegationPage() {
     )
       return;
     setDraft((previous) => acceptDocumentStage(previous, stage));
+    setPendingAnchor(null);
+    setWholeStageComment(false);
+    setCommentText("");
+    commentIntentRef.current = false;
     if (stage === 2) {
       setDemoFinished(true);
       setMessage("三个阶段已经验收（演示），没有创建真实任务，也没有启动执行。");
       return;
     }
     setStage((stage + 1) as DelegationStage);
-    setSelectedExcerpt("");
+    setPendingAnchor(null);
     setRevision(0);
     setStreamStep(0);
     setEditingBody(false);
@@ -345,7 +552,12 @@ export default function DelegationPage() {
     setRevision(0);
     setStreamStep(0);
     setEditingBody(false);
-    setSelectedExcerpt("");
+    setPendingAnchor(null);
+    setWholeStageComment(false);
+    setCommentText("");
+    commentIntentRef.current = false;
+    setCommentsOpen(false);
+    setActiveCommentId(null);
     setTimelineOpen(false);
     setMessage("");
   };
@@ -475,7 +687,22 @@ export default function DelegationPage() {
             <span>
               <FileText size={14} aria-hidden="true" /> 需求草稿 / {scenario.label}
             </span>
-            <span>{saveStatus === "failed" ? "会话保存失败" : "仅在此标签页保存"}</span>
+            <div className="delegation-topline-actions">
+              {saveStatus === "failed" ? <span role="status">会话保存失败</span> : null}
+              <button
+                type="button"
+                className="delegation-comment-trigger"
+                onClick={() => (commentsOpen ? closeComments() : openComments())}
+                aria-label={currentComments.length ? "批注 · " + currentComments.length : "批注"}
+                aria-expanded={commentsOpen}
+                aria-controls="delegation-comments-panel"
+                title={
+                  currentComments.length ? "查看批注（" + currentComments.length + "）" : "查看批注"
+                }
+              >
+                <MessageSquare size={16} aria-hidden="true" />
+              </button>
+            </div>
           </div>
           <div className="delegation-paper-content">
             <div className="delegation-paper-title">
@@ -515,7 +742,10 @@ export default function DelegationPage() {
               {!streaming && !historical ? (
                 <button
                   type="button"
-                  onClick={() => setEditingBody(!editingBody)}
+                  onClick={() => {
+                    setPendingAnchor(null);
+                    setEditingBody(!editingBody);
+                  }}
                   className="delegation-text-action"
                 >
                   <PenLine size={13} aria-hidden="true" />
@@ -523,23 +753,62 @@ export default function DelegationPage() {
                 </button>
               ) : null}
             </div>
-            {editingBody && !streaming ? (
-              <Suspense fallback={<p className="delegation-loading">正在准备编辑器…</p>}>
-                <div className="delegation-editor">
-                  <MarkdownEditor
-                    initialValue={record.markdown}
-                    onChange={(value) =>
-                      setDraft((previous) => changeDocumentMarkdown(previous, stage, value))
+            <Suspense fallback={<p className="delegation-loading">正在准备文档…</p>}>
+              <div
+                className="delegation-document-text"
+                data-editing={editingBody}
+                data-has-selection={pendingAnchor !== null && !commentsOpen}
+              >
+                <DelegationReviewDocument
+                  key={
+                    scenarioId +
+                    "-" +
+                    stage +
+                    "-" +
+                    (editingBody
+                      ? "edit"
+                      : "read-" + record.revision + "-" + streamStep + "-" + historical)
+                  }
+                  markdown={renderedBody}
+                  editable={editingBody && !streaming && !historical}
+                  anchors={documentAnchors}
+                  version={{ stage, revision: record.revision }}
+                  onReady={(view) => {
+                    documentViewRef.current = view;
+                  }}
+                  onChange={(value) =>
+                    setDraft((previous) => changeDocumentMarkdown(previous, stage, value))
+                  }
+                  onSelection={selectDocumentText}
+                  onSelectionCleared={clearDocumentSelection}
+                  onAnchorsChange={updateAnchors}
+                  onOpenAnchor={openAnchoredComment}
+                />
+                {pendingAnchor && !commentsOpen && !editingBody && !streaming && !historical ? (
+                  <button
+                    type="button"
+                    className={
+                      selectionPosition
+                        ? "delegation-selected-comment is-floating"
+                        : "delegation-selected-comment"
                     }
-                    disabled={historical}
-                  />
-                </div>
-              </Suspense>
-            ) : (
-              <div className="delegation-document-text" onMouseUp={selectText}>
-                <MarkdownText features="basic">{renderedBody}</MarkdownText>
+                    style={
+                      selectionPosition
+                        ? { left: selectionPosition.left, top: selectionPosition.top }
+                        : undefined
+                    }
+                    onPointerDown={(event) => {
+                      commentIntentRef.current = true;
+                      if (event.pointerType === "mouse") event.preventDefault();
+                    }}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={openComments}
+                  >
+                    <MessageSquare size={14} aria-hidden="true" /> 批注所选文字
+                  </button>
+                ) : null}
               </div>
-            )}
+            </Suspense>
             {record.history.length > 0 ? (
               <details className="delegation-history">
                 <summary>历史验收版本 · {record.history.length}</summary>
@@ -553,16 +822,6 @@ export default function DelegationPage() {
                 ))}
               </details>
             ) : null}
-            {selectedExcerpt && !editingBody ? (
-              <button
-                type="button"
-                className="delegation-selected-comment"
-                onClick={() => setCommentsOpen(true)}
-              >
-                <MessageSquare size={14} aria-hidden="true" /> 批注所选文字
-              </button>
-            ) : null}
-
             {!consistent && !streaming ? (
               <div className="delegation-consistency-warning" role="alert">
                 正文中的「当前约定」与动态控件不一致，暂时不能接受本阶段。
@@ -617,14 +876,6 @@ export default function DelegationPage() {
             ) : null}
           </div>
           <footer className="delegation-paper-footer">
-            <button
-              type="button"
-              className="delegation-quiet-action"
-              onClick={() => setCommentsOpen(true)}
-            >
-              <MessageSquare size={16} aria-hidden="true" />
-              批注 {currentComments.length ? "· " + currentComments.length : ""}
-            </button>
             <div className="delegation-paper-actions">
               {revisingHistory ? (
                 <>
@@ -694,9 +945,13 @@ export default function DelegationPage() {
               type="button"
               className="delegation-comment-backdrop"
               aria-label="关闭批注"
-              onClick={() => setCommentsOpen(false)}
+              onClick={() => closeComments()}
             />
-            <aside className="delegation-comments" aria-label="随文批注">
+            <aside
+              id="delegation-comments-panel"
+              className="delegation-comments"
+              aria-label="随文批注"
+            >
               <div className="delegation-comments-header">
                 <div>
                   <small>Review notes</small>
@@ -704,21 +959,47 @@ export default function DelegationPage() {
                     随文批注 <span>{currentComments.length}</span>
                   </h3>
                 </div>
-                <button type="button" aria-label="收起批注" onClick={() => setCommentsOpen(false)}>
+                <button type="button" aria-label="收起批注" onClick={() => closeComments()}>
                   <X size={17} aria-hidden="true" />
                 </button>
               </div>
               <p className="delegation-comment-caption">
                 批注属于当前阶段。Mira 提出处理建议后，仍由你确认是否解决。
               </p>
-              <div className="delegation-comment-list">
+              <div
+                className="delegation-comment-list"
+                role="region"
+                aria-label="批注列表"
+                tabIndex={0}
+              >
                 {currentComments.length ? (
                   currentComments.map((comment) => (
-                    <article key={comment.id} className="delegation-comment-item">
+                    <article
+                      key={comment.id}
+                      id={"delegation-comment-" + comment.id}
+                      className="delegation-comment-item"
+                      data-selected={activeCommentId === comment.id}
+                    >
                       <span className="delegation-comment-status">
                         {statusLabels[comment.status]}
                       </span>
-                      <blockquote>{comment.excerpt}</blockquote>
+                      {comment.anchor?.status === "active" ? (
+                        <button
+                          type="button"
+                          className="delegation-comment-source"
+                          onClick={() => jumpToCommentSource(comment.id)}
+                        >
+                          <blockquote>{comment.excerpt}</blockquote>
+                          <span>返回原文</span>
+                        </button>
+                      ) : (
+                        <blockquote>
+                          {comment.excerpt}
+                          {comment.anchor?.status === "lost" ? (
+                            <small> · 定位失效，原版本保留</small>
+                          ) : null}
+                        </blockquote>
+                      )}
                       <p>{comment.text}</p>
                       {comment.status === "suggested" ? (
                         <div className="delegation-comment-actions">
@@ -748,27 +1029,55 @@ export default function DelegationPage() {
                   ))
                 ) : (
                   <p className="delegation-comment-empty">
-                    还没有批注。框选正文或在这里添加一条整体意见。
+                    当前没有需要查看的批注。请先框选正文；也可以明确选择批注整个阶段。
                   </p>
                 )}
               </div>
               {!streaming && !historical ? (
-                <div className="delegation-comment-compose">
-                  <label htmlFor="delegation-comment-input">
-                    {selectedExcerpt ? "批注所选文字" : "对当前阶段提出意见"}
-                  </label>
-                  {selectedExcerpt ? <blockquote>{selectedExcerpt}</blockquote> : null}
-                  <textarea
-                    id="delegation-comment-input"
-                    value={commentText}
-                    onChange={(event) => setCommentText(event.target.value)}
-                    placeholder="例如：只关注有用户或商业证据的变化…"
-                    rows={3}
-                  />
-                  <button type="button" disabled={!commentText.trim()} onClick={addComment}>
-                    <Plus size={14} aria-hidden="true" /> 添加批注
-                  </button>
-                </div>
+                pendingAnchor || wholeStageComment ? (
+                  <div className="delegation-comment-compose">
+                    <label htmlFor="delegation-comment-input">
+                      {pendingAnchor ? "批注所选文字" : "批注整个阶段"}
+                    </label>
+                    {pendingAnchor ? <blockquote>{pendingAnchor.excerpt}</blockquote> : null}
+                    <button
+                      type="button"
+                      className="delegation-comment-clear-selection"
+                      onClick={() => {
+                        setWholeStageComment(!wholeStageComment);
+                        setPendingAnchor(null);
+                        setSelectionPosition(null);
+                        setCommentText("");
+                      }}
+                    >
+                      {pendingAnchor ? "改为批注整个阶段" : "取消全文批注"}
+                    </button>
+                    <textarea
+                      id="delegation-comment-input"
+                      value={commentText}
+                      onChange={(event) => setCommentText(event.target.value)}
+                      placeholder="例如：只关注有用户或商业证据的变化…"
+                      rows={3}
+                    />
+                    <button type="button" disabled={!commentText.trim()} onClick={addComment}>
+                      <Plus size={14} aria-hidden="true" /> 添加批注
+                    </button>
+                  </div>
+                ) : (
+                  <div className="delegation-comment-compose delegation-comment-compose-empty">
+                    <p>先选中正文中的文字，才能添加随文批注。</p>
+                    <button
+                      type="button"
+                      className="delegation-comment-stage-target"
+                      onClick={() => {
+                        setWholeStageComment(true);
+                        setCommentText("");
+                      }}
+                    >
+                      批注整个阶段
+                    </button>
+                  </div>
+                )
               ) : null}
             </aside>
           </div>

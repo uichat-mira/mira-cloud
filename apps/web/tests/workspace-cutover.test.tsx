@@ -3,6 +3,17 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
+import type { ReactNode } from "react";
+
+// These tests exercise Work navigation, not the Milkdown runtime. Let /new and
+// the POC lab render their actual page chrome without starting asynchronous
+// Crepe timers that outlive an abruptly unmounted jsdom route. The real editor
+// and review behavior is exercised separately by delegation-page tests and CDP.
+vi.mock("@milkdown/react", () => ({
+  Milkdown: () => <div data-testid="navigation-only-milkdown" />,
+  MilkdownProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useEditor: () => ({ loading: false, get: () => undefined }),
+}));
 
 import { WorkspaceShell } from "../src/pages/workspace";
 
@@ -134,9 +145,13 @@ describe("AGT-054 Work workspace migration", () => {
     const sidebar = screen.getByRole("complementary", { name: "当前业务" });
     const trigger = within(sidebar).getByRole("button", { name: "交代工作" });
     await user.click(trigger);
-
+    // /new lazy-loads the Milkdown editor; assert the actual page, not its Suspense fallback.
     expect(
-      await screen.findByRole("heading", { level: 1, name: "交代一件值得持续完成的事" }),
+      await screen.findByRole(
+        "heading",
+        { level: 1, name: "交代一件值得持续完成的事" },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "交代工作" })).toBeNull();
     expect(screen.getByRole("region", { name: "交代工作原型" })).toBeInTheDocument();

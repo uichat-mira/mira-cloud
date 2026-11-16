@@ -222,6 +222,58 @@
   align-items: center;
   gap: 7px;
 }
+.delegation-topline-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.delegation-comment-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--mira-radius-ui-control);
+  background: transparent;
+  color: rgb(var(--mira-color-text-secondary));
+  cursor: pointer;
+}
+
+.delegation-comment-trigger:hover,
+.delegation-comment-trigger[aria-expanded="true"] {
+  background: rgb(var(--mira-color-surface-secondary));
+  color: rgb(var(--mira-color-text-primary));
+}
+
+.delegation-comment-trigger:focus-visible {
+  outline: 2px solid rgb(var(--mira-color-primary));
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .delegation-comment-trigger {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Keep the draft identity and review entry visible while reading a long stage.
+   Unlike the review rail, this bar belongs to the paper and should release
+   naturally when the paper ends. Do not consume mobile reading height. */
+@media (min-width: 981px) {
+  .delegation-paper-topline {
+    position: sticky;
+    top: var(--workspace-header-height);
+    z-index: 18; /* Below the Shell topbar (20), above the paper content. */
+    background: rgb(var(--mira-color-surface-primary) / 0.97);
+    backdrop-filter: blur(8px);
+  }
+}
 .delegation-paper-content {
   padding: clamp(28px, 4vw, 49px) clamp(22px, 5vw, 58px) 20px;
 }
@@ -466,8 +518,10 @@
 .delegation-paper-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 16px;
   flex-wrap: wrap;
+  width: 100%;
 }
 .delegation-accept {
   display: inline-flex;
@@ -632,7 +686,8 @@
   outline: 2px solid rgb(var(--mira-color-primary) / 0.4);
   outline-offset: 2px;
 }
-.delegation-comment-compose > button {
+.delegation-comment-compose
+  > button:not(.delegation-comment-clear-selection):not(.delegation-comment-stage-target) {
   display: inline-flex;
   align-self: flex-end;
   align-items: center;
@@ -645,10 +700,40 @@
   font-size: 11px;
   cursor: pointer;
 }
-.delegation-comment-compose > button:disabled {
+.delegation-comment-compose
+  > button:not(.delegation-comment-clear-selection):not(.delegation-comment-stage-target):disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
+.delegation-comment-compose-empty {
+  gap: 12px;
+}
+
+.delegation-comment-compose-empty p {
+  margin: 0;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.delegation-comment-compose > .delegation-comment-stage-target {
+  display: inline-flex;
+  align-self: flex-start;
+  min-height: 38px;
+  align-items: center;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+  background: transparent;
+  padding: 7px 11px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.delegation-comment-compose > .delegation-comment-stage-target:hover {
+  background: rgb(var(--mira-color-surface-secondary));
+}
+
 @media (max-width: 1120px) {
   .delegation-layout,
   .delegation-layout.has-comments {
@@ -839,5 +924,304 @@
   .delegation-quiet-action,
   .delegation-accept {
     min-height: 44px;
+  }
+}
+
+/* Inline review is part of /new, not a second task or review state machine. */
+.delegation-document-text {
+  position: relative;
+  min-width: 0;
+}
+.delegation-review-editor {
+  min-width: 0;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 13px;
+  line-height: 1.85;
+}
+.delegation-review-editor .milkdown,
+.delegation-review-editor .ProseMirror,
+.delegation-review-editor .milkdown .editor {
+  min-height: 100px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: inherit;
+  outline: none;
+  box-shadow: none;
+}
+.delegation-review-editor .milkdown .editor > :first-child,
+.delegation-review-editor .ProseMirror > :first-child {
+  margin-top: 0;
+}
+.delegation-review-editor .ProseMirror p {
+  line-height: 1.85;
+}
+.delegation-review-editor.is-editing {
+  margin-bottom: 17px;
+  padding: 14px;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+  background: rgb(var(--mira-color-surface-secondary));
+}
+.delegation-review-editor .delegation-review-poc-anchor {
+  border-bottom: 1.5px solid rgb(var(--mira-color-primary) / 0.78);
+  background: rgb(var(--mira-color-primary) / 0.12);
+  cursor: pointer;
+}
+.delegation-review-editor .delegation-review-poc-anchor:hover {
+  background: rgb(var(--mira-color-primary) / 0.22);
+}
+.delegation-selected-comment {
+  min-height: 36px;
+  margin: 4px 0 14px;
+  box-shadow: var(--mira-shadow-ui-panel, none);
+}
+.delegation-comment-item[data-selected="true"] {
+  border-color: rgb(var(--mira-color-primary) / 0.65);
+  background: rgb(var(--mira-color-primary) / 0.04);
+}
+.delegation-comment-source {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.delegation-comment-source span {
+  display: inline-flex;
+  margin-top: 2px;
+  color: rgb(var(--mira-color-primary));
+  font-size: 10px;
+}
+.delegation-comment-source:hover blockquote {
+  color: rgb(var(--mira-color-text-primary));
+}
+.delegation-comment-item blockquote small {
+  color: rgb(var(--mira-color-warning-text));
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .delegation-selected-comment {
+    min-height: 44px;
+    max-width: 100%;
+  }
+  .delegation-comments {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: max(26px, env(safe-area-inset-bottom));
+  }
+  .delegation-comment-source {
+    min-height: 44px;
+  }
+  .delegation-comment-compose textarea {
+    font-size: 16px; /* Prevent iOS autofocus viewport zoom. */
+  }
+}
+
+.delegation-document-text[data-has-selection="true"] {
+  padding-bottom: 37px;
+}
+.delegation-selected-comment.is-floating {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  white-space: nowrap;
+}
+.delegation-comment-clear-selection {
+  align-self: flex-start;
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  cursor: pointer;
+}
+/* New work is a full desktop canvas. The generic Work shell retains its
+   normal 1320px reading limit for every other route. */
+@media (min-width: 1121px) {
+  .workspace-content:has(> .delegation-page) {
+    max-width: none;
+    padding-inline: clamp(20px, 2.4vw, 40px);
+  }
+  .delegation-page .delegation-introduction {
+    max-width: none;
+  }
+}
+
+/* Use the full canvas for the paper and optional review rail. Until there is
+   enough room for all three columns, fold the timeline into the stage header. */
+@media (min-width: 1121px) and (max-width: 1760px) {
+  .delegation-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .delegation-layout.has-comments {
+    grid-template-columns: minmax(0, 1fr) minmax(248px, 294px);
+    gap: 22px;
+  }
+  .delegation-timeline {
+    display: none;
+  }
+  .delegation-compact-progress {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--mira-color-border));
+    background: transparent;
+    padding: 12px 20px;
+    color: rgb(var(--mira-color-text-secondary));
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .delegation-compact-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgb(var(--mira-color-border));
+  }
+  .delegation-compact-steps button {
+    min-height: 36px;
+    border: 0;
+    background: transparent;
+    color: rgb(var(--mira-color-text-secondary));
+    font-size: 11px;
+    cursor: pointer;
+  }
+}
+
+.delegation-review-editor .delegation-review-poc-anchor:focus-visible {
+  outline: 2px solid rgb(var(--mira-color-primary));
+  outline-offset: 2px;
+}
+
+/* Desktop /new review is a viewport rail, not a sticky section of the
+   document. Grid keeps its column reserved for the rail, while the panel
+   itself remains visible from the first viewport through the document end. */
+@media (min-width: 1121px) {
+  .delegation-layout.has-comments > .delegation-comment-overlay {
+    position: static;
+    align-self: start;
+    min-height: 0;
+    height: 0;
+  }
+
+  .delegation-comment-overlay .delegation-comments {
+    position: fixed;
+    z-index: 19;
+    top: calc(var(--workspace-header-height, 58px) + 16px);
+    right: clamp(20px, 2.4vw, 40px);
+    bottom: 16px;
+    display: flex;
+    width: min(294px, calc(100vw - 40px));
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0 0 12px;
+    background: rgb(var(--mira-color-surface-primary));
+  }
+
+  .delegation-comments-header,
+  .delegation-comment-caption {
+    flex: 0 0 auto;
+  }
+
+  .delegation-comments-header {
+    padding-top: 14px;
+  }
+
+  .delegation-comment-list {
+    flex: 1 1 0;
+    min-height: 0;
+    margin: 12px 0 0;
+    padding: 2px 5px 12px 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .delegation-comment-list:hover,
+  .delegation-comment-list:focus-visible {
+    scrollbar-color: rgb(var(--mira-color-border)) transparent;
+  }
+
+  .delegation-comment-compose {
+    flex: 0 0 auto;
+    max-height: min(39dvh, 338px);
+    min-height: 0;
+    margin-top: 0;
+    padding: 14px 4px 0 0;
+    border-top: 1px solid rgb(var(--mira-color-border));
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Preserve the same number of desktop grid tracks in both states so the
+   document releases/reserves the review rail smoothly instead of jumping.
+   The fixed review surface is animated separately from the document width. */
+@media (min-width: 1121px) {
+  .delegation-layout {
+    transition:
+      grid-template-columns 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      column-gap 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .delegation-layout.has-comments .delegation-comments {
+    animation: delegation-review-appear 180ms ease-out both;
+  }
+}
+
+@media (min-width: 1761px) {
+  .delegation-layout {
+    grid-template-columns: 188px minmax(0, 1fr) 0px;
+    column-gap: 0;
+  }
+
+  .delegation-layout.has-comments {
+    grid-template-columns: 175px minmax(0, 1fr) 294px;
+    column-gap: 22px;
+  }
+
+  .delegation-timeline {
+    margin-right: 22px;
+  }
+}
+
+@media (min-width: 1121px) and (max-width: 1760px) {
+  .delegation-layout {
+    grid-template-columns: minmax(0, 1fr) 0px;
+    column-gap: 0;
+  }
+
+  .delegation-layout.has-comments {
+    grid-template-columns: minmax(0, 1fr) 294px;
+    column-gap: 22px;
+  }
+}
+
+@keyframes delegation-review-appear {
+  from {
+    opacity: 0;
+    translate: 10px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delegation-layout.has-comments .delegation-comments {
+    animation: none;
   }
 }

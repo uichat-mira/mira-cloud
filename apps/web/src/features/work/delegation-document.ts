@@ -19,10 +19,22 @@ const stageSchema = snapshotSchema.extend({
   accepted: snapshotSchema.nullable(),
   history: z.array(snapshotSchema),
 });
+const commentAnchorSchema = z.object({
+  from: z.number().int().nonnegative(),
+  to: z.number().int().positive(),
+  version: z.object({
+    stage: z.number().int().min(0).max(2),
+    revision: z.number().int().nonnegative(),
+  }),
+  status: z.enum(["active", "lost"]),
+});
+
 const commentSchema = z.object({
   id: z.number().int().nonnegative(),
   stage: z.union([z.literal(0), z.literal(1), z.literal(2)]),
   excerpt: z.string(),
+  // Absent for stage-wide notes created before or without a text selection.
+  anchor: commentAnchorSchema.optional(),
   text: z.string(),
   status: z.enum(["open", "suggested", "resolved", "abandoned"]),
 });
@@ -111,6 +123,14 @@ export function parseDelegationDraft(raw: string | null): DelegationDraft | null
     const draft = result.data;
     // Refuse inconsistent revision metadata from tampered/stale session data.
     if (
+      draft.comments.some(
+        (item) =>
+          item.anchor !== undefined &&
+          (item.anchor.version.stage !== item.stage ||
+            item.anchor.from >= item.anchor.to ||
+            item.anchor.to > 50000 ||
+            item.anchor.version.revision > draft.stages[item.stage].revision),
+      ) ||
       draft.stages.some(
         (entry, i) =>
           (i < draft.acceptedCount && entry.accepted === null) ||
