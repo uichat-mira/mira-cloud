@@ -198,6 +198,49 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     expect(screen.getByRole("button", { name: "批注 · 1" })).toBeInTheDocument();
   });
 
+  it("can annotate a second paragraph while the review sidebar stays open", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/研究重点：模型、产品与开源/);
+    await user.click(screen.getByRole("button", { name: "批注" }));
+    const panel = screen.getByRole("complementary", { name: "随文批注" });
+    const editor = document.querySelector(".delegation-review-editor") as HTMLElement;
+    const paragraphs = editor.querySelectorAll(".ProseMirror p");
+    expect(paragraphs.length).toBeGreaterThanOrEqual(2);
+    if (!paragraphs[0] || !paragraphs[1]) throw new Error("Expected two document paragraphs");
+
+    const selectParagraph = (paragraph: Element) => {
+      const selection = window.getSelection()!;
+      const range = document.createRange();
+      range.selectNodeContents(paragraph);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      fireEvent.mouseUp(editor);
+    };
+    // Regression: the previous commentsOpen guard discarded this entirely.
+    selectParagraph(paragraphs[1]);
+    const firstComposer = await within(panel).findByRole("textbox", { name: "批注所选文字" });
+    expect(within(panel).getByText(/研究重点：模型、产品与开源/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "批注所选文字" })).toBeNull();
+    await user.type(firstComposer, "先确认第二段的来源");
+    await user.click(within(panel).getByRole("button", { name: "添加批注" }));
+    expect(within(panel).getByRole("heading", { name: "随文批注 1" })).toBeInTheDocument();
+
+    selectParagraph(paragraphs[0]);
+    const secondComposer = await within(panel).findByRole("textbox", { name: "批注所选文字" });
+    expect(within(panel).getByText(/请持续观察 AI 行业的新产品/)).toBeInTheDocument();
+    await user.type(secondComposer, "再确认第一段的约定");
+    await user.click(within(panel).getByRole("button", { name: "添加批注" }));
+
+    expect(within(panel).getByRole("heading", { name: "随文批注 2" })).toBeInTheDocument();
+    expect(document.querySelectorAll(".delegation-review-poc-anchor")).toHaveLength(2);
+    const draft = JSON.parse(window.sessionStorage.getItem("mira-cloud-delegation-fixture-v1")!);
+    expect(draft.comments).toHaveLength(2);
+    expect(draft.comments[0].excerpt).toContain("研究重点");
+    expect(draft.comments[1].excerpt).toContain("请持续观察");
+    expect(draft.comments.every((item: { anchor?: unknown }) => !!item.anchor)).toBe(true);
+  });
+
   it("removes abandoned anchored comments from the review list and document decorations without deleting their history", async () => {
     const user = userEvent.setup();
     renderPage();

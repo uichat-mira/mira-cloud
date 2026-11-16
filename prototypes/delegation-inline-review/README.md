@@ -43,3 +43,9 @@ This real Chrome test makes a selected-text comment in the /new fixture, then ab
     NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/selection-debounce-qa.mjs
 
 In a disposable real Chrome tab on the formal /new page, a selected DOM range stays hidden while the pointer is down, becomes actionable only after 180ms of stability following release, resets when the range changes, hides immediately when collapsed, and supplies the *latest* range to the comment composer. Existing browser-qa.mjs and selection-animation-qa.mjs cover the adjacent flows. Mobile long-press still requires hardware verification.
+
+## Sequential selected-text comments with an already-open review rail
+
+    NODE_USE_ENV_PROXY=0 node prototypes/delegation-inline-review/sequential-selection-qa.mjs
+
+Regression for the previous commentsOpen selection guard: open the review rail, select and annotate a paragraph, then select and annotate another paragraph without closing the rail. The script checks both source excerpts, persisted anchors and document marks in the actual Chrome /new page. When the rail is open, selection goes straight to the visible composer; it does not duplicate the closed-mode floating action.

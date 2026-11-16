@@ -472,7 +472,9 @@ export default function DelegationPage() {
   };
 
   const selectDocumentText = (anchor: TextReviewAnchor) => {
-    if (commentsOpen || commentIntentRef.current) return;
+    // A visible review rail must continue accepting new source selections.
+    // The sidebar composer uses the latest stable range; the floating entry
+    // is only needed while the review rail is closed.
     if (streaming || historical || editingBody) return;
     if (anchor.excerpt.length > 600) {
       setMessage("选区过长，请选择不超过 600 字的段落。");
@@ -755,7 +757,7 @@ export default function DelegationPage() {
               <div
                 className="delegation-document-text"
                 data-editing={editingBody}
-                data-has-selection={pendingAnchor !== null}
+                data-has-selection={pendingAnchor !== null && !commentsOpen}
               >
                 <DelegationReviewDocument
                   key={
@@ -782,7 +784,7 @@ export default function DelegationPage() {
                   onAnchorsChange={updateAnchors}
                   onOpenAnchor={openAnchoredComment}
                 />
-                {pendingAnchor && !editingBody && !streaming && !historical ? (
+                {pendingAnchor && !commentsOpen && !editingBody && !streaming && !historical ? (
                   <button
                     type="button"
                     className={
