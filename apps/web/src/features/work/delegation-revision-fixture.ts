@@ -3,8 +3,9 @@ import { delegationScenarios, type DelegationStage } from "./delegation-fixtures
 import type { RevisionProposal } from "./delegation-revision-poc";
 
 // Deliberately pre-authored changes, not natural-language understanding.
-// They let the UI show disagreements between a comment and a proposed edit.
-const PROTECTED_FIELDS = new Set([
+// The fixture leaves safety and notification preferences untouched; this is a
+// demo-selection rule, not the proposal engine's authorization boundary.
+const FIXTURE_UNCHANGED_FIELDS = new Set([
   "externalActions",
   "booking",
   "outreach",
@@ -32,9 +33,10 @@ export function createFixtureRevisionProposal(
   }
 
   const descriptors = delegationScenarios[draft.scenarioId].sections[stage].fields;
+  let changedFieldCount = 0;
   for (const field of descriptors) {
-    if (operations.filter((x) => x.kind === "set-field").length >= 2) break;
-    if (PROTECTED_FIELDS.has(field.id)) continue;
+    if (changedFieldCount >= 2) break;
+    if (FIXTURE_UNCHANGED_FIELDS.has(field.id)) continue;
     const previous = record.config[field.id];
     if (field.kind === "choice" && typeof previous === "string") {
       const position = field.options.findIndex((option) => option.value === previous);
@@ -44,8 +46,10 @@ export function createFixtureRevisionProposal(
         field: field.id,
         value: field.options[(position + 1) % field.options.length]!.value,
       });
+      changedFieldCount += 1;
     } else if (field.kind === "toggle" && typeof previous === "boolean") {
       operations.push({ kind: "set-field", field: field.id, value: !previous });
+      changedFieldCount += 1;
     }
   }
 

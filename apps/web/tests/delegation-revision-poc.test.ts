@@ -348,11 +348,14 @@ describe("Diff review research — D04/D05/D06 proposal vs canonical draft", () 
   });
 
   it("enforces the batch review closure at the stage acceptance boundary", () => {
-    // The domain boundary now matches the existing /new UI: unresolved review
-    // comments cannot be bypassed by a direct acceptDocumentStage call.
-    const draft = draftWithComments();
-    expect(draft.comments.some((c) => c.status === "open")).toBe(true);
-    expect(acceptDocumentStage(draft, 0).acceptedCount).toBe(0);
+    // The domain boundary must reject both untouched notes and unconfirmed suggestions.
+    for (const status of ["open", "suggested"] as const) {
+      const draft = updateReviewComments(draftWithComments(), (comments) =>
+        comments.map((comment) => ({ ...comment, status })),
+      );
+      expect(draft.comments.every((comment) => comment.status === status)).toBe(true);
+      expect(acceptDocumentStage(draft, 0).acceptedCount).toBe(0);
+    }
   });
 
   it("refuses proposals against an inconsistent handwritten agreement", () => {

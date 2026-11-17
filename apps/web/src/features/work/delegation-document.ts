@@ -255,6 +255,7 @@ export function acceptDocumentStage(
   draft: DelegationDraft,
   stage: DelegationStage,
 ): DelegationDraft {
+  // Acceptance is a domain invariant; a caller must not bypass the UI guard.
   if (
     stage !== draft.acceptedCount ||
     draft.editingHistorical !== null ||

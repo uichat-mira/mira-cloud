@@ -28,6 +28,8 @@ const responseSchema = z.strictObject({
   proposedHandling: z.enum(["addressed", "not_addressed"]),
   reason: z.string().trim().min(1).max(600),
 });
+const PROPOSAL_PROTECTED_FIELDS = new Set(["externalActions", "booking", "outreach"]);
+
 const revisionProposalSchema = z.strictObject({
   protocol: z.literal("mira.delegation.revision_proposal"),
   version: z.literal("0.1.0"),
@@ -149,8 +151,8 @@ export function prepareRevision(draft: DelegationDraft, payload: unknown): Revis
       }
       next = changeDocumentMarkdown(next, stage, result);
     } else {
-      // A model cannot change an external-action flag, even in a Fixture.
-      if (["externalActions", "booking", "outreach"].includes(operation.field)) {
+      // Proposals may revise content, but never grant permission for external actions.
+      if (PROPOSAL_PROTECTED_FIELDS.has(operation.field)) {
         return reject("invalid-operation");
       }
       const descriptor = delegationScenarios[draft.scenarioId].sections[stage].fields.find(

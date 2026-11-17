@@ -1722,6 +1722,9 @@
   .delegation-diff-details li > * {
     margin-right: 7px;
   }
+  .delegation-comment-demo {
+    min-height: 44px;
+  }
 }
 
 .delegation-comment-empty p {
@@ -1740,9 +1743,4 @@
 .delegation-comment-demo:focus-visible {
   outline: 2px solid rgb(var(--mira-color-primary));
   outline-offset: 3px;
-}
-@media (max-width: 700px) {
-  .delegation-comment-demo {
-    min-height: 44px;
-  }
 }
