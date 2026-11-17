@@ -18,6 +18,9 @@ const snapshotSchema = z.object({
 const stageSchema = snapshotSchema.extend({
   accepted: snapshotSchema.nullable(),
   history: z.array(snapshotSchema),
+  // Superseded draft revisions are not accepted snapshots. Keep them distinct
+  // so old-version annotations can be read without inventing a new anchor.
+  reviewHistory: z.array(snapshotSchema).optional(),
 });
 const commentAnchorSchema = z.object({
   from: z.number().int().nonnegative(),
@@ -37,6 +40,7 @@ const commentSchema = z.object({
   anchor: commentAnchorSchema.optional(),
   text: z.string(),
   status: z.enum(["open", "suggested", "resolved", "abandoned"]),
+  suggestedReason: z.string().max(600).optional(),
 });
 const draftSchema = z.object({
   schemaVersion: z.literal(1),
@@ -108,6 +112,7 @@ export function createDelegationDraft(
     revision: 0,
     accepted: null,
     history: [],
+    reviewHistory: [],
   });
   const stages: DelegationDraft["stages"] = [makeStage(0), makeStage(1), makeStage(2)];
   return {
@@ -143,6 +148,10 @@ export function parseDelegationDraft(raw: string | null): DelegationDraft | null
         (entry, i) =>
           (i < draft.acceptedCount && entry.accepted === null) ||
           entry.history.length > 60 ||
+          (entry.reviewHistory?.length ?? 0) > 60 ||
+          entry.reviewHistory?.some(
+            (item) => item.revision > entry.revision || item.markdown.length > 20000,
+          ) ||
           entry.markdown.length > 20000,
       )
     )
@@ -151,6 +160,28 @@ export function parseDelegationDraft(raw: string | null): DelegationDraft | null
   } catch {
     return null;
   }
+}
+
+function reviewHistoryBeforeMutation(
+  draft: DelegationDraft,
+  stage: DelegationStage,
+): DocumentSnapshot[] {
+  const current = draft.stages[stage];
+  const referenced = draft.comments.some(
+    (comment) => comment.stage === stage && comment.anchor?.version.revision === current.revision,
+  );
+  const history = current.reviewHistory ?? [];
+  if (!referenced || history.some((snapshot) => snapshot.revision === current.revision)) {
+    return history;
+  }
+  return [
+    ...history,
+    {
+      markdown: current.markdown,
+      config: { ...current.config },
+      revision: current.revision,
+    },
+  ].slice(-60);
 }
 
 export function changeDocumentMarkdown(
@@ -162,7 +193,12 @@ export function changeDocumentMarkdown(
   if (markdown === current.markdown || markdown.length > 20000) return draft;
   if (stage < draft.acceptedCount && draft.editingHistorical !== stage) return draft;
   const stages = [...draft.stages] as DelegationDraft["stages"];
-  stages[stage] = { ...current, markdown, revision: current.revision + 1 };
+  stages[stage] = {
+    ...current,
+    markdown,
+    revision: current.revision + 1,
+    reviewHistory: reviewHistoryBeforeMutation(draft, stage),
+  };
   return { ...draft, stages };
 }
 
@@ -190,7 +226,13 @@ export function changeDocumentConfig(
     ? updateAgreement(current.markdown, agreement)
     : current.markdown;
   const stages = [...draft.stages] as DelegationDraft["stages"];
-  stages[stage] = { ...current, config, markdown, revision: current.revision + 1 };
+  stages[stage] = {
+    ...current,
+    config,
+    markdown,
+    revision: current.revision + 1,
+    reviewHistory: reviewHistoryBeforeMutation(draft, stage),
+  };
   return { ...draft, stages };
 }
 
@@ -216,6 +258,10 @@ export function acceptDocumentStage(
   if (
     stage !== draft.acceptedCount ||
     draft.editingHistorical !== null ||
+    draft.comments.some(
+      (comment) =>
+        comment.stage === stage && (comment.status === "open" || comment.status === "suggested"),
+    ) ||
     !isAgreementConsistent(draft, stage)
   ) {
     return draft;

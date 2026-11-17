@@ -1524,3 +1524,225 @@
   outline: 2px solid rgb(var(--mira-color-primary));
   outline-offset: 3px;
 }
+
+/* D04/D05 — Diff lives inside the same review paper, not a third panel. */
+.delegation-diff {
+  scroll-margin-block: 72px 120px;
+  margin: 26px 0 30px;
+  padding: 18px 0 17px;
+  border-top: 1px solid rgb(var(--mira-color-border));
+  border-bottom: 1px solid rgb(var(--mira-color-border));
+  min-width: 0;
+}
+.delegation-diff-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+.delegation-diff-heading > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: rgb(var(--mira-color-primary));
+}
+.delegation-diff-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+.delegation-diff-heading strong {
+  color: rgb(var(--mira-color-text-primary));
+  font-size: 13px;
+  font-weight: 600;
+}
+.delegation-diff-heading p,
+.delegation-diff-disclaimer {
+  margin: 4px 0 0;
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 11px;
+  line-height: 1.7;
+}
+.delegation-diff-heading button {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 5px;
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 11px;
+  cursor: pointer;
+}
+.delegation-diff-heading button[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.delegation-diff-heading button:focus-visible,
+.delegation-diff-old-document summary:focus-visible {
+  outline: 2px solid rgb(var(--mira-color-primary));
+  outline-offset: 3px;
+}
+.delegation-diff-disclaimer {
+  margin: 11px 0 0 29px;
+}
+.delegation-diff-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 22px;
+  margin: 18px 0 0 29px;
+}
+.delegation-diff-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.delegation-diff-field > span:first-child {
+  color: rgb(var(--mira-color-text-tertiary));
+  margin-right: 5px;
+}
+.delegation-diff-field del {
+  color: rgb(var(--mira-color-text-tertiary));
+  text-decoration-color: rgb(var(--mira-color-text-tertiary) / 0.55);
+}
+.delegation-diff-field > span:nth-last-child(2) {
+  color: rgb(var(--mira-color-text-tertiary));
+}
+.delegation-diff-field strong {
+  color: rgb(var(--mira-color-text-primary));
+  font-weight: 500;
+}
+.delegation-diff-details {
+  margin: 19px 0 0;
+  padding: 17px 0 0;
+  border-top: 1px solid rgb(var(--mira-color-border));
+}
+.delegation-diff-details-title {
+  margin: 0 0 11px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+}
+.delegation-diff-details ol {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+.delegation-diff-details li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  line-height: 1.8;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.delegation-diff-details del {
+  padding: 2px 4px;
+  color: rgb(var(--mira-color-text-secondary));
+  background: rgb(var(--mira-color-surface-secondary));
+  text-decoration-color: rgb(var(--mira-color-text-tertiary));
+}
+.delegation-diff-details ins {
+  padding: 2px 4px;
+  color: rgb(var(--mira-color-text-primary));
+  background: rgb(var(--mira-color-primary) / 0.085);
+  text-decoration: none;
+}
+.delegation-diff-details li > span,
+.delegation-diff-details > small {
+  color: rgb(var(--mira-color-text-tertiary));
+  font-size: 10px;
+}
+.delegation-diff-old-document {
+  margin: 18px 0;
+  border-top: 1px solid rgb(var(--mira-color-border));
+  padding-top: 13px;
+}
+.delegation-diff-old-document summary {
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+  cursor: pointer;
+}
+.delegation-diff-old-document > div {
+  margin-top: 12px;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.delegation-diff-source {
+  display: grid;
+  gap: 16px;
+  padding: 6px 0 14px;
+  max-height: 65dvh;
+  overflow: auto;
+}
+.delegation-diff-source > p {
+  margin: 0;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+  line-height: 1.75;
+}
+.delegation-diff-source > blockquote {
+  margin: 0;
+  padding: 9px 13px;
+  border-left: 2px solid rgb(var(--mira-color-primary) / 0.55);
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 12px;
+}
+.delegation-comment-proposal {
+  margin: 7px 0;
+  padding-left: 10px;
+  border-left: 2px solid rgb(var(--mira-color-primary) / 0.45);
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 11px;
+  line-height: 1.75;
+}
+@media (max-width: 700px) {
+  .delegation-diff-heading {
+    flex-wrap: wrap;
+  }
+  .delegation-diff-heading button {
+    min-height: 44px;
+    margin-left: auto;
+  }
+  .delegation-diff-fields,
+  .delegation-diff-disclaimer {
+    margin-left: 0;
+  }
+  .delegation-diff-field {
+    flex-basis: 100%;
+  }
+  .delegation-diff-details li {
+    display: block;
+  }
+  .delegation-diff-details li > * {
+    margin-right: 7px;
+  }
+}
+
+.delegation-comment-empty p {
+  margin: 0 0 10px;
+}
+.delegation-comment-demo {
+  min-height: 34px;
+  padding: 6px 11px;
+  border: 1px solid rgb(var(--mira-color-border));
+  border-radius: var(--mira-radius-ui-control);
+  background: transparent;
+  color: rgb(var(--mira-color-text-secondary));
+  font-size: 11px;
+  cursor: pointer;
+}
+.delegation-comment-demo:focus-visible {
+  outline: 2px solid rgb(var(--mira-color-primary));
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  .delegation-comment-demo {
+    min-height: 44px;
+  }
+}

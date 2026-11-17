@@ -34,7 +34,9 @@ const revisionProposalSchema = z.strictObject({
   stage: z.union([z.literal(0), z.literal(1), z.literal(2)]),
   baseRevision: z.number().int().nonnegative(),
   operations: z.array(operationSchema).min(1).max(12),
-  commentResponses: z.array(responseSchema).min(1).max(40),
+  // An independent demonstration may have zero notes. If notes exist, every
+  // unresolved ID must still be answered exactly once below.
+  commentResponses: z.array(responseSchema).max(40),
 });
 
 export type RevisionProposal = z.infer<typeof revisionProposalSchema>;
@@ -171,6 +173,17 @@ export function prepareRevision(draft: DelegationDraft, payload: unknown): Revis
     if (next.stages[stage].markdown.length > 20_000) return reject("invalid-operation");
   }
   if (!isAgreementConsistent(next, stage)) return reject("unresolved-agreement");
+
+  // A proposal is one reviewable revision, regardless of how many operations
+  // it contains. Intermediate pure operations above must not leak into the
+  // user-facing revision number or create fictitious source versions.
+  const revisedStages = [...next.stages] as DelegationDraft["stages"];
+  revisedStages[stage] = {
+    ...revisedStages[stage],
+    revision: draft.stages[stage].revision + 1,
+  };
+  next = { ...next, stages: revisedStages };
+
   const updatedFields = fields(next, stage);
   if (!updatedFields) return reject("invalid-operation");
 
@@ -221,8 +234,23 @@ export function commitRevision(
       return {
         ...comment,
         status: response.proposedHandling === "addressed" ? "suggested" : "open",
+        suggestedReason: response.reason,
       };
     }),
   );
-  return { ...prepared, proposedDraft: draft };
+  const stages = [...draft.stages] as DelegationDraft["stages"];
+  const currentStage = stages[prepared.stage];
+  const reviewHistory = currentStage.reviewHistory ?? [];
+  stages[prepared.stage] = {
+    ...currentStage,
+    // Keep the original review source separate from accepted history. A former
+    // revision can be opened for provenance but must never be auto-reanchored.
+    reviewHistory: (reviewHistory.some(
+      (snapshot) => snapshot.revision === prepared.baseline.revision,
+    )
+      ? reviewHistory
+      : [...reviewHistory, prepared.baseline]
+    ).slice(-60),
+  };
+  return { ...prepared, proposedDraft: { ...draft, stages } };
 }

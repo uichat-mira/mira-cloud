@@ -84,7 +84,8 @@ describe("Diff review research — D04/D05/D06 proposal vs canonical draft", () 
     const candidate = prepared(before);
     expect(JSON.stringify(before)).toBe(serialized);
     expect(candidate.baseline.revision).toBe(0);
-    expect(candidate.preview.revision).toBeGreaterThan(0);
+    expect(candidate.preview.revision).toBe(1);
+    expect(candidate.proposedDraft.stages[0].revision).toBe(1);
     expect(candidate.preview.markdown).toContain("请追踪模型变化");
     expect(candidate.preview.markdown).toContain("## 当前约定");
     expect(isAgreementConsistent(candidate.proposedDraft, 0)).toBe(true);
@@ -99,6 +100,16 @@ describe("Diff review research — D04/D05/D06 proposal vs canonical draft", () 
     expect(candidate.proposedDraft.acceptedCount).toBe(0);
   });
 
+  it("allows a revision with no comments, but never skips an existing unresolved comment", () => {
+    const clean = updateReviewComments(createDelegationDraft("radar"), () => []);
+    const result = prepareRevision(clean, { ...proposal(), commentResponses: [] });
+    expect(result.ok).toBe(true);
+    expect(prepareRevision(draftWithComments(), { ...proposal(), commentResponses: [] })).toEqual({
+      ok: false,
+      reason: "comment-mismatch",
+    });
+  });
+
   it("commits only the reviewed candidate and leaves all user decisions pending", () => {
     const before = draftWithComments();
     const candidate = prepared(before);
@@ -110,7 +121,14 @@ describe("Diff review research — D04/D05/D06 proposal vs canonical draft", () 
       "suggested",
       "open",
     ]);
+    expect(result.proposedDraft.comments.map((c) => c.suggestedReason)).toEqual([
+      candidate.commentResponses[0]!.reason,
+      candidate.commentResponses[1]!.reason,
+      candidate.commentResponses[2]!.reason,
+    ]);
     expect(result.proposedDraft.comments[0]!.anchor).toEqual(before.comments[0]!.anchor);
+    expect(result.proposedDraft.stages[0].reviewHistory).toEqual([candidate.baseline]);
+    expect(result.proposedDraft.stages[0].revision).toBe(1);
     expect(result.proposedDraft.acceptedCount).toBe(0);
     expect(result.proposedDraft.stages[0].accepted).toBeNull();
     expect(before.stages[0].revision).toBe(0);
@@ -201,6 +219,7 @@ describe("Diff review research — D04/D05/D06 proposal vs canonical draft", () 
     const before = draftWithComments();
     const base = proposal();
     const variants = [
+      { ...base, commentResponses: [] },
       { ...base, commentResponses: base.commentResponses.slice(0, 2) },
       {
         ...base,
@@ -232,7 +251,10 @@ describe("Diff review research — D04/D05/D06 proposal vs canonical draft", () 
 
   it("cannot revise an accepted stage or a stage undergoing historical edit", () => {
     const before = draftWithComments();
-    const accepted = acceptDocumentStage(before, 0);
+    const accepted = acceptDocumentStage(
+      updateReviewComments(before, () => []),
+      0,
+    );
     expect(prepareRevision(accepted, proposal())).toEqual({ ok: false, reason: "invalid-stage" });
     expect(prepareRevision({ ...before, editingHistorical: 0 }, proposal())).toEqual({
       ok: false,
@@ -325,12 +347,12 @@ describe("Diff review research — D04/D05/D06 proposal vs canonical draft", () 
     });
   });
 
-  it("documents the existing model-level acceptance gap without changing production code", () => {
-    // The current /new UI checks unresolved comments, but this domain function
-    // does not. Fix before exposing proposal commit as a production action.
+  it("enforces the batch review closure at the stage acceptance boundary", () => {
+    // The domain boundary now matches the existing /new UI: unresolved review
+    // comments cannot be bypassed by a direct acceptDocumentStage call.
     const draft = draftWithComments();
     expect(draft.comments.some((c) => c.status === "open")).toBe(true);
-    expect(acceptDocumentStage(draft, 0).acceptedCount).toBe(1);
+    expect(acceptDocumentStage(draft, 0).acceptedCount).toBe(0);
   });
 
   it("refuses proposals against an inconsistent handwritten agreement", () => {

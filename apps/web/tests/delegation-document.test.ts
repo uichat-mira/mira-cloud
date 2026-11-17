@@ -53,6 +53,61 @@ describe("single authority for delegation document, JSON UI and acceptance", () 
     expect(changeDocumentConfig(before, 0, "focus", "__invalid__")).toBe(before);
   });
 
+  it("preserves the exact source snapshot whenever a manual edit supersedes an anchored revision", () => {
+    let draft = createDelegationDraft("radar");
+    const original = draft.stages[0];
+    draft = updateReviewComments(draft, () => [
+      {
+        id: 31,
+        stage: 0,
+        excerpt: "持续关注",
+        text: "请保留原始来源",
+        status: "open",
+        anchor: {
+          from: 1,
+          to: 5,
+          version: { stage: 0, revision: 0 },
+          status: "active",
+        },
+      },
+    ]);
+    const firstEdit = changeDocumentMarkdown(
+      draft,
+      0,
+      original.markdown.replace("请持续观察 AI 行业", "请持续观察 AI 行业与独立开发者"),
+    );
+    expect(firstEdit.stages[0].reviewHistory).toEqual([
+      { markdown: original.markdown, config: original.config, revision: 0 },
+    ]);
+
+    const secondSource = firstEdit.stages[0];
+    const withNewAnchor = updateReviewComments(firstEdit, (items) => [
+      ...items,
+      {
+        id: 32,
+        stage: 0,
+        excerpt: "独立开发者",
+        text: "补充这个范围",
+        status: "open",
+        anchor: {
+          from: 8,
+          to: 12,
+          version: { stage: 0, revision: 1 },
+          status: "active",
+        },
+      },
+    ]);
+    const secondEdit = changeDocumentConfig(withNewAnchor, 0, "focus", "business");
+    expect(secondEdit.stages[0].reviewHistory).toEqual([
+      { markdown: original.markdown, config: original.config, revision: 0 },
+      {
+        markdown: secondSource.markdown,
+        config: secondSource.config,
+        revision: 1,
+      },
+    ]);
+  });
+
   it("manual Markdown conflict remains visible and stops acceptance until reconciled", () => {
     let draft = createDelegationDraft();
     const edited = draft.stages[1].markdown.replace("按每小时检查", "按每天检查");

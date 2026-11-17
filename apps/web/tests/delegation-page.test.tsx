@@ -513,7 +513,7 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole("button", { name: "演示流式修订" }));
-    expect(screen.getByRole("status")).toHaveTextContent("Mira 正在同时更新正文与确认组件");
+    expect(screen.getByRole("status")).toHaveTextContent("正在准备正文与字段的演示差异");
     expect(screen.getByRole("button", { name: "接受本阶段" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "中止" }));
     expect(screen.getByText(/生成已中止；保留此前正文和批注/)).toBeInTheDocument();

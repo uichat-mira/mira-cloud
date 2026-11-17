@@ -2,7 +2,7 @@
 
 **版本**：v1.0（31 项用户决议整理稿）  
 **日期**：2026-11-14  
-**状态**：31 项产品决议已确认，作为「交代工作」的设计基线；技术可行性与视觉体验待验证，功能尚未实现  
+**状态**：31 项产品决议已确认，作为「交代工作」的设计基线；/new 已有局部 Fixture UI 实现，真实 AI 起稿、云端委托与长期运行能力尚未接通\
 **适用范围**：Mira Cloud 的长期定时／条件触发工作，不是 Mira Desktop 的即时施工任务。
 
 ## 1. 产品定义
@@ -133,7 +133,7 @@
 
 ## 9. 与现有 Mira Cloud 合同的关系
 
-[Workbench 产品合同](./workbench.md)是整个工作空间的唯一入口，本文件是其中「交代工作」领域的**已确认详细产品合同**，以 D01–D31 为准。原有 Composer Modal 交互合同已被本文件取代；当前 React Web 的独立 `/new` 页面已使用 json-render 和 Milkdown 演示统一需求草稿、约定校验与历史审阅，但仍为未接 Cloud Agent 的 Fixture 原型。**设计生效不代表运行时已经实现；不得以本文件宣称真实长期托管能力已接通。** 具体可行性与验证缺口见[技术验证清单](./delegation-technical-validation.md)。
+[Workbench 产品合同](./workbench.md)是整个工作空间的唯一入口，本文件是其中「交代工作」领域的**已确认详细产品合同**，以 D01–D31 为准。原有 Composer Modal 交互合同已被本文件取代；当前 React Web 的独立 `/new` 页面已使用 json-render 和 Milkdown 演示统一需求草稿、约定校验、文字批注、历史来源回看，以及本地 Fixture 修订候选的正文／已登记字段 Diff。该页面仍是本地原型：预设 Fixture 不是真实 AI，演示节奏不是真实流式生成，草稿仍保存在当前标签页，尚未接 Cloud Agent 或云端持久化。**设计生效与局部 UI 通过，不代表真实长期托管能力已经实现。** 具体实现证据与验证缺口见[技术验证清单](./delegation-technical-validation.md)及[Diff UI 实现记录](../research/delegation/10-diff-ui-fixture-implementation.md)。
 
 参考：
 - [Mira Cloud / docs/product/workbench.md（dev）](https://github.com/uichat-mira/mira-cloud/blob/dev/docs/product/workbench.md)
