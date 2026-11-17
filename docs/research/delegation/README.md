@@ -21,6 +21,7 @@
 | 08 · Mira Delegation Protocol v0.1 | [模型无关起稿协议研究](./08-delegation-protocol-research.md) · [Schema/Fixture/验证脚本](./protocol-v0.1/README.md) | JSON Schema Draft 2020-12 + 研究性业务校验；**4/4 合法样例通过、10/10 反例被拒绝**。纯 Fixture 研究，**未接模型、未采纳为正式协议** |
 | 09 · Diff 集中修订与批注闭环 | [统一修订候选研究与 T1 实验](./09-diff-consolidated-revision-research.md) | 既有 Milkdown / 组件 Diff 复用 + 受控修订候选模型、批注映射/版本冲突测试；研究阶段未接模型，后续 UI 接线见阶段 10 |
 | 10 · Diff Fixture UI 接线 | [Diff 集中修订 UI 接线与浏览器验证](./10-diff-ui-fixture-implementation.md) | /new 本地 Fixture 候选、正文／字段 Diff、来源版本与批注闭环；自动化与桌面/手机模拟视口通过；**未接模型、云端持久化或长期运行时** |
+| 11 · D06 / D26 选择式批量确认 | [批注选择式批量确认](./11-batch-review-confirmation.md) | 当前阶段内仅对用户勾选的 `suggested` 批注批量确认；T1、jsdom 与 Chrome 桌面／移动模拟视口通过；**仍为本地 Fixture，不代表真实 AI、服务端批量写入或真机验收** |
 
 ## 后续阶段及入库规则
 

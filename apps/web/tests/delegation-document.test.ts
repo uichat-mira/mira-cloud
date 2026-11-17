@@ -10,6 +10,7 @@ import {
   createDelegationDraft,
   isAgreementConsistent,
   parseDelegationDraft,
+  resolveSelectedSuggestedComments,
   submitHistoricalRevision,
   updateReviewComments,
 } from "../src/features/work/delegation-document";
@@ -209,6 +210,53 @@ describe("single authority for delegation document, JSON UI and acceptance", () 
     expect(cancelled.comments).toHaveLength(0);
     expect(cancelled.historicalCommentBackup).toBeNull();
     expect(cancelled.stages[0].accepted).not.toBeNull();
+  });
+
+  it("batch-resolves only selected suggested comments in the active stage", () => {
+    const draft = updateReviewComments(createDelegationDraft(), () => [
+      {
+        id: 1,
+        stage: 0,
+        excerpt: "第一条建议",
+        text: "已提出处理方案",
+        status: "suggested",
+        suggestedReason: "补充来源核验",
+      },
+      { id: 2, stage: 0, excerpt: "未处理", text: "仍待判断", status: "open" },
+      {
+        id: 3,
+        stage: 0,
+        excerpt: "第三条建议",
+        text: "已有处理方案",
+        status: "suggested",
+      },
+      {
+        id: 4,
+        stage: 1,
+        excerpt: "其他阶段",
+        text: "不应跨阶段修改",
+        status: "suggested",
+      },
+      { id: 1, stage: 1, excerpt: "重复 ID", text: "也不应跨阶段修改", status: "open" },
+    ]);
+
+    const updated = resolveSelectedSuggestedComments(draft, 0, [1, 2, 4, 999]);
+    expect(updated.comments.map((comment) => comment.status)).toEqual([
+      "resolved",
+      "open",
+      "suggested",
+      "suggested",
+      "open",
+    ]);
+    expect(draft.comments.map((comment) => comment.status)).toEqual([
+      "suggested",
+      "open",
+      "suggested",
+      "suggested",
+      "open",
+    ]);
+    expect(acceptDocumentStage(updated, 0)).toBe(updated);
+    expect(resolveSelectedSuggestedComments(updated, 0, [2, 4, 999])).toBe(updated);
   });
 
   it("persists precise text anchors alongside existing stage-wide comments", () => {

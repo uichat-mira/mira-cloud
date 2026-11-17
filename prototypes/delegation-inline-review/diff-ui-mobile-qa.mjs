@@ -13,6 +13,9 @@ const snapshot = async () =>
         "diff:!!document.querySelector('.delegation-diff')," +
         "fields:document.querySelectorAll('.delegation-diff-field').length," +
         "proposals:document.querySelectorAll('.delegation-comment-proposal').length," +
+        "selectable:document.querySelectorAll('.delegation-comment-select').length," +
+        "selectHeight:document.querySelector('.delegation-comment-select')?.getBoundingClientRect().height??0," +
+        "batchHeight:document.querySelector('.delegation-comment-batch button')?.getBoundingClientRect().height??0," +
         "details:document.querySelectorAll('.delegation-diff-details li').length," +
         "overlay:!!document.querySelector('.delegation-comment-overlay')," +
         "diffTop:document.querySelector('.delegation-diff')?.getBoundingClientRect().top??null," +
@@ -101,14 +104,26 @@ try {
   await click("document.querySelector('.delegation-comment-trigger')");
   await pause(120);
   assert((await snapshot()).overlay, "Review sheet did not reopen");
-  assert((await snapshot()).proposals === 3, "Adopted comment reasons were not preserved");
-  await click("document.querySelector('.delegation-comment-actions button')");
+  const reviewControls = await snapshot();
+  assert(reviewControls.proposals === 3, "Adopted comment reasons were not preserved");
+  assert(reviewControls.selectable === 2, "Only suggested comments should be selectable");
+  assert(reviewControls.selectHeight >= 44, "Mobile selection target is below 44px");
+  assert(reviewControls.batchHeight >= 44, "Mobile batch action target is below 44px");
+  await click(
+    "document.querySelector('.delegation-comment-select input[aria-label=\"选择批注 1 进行批量确认\"]')",
+  );
+  await clickText("确认选中（1）");
+  await pause(120);
+  assert(
+    (await snapshot()).statuses.join(",") === "resolved,suggested,open",
+    "Mobile batch confirmation changed an unselected or open comment",
+  );
   await click("document.querySelector('.delegation-comment-actions button')");
   await click("document.querySelector('.delegation-comment-abandon')");
   await pause(120);
   assert(
     (await snapshot()).statuses.join(",") === "resolved,resolved,abandoned",
-    "Manual comment closure failed",
+    "Individual comment closure failed",
   );
   await click("document.querySelector('.delegation-comments-header button')");
   await pause(120);

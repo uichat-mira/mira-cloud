@@ -363,3 +363,23 @@ export function updateReviewComments(
 ): DelegationDraft {
   return { ...draft, comments: update(draft.comments) };
 }
+
+export function resolveSelectedSuggestedComments(
+  draft: DelegationDraft,
+  stage: DelegationStage,
+  selectedCommentIds: readonly number[],
+): DelegationDraft {
+  const selected = new Set(selectedCommentIds);
+  const hasEligibleComment = draft.comments.some(
+    (comment) =>
+      comment.stage === stage && comment.status === "suggested" && selected.has(comment.id),
+  );
+  if (!hasEligibleComment) return draft;
+  return updateReviewComments(draft, (comments) =>
+    comments.map((comment) =>
+      comment.stage === stage && comment.status === "suggested" && selected.has(comment.id)
+        ? { ...comment, status: "resolved" }
+        : comment,
+    ),
+  );
+}

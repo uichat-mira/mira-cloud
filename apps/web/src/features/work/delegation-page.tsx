@@ -40,6 +40,7 @@ import {
   isAgreementConsistent,
   parseDelegationDraft,
   type DocumentSnapshot,
+  resolveSelectedSuggestedComments,
   submitHistoricalRevision,
   updateReviewComments,
 } from "./delegation-document";
@@ -187,6 +188,7 @@ export default function DelegationPage() {
     null,
   );
   const [activeCommentId, setActiveCommentId] = useState<number | null>(null);
+  const [selectedCommentIds, setSelectedCommentIds] = useState<number[]>([]);
   const documentViewRef = useRef<EditorView | null>(null);
   const sheetScrollRef = useRef(0);
   const commentIntentRef = useRef(false);
@@ -207,6 +209,9 @@ export default function DelegationPage() {
     },
     [],
   );
+  useEffect(() => {
+    setSelectedCommentIds([]);
+  }, [scenarioId, stage]);
   const [editingBody, setEditingBody] = useState(false);
   const [providerEpoch, setProviderEpoch] = useState(0);
   const [demoFinished, setDemoFinished] = useState(draft.acceptedCount === 3);
@@ -225,6 +230,10 @@ export default function DelegationPage() {
   const currentComments = comments.filter(
     (comment) => comment.stage === stage && comment.status !== "abandoned",
   );
+  const suggestedComments = currentComments.filter((comment) => comment.status === "suggested");
+  const selectedSuggestedCommentIds = suggestedComments
+    .filter((comment) => selectedCommentIds.includes(comment.id))
+    .map((comment) => comment.id);
   const documentAnchors = useMemo(
     () =>
       comments.flatMap((comment): TextReviewAnchor[] =>
@@ -630,6 +639,29 @@ export default function DelegationPage() {
       updateReviewComments(previous, (items) =>
         items.map((comment) => (comment.id === id ? { ...comment, status } : comment)),
       ),
+    );
+    setSelectedCommentIds((previous) => previous.filter((selectedId) => selectedId !== id));
+  };
+
+  const toggleSuggestedCommentSelection = (id: number, checked: boolean) => {
+    if (streaming || preparingRevision || candidate || historical) return;
+    if (!suggestedComments.some((comment) => comment.id === id)) return;
+    setSelectedCommentIds((previous) =>
+      checked
+        ? previous.includes(id)
+          ? previous
+          : [...previous, id]
+        : previous.filter((selectedId) => selectedId !== id),
+    );
+  };
+
+  const confirmSelectedComments = () => {
+    if (streaming || preparingRevision || candidate || historical) return;
+    const selectedIds = selectedSuggestedCommentIds;
+    if (selectedIds.length === 0) return;
+    setDraft((previous) => resolveSelectedSuggestedComments(previous, stage, selectedIds));
+    setSelectedCommentIds((previous) =>
+      previous.filter((selectedId) => !selectedIds.includes(selectedId)),
     );
   };
 
@@ -1340,6 +1372,23 @@ export default function DelegationPage() {
               <p className="delegation-comment-caption">
                 批注属于当前阶段。预设修订不等于真正理解意见，仍由你逐条确认。
               </p>
+              {suggestedComments.length > 0 &&
+              !streaming &&
+              !preparingRevision &&
+              !candidate &&
+              !historical ? (
+                <div className="delegation-comment-batch">
+                  <span>只确认已勾选且已有处理建议的批注</span>
+                  <button
+                    type="button"
+                    disabled={selectedSuggestedCommentIds.length === 0}
+                    onClick={confirmSelectedComments}
+                  >
+                    <CheckCircle2 size={13} aria-hidden="true" />
+                    确认选中（{selectedSuggestedCommentIds.length}）
+                  </button>
+                </div>
+              ) : null}
               <div
                 className="delegation-comment-list"
                 role="region"
@@ -1393,22 +1442,46 @@ export default function DelegationPage() {
                           </p>
                         ) : null;
                       })()}
-                      {comment.status === "suggested" && !preparingRevision && !candidate ? (
-                        <div className="delegation-comment-actions">
-                          <button
-                            type="button"
-                            onClick={() => updateComment(comment.id, "resolved")}
-                          >
-                            <Check size={13} aria-hidden="true" /> 确认解决
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateComment(comment.id, "abandoned")}
-                          >
-                            放弃
-                          </button>
-                        </div>
-                      ) : comment.status === "open" && !preparingRevision && !candidate ? (
+                      {comment.status === "suggested" &&
+                      !streaming &&
+                      !preparingRevision &&
+                      !candidate &&
+                      !historical ? (
+                        <>
+                          <label className="delegation-comment-select">
+                            <input
+                              type="checkbox"
+                              aria-label={`选择批注 ${comment.id} 进行批量确认`}
+                              checked={selectedSuggestedCommentIds.includes(comment.id)}
+                              onChange={(event) =>
+                                toggleSuggestedCommentSelection(
+                                  comment.id,
+                                  event.currentTarget.checked,
+                                )
+                              }
+                            />
+                            <span>纳入批量确认</span>
+                          </label>
+                          <div className="delegation-comment-actions">
+                            <button
+                              type="button"
+                              onClick={() => updateComment(comment.id, "resolved")}
+                            >
+                              <Check size={13} aria-hidden="true" /> 确认解决
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateComment(comment.id, "abandoned")}
+                            >
+                              放弃
+                            </button>
+                          </div>
+                        </>
+                      ) : comment.status === "open" &&
+                        !streaming &&
+                        !preparingRevision &&
+                        !candidate &&
+                        !historical ? (
                         <button
                           type="button"
                           className="delegation-comment-abandon"

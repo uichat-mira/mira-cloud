@@ -108,6 +108,76 @@ describe("D04–D06: /new Diff interactive fixture", () => {
     expect(fetcher).not.toHaveBeenCalled();
   }, 15000);
 
+  it("batch-confirms only selected suggested notes and keeps individual decisions available", async () => {
+    const user = userEvent.setup();
+    const draft = createDelegationDraft();
+    draft.comments = [
+      {
+        id: 1,
+        stage: 0,
+        excerpt: "第一条意见",
+        text: "第一条已有处理建议",
+        status: "suggested",
+        suggestedReason: "补充来源核验",
+      },
+      {
+        id: 2,
+        stage: 0,
+        excerpt: "第二条意见",
+        text: "第二条已有处理建议",
+        status: "suggested",
+        suggestedReason: "补充范围说明",
+      },
+      {
+        id: 3,
+        stage: 0,
+        excerpt: "第三条意见",
+        text: "第三条已有处理建议",
+        status: "suggested",
+        suggestedReason: "明确验证方式",
+      },
+      { id: 4, stage: 0, excerpt: "未处理意见", text: "仍待判断", status: "open" },
+      {
+        id: 5,
+        stage: 1,
+        excerpt: "其他阶段意见",
+        text: "不能跨阶段确认",
+        status: "suggested",
+        suggestedReason: "另一阶段的处理建议",
+      },
+    ];
+    boot(draft);
+
+    await user.click(screen.getByRole("button", { name: "批注 · 4" }));
+    const rail = screen.getByRole("complementary", { name: "随文批注" });
+    expect(within(rail).getAllByRole("checkbox")).toHaveLength(3);
+    expect(within(rail).getByRole("button", { name: "确认选中（0）" })).toBeDisabled();
+
+    await user.click(within(rail).getByRole("checkbox", { name: "选择批注 1 进行批量确认" }));
+    await user.click(within(rail).getByRole("checkbox", { name: "选择批注 3 进行批量确认" }));
+    await user.click(within(rail).getByRole("button", { name: "确认选中（2）" }));
+
+    const afterBatch = JSON.parse(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)!);
+    expect(afterBatch.comments.map((comment: { status: string }) => comment.status)).toEqual([
+      "resolved",
+      "suggested",
+      "resolved",
+      "open",
+      "suggested",
+    ]);
+    expect(within(rail).getAllByRole("checkbox")).toHaveLength(1);
+    expect(within(rail).getByRole("button", { name: "确认解决" })).toBeInTheDocument();
+    expect(within(rail).getByRole("button", { name: "放弃此批注" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "接受本阶段" })).toBeDisabled();
+
+    await user.click(within(rail).getByRole("button", { name: "确认解决" }));
+    await user.click(within(rail).getByRole("button", { name: "放弃此批注" }));
+    expect(screen.getByRole("button", { name: "接受本阶段" })).toBeEnabled();
+    expect(JSON.parse(window.sessionStorage.getItem(DRAFT_STORAGE_KEY)!).comments[4].status).toBe(
+      "suggested",
+    );
+  });
+
   it("keeps the draft untouched on cancel while generating and on discarding a ready revision", async () => {
     const user = userEvent.setup();
     const { fetcher } = boot();

@@ -110,13 +110,27 @@ try {
   assert(adopted.rootWidth <= adopted.viewport + 1, "Adopted mobile overflow");
   await screenshot("/tmp/mira-diff-mobile-adopted.png");
   await click("document.querySelector('.delegation-comment-trigger')");
-  await click("document.querySelector('.delegation-comment-actions button')");
+  assert(
+    (await evaluate("document.querySelectorAll('.delegation-comment-select').length")) === 2,
+    "Only the two suggested comments should be selectable",
+  );
+  await click(
+    "document.querySelector('.delegation-comment-select input[aria-label=\"选择批注 1 进行批量确认\"]')",
+  );
+  await clickText("确认选中（1）");
+  await pause(160);
+  const batchDecided = await snapshot();
+  console.log("BATCH_DECIDED", batchDecided);
+  assert(
+    batchDecided.statuses.join(",") === "resolved,suggested,open",
+    "Batch confirmation changed an unselected or open comment",
+  );
   await click("document.querySelector('.delegation-comment-actions button')");
   await click("document.querySelector('.delegation-comment-abandon')");
   await pause(160);
   const decided = await snapshot();
   console.log("DECIDED", decided);
-  assert(decided.statuses.join(",") === "resolved,resolved,abandoned", "Manual closure failed");
+  assert(decided.statuses.join(",") === "resolved,resolved,abandoned", "Individual closure failed");
   await clickText("接受本阶段");
   await pause(250);
   const accepted = await snapshot();
