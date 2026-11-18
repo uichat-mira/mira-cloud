@@ -18,6 +18,7 @@ export interface StepIndicatorProps<T extends StepValue = number> {
   onStepChange?: (step: T) => void;
   className?: string;
   ariaLabel?: string;
+  connectorWidth?: string;
 }
 
 type EdgeFade = { left: boolean; right: boolean };
@@ -48,6 +49,7 @@ export function StepIndicator<T extends StepValue>({
   onStepChange,
   className = "",
   ariaLabel = "Progress steps",
+  connectorWidth = "2rem",
 }: StepIndicatorProps<T>) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLOListElement>(null);
@@ -196,9 +198,10 @@ export function StepIndicator<T extends StepValue>({
                     aria-hidden="true"
                     data-step-indicator-connector=""
                     className={[
-                      "mt-3 h-px w-8 shrink-0",
+                      "mt-3 h-px shrink-0",
                       completed ? "bg-primary/35" : "bg-border",
                     ].join(" ")}
+                    style={{ width: connectorWidth }}
                   />
                 ) : null}
               </li>

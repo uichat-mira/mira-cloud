@@ -214,6 +214,7 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     expect(timeline).toHaveTextContent("交付与边界");
     expect(timeline).toHaveTextContent("长期托管");
     expect(timeline.parentElement).toHaveClass("delegation-paper-topline");
+    expect(document.querySelector(".delegation-paper-identity")).toBeNull();
     expect(document.querySelector(".delegation-timeline")).toBeNull();
     expect(document.querySelector(".delegation-intent")).toBeNull();
   });

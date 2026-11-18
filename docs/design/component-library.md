@@ -45,7 +45,7 @@ Additional components such as DatePicker, charts, resource tree, command palette
 
 ### StepIndicator
 
-`StepIndicator` is the shared progressive-step viewport. It accepts an arbitrary ordered step list, optional per-step descriptions/markers and explicit completed/disabled state. When the full track exceeds its real container width, it measures the rendered viewport/track, keeps the current step centered where possible, and clips the remaining track behind restrained edge fades; it must not assume a fixed number of steps or a particular viewport breakpoint. Product surfaces supply domain status and navigation permission through props—the primitive does not infer workflow authority. Narrow product layouts may still choose a separate compact disclosure when preserving reading space is more important than showing the full track.
+`StepIndicator` is the shared progressive-step viewport. It accepts an arbitrary ordered step list, optional per-step descriptions/markers, explicit completed/disabled state, and a typed `connectorWidth` for surfaces that need a more compact or expansive rhythm. When the full track exceeds its real container width, it measures the rendered viewport/track, keeps the current step centered where possible, and clips the remaining track behind restrained edge fades; it must not assume a fixed number of steps or a particular viewport breakpoint. Product surfaces supply domain status and navigation permission through props—the primitive does not infer workflow authority. Narrow product layouts may still choose a separate compact disclosure when preserving reading space is more important than showing the full track.
 
 
 ## 3. State semantics matter more than decoration

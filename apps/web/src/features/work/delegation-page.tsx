@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   ChevronDown,
   CornerUpLeft,
-  FileText,
   MessageSquare,
   PenLine,
   Plus,
@@ -993,12 +992,10 @@ export default function DelegationPage() {
             </nav>
           ) : null}
           <div className="delegation-paper-topline">
-            <span className="delegation-paper-identity">
-              <FileText size={14} aria-hidden="true" /> 需求草稿 / {scenario.label}
-            </span>
             <StepIndicator
               className="delegation-paper-stage-viewport"
               ariaLabel="工作主时间轴"
+              connectorWidth="clamp(52px, 6.8vw, 116px)"
               currentStep={demoFinished ? stageCount : stage}
               steps={timelineSteps}
               onStepChange={(nextStep) => {
