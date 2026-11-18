@@ -18,6 +18,7 @@ export interface StepIndicatorProps<T extends StepValue = number> {
   onStepChange?: (step: T) => void;
   className?: string;
   ariaLabel?: string;
+  connectorWidth?: React.CSSProperties["width"];
 }
 
 type EdgeFade = { left: boolean; right: boolean };
@@ -48,20 +49,20 @@ export function StepIndicator<T extends StepValue>({
   onStepChange,
   className = "",
   ariaLabel = "Progress steps",
+  connectorWidth = "2rem",
 }: StepIndicatorProps<T>) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLOListElement>(null);
   const [fade, setFade] = useState<EdgeFade>({ left: false, right: false });
+  const currentIndex = steps.findIndex((item) => sameStep(item.step, currentStep));
   const stepKey = steps.map((item) => String(item.step)).join("\u0000");
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
     const track = trackRef.current;
-    if (!viewport || !track || steps.length === 0) return;
+    if (!viewport || !track || currentIndex < 0) return;
 
     const centerCurrentStep = () => {
-      const currentIndex = steps.findIndex((item) => sameStep(item.step, currentStep));
-      if (currentIndex < 0) return;
       const target = track.querySelector<HTMLElement>(
         `[data-step-indicator-item][data-step-index="${currentIndex}"]`,
       );
@@ -88,7 +89,7 @@ export function StepIndicator<T extends StepValue>({
     observer.observe(viewport);
     observer.observe(track);
     return () => observer.disconnect();
-  }, [currentStep, stepKey, steps.length]);
+  }, [currentIndex, stepKey]);
 
   const currentMask = maskImage(fade);
 
@@ -196,9 +197,10 @@ export function StepIndicator<T extends StepValue>({
                     aria-hidden="true"
                     data-step-indicator-connector=""
                     className={[
-                      "mt-3 h-px w-8 shrink-0",
+                      "mt-3 h-px shrink-0",
                       completed ? "bg-primary/35" : "bg-border",
                     ].join(" ")}
+                    style={{ width: connectorWidth }}
                   />
                 ) : null}
               </li>

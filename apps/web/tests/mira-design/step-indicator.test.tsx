@@ -53,6 +53,23 @@ describe("StepIndicator viewport", () => {
     expect(screen.getByText("阶段 5").closest("[aria-current=step]")).not.toBeNull();
   });
 
+  it("applies an explicit connector width without feature-local style hooks", () => {
+    const { container } = render(
+      <StepIndicator
+        currentStep={1}
+        connectorWidth={96}
+        steps={[
+          { step: 1, label: "目标" },
+          { step: 2, label: "交付" },
+        ]}
+      />,
+    );
+
+    expect(container.querySelector("[data-step-indicator-connector]")).toHaveStyle({
+      width: "96px",
+    });
+  });
+
   it("keeps navigation explicit and respects disabled steps", async () => {
     const onStepChange = vi.fn();
     render(
