@@ -10,7 +10,6 @@ import {
   MessageSquare,
   PenLine,
   Plus,
-  Sparkles,
   Square,
   WandSparkles,
   X,
@@ -932,44 +931,6 @@ export default function DelegationPage() {
       ) : null}
 
       <div className={commentsOpen ? "delegation-layout has-comments" : "delegation-layout"}>
-        <aside className="delegation-timeline" aria-label="工作主时间轴">
-          <div className="delegation-timeline-kicker">需求主线</div>
-          <ol>
-            {scenario.stages.map((label, index) => {
-              const available = index <= acceptedCount;
-              const current = index === stage;
-              const completed = index < acceptedCount;
-              return (
-                <li key={label} className={current ? "is-current" : ""}>
-                  <button
-                    type="button"
-                    onClick={() => reviewStage(index as DelegationStage)}
-                    disabled={!available || streaming || preparingRevision || candidate !== null}
-                    aria-current={current ? "step" : undefined}
-                  >
-                    <span className="delegation-step-icon">
-                      {completed ? (
-                        <Check size={13} aria-hidden="true" />
-                      ) : (
-                        String(index + 1).padStart(2, "0")
-                      )}
-                    </span>
-                    <span className="delegation-step-copy">
-                      <strong>{label}</strong>
-                      <small>{completed ? "已接受" : current ? "正在审阅" : "等待前一阶段"}</small>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-          <div className="delegation-timeline-footer">
-            <span className="delegation-timeline-line" />
-            <span>长期托管</span>
-            <small>通过最终确认后才成立</small>
-          </div>
-        </aside>
-
         <article className="delegation-paper" aria-label="需求审阅画布">
           <button
             type="button"
@@ -1024,12 +985,18 @@ export default function DelegationPage() {
               </button>
             </div>
           </div>
-          <div className="delegation-paper-content">
-            <div className="delegation-paper-title">
-              <div className="delegation-paper-title-meta">
-                <span className="delegation-paper-index">0{stage + 1} / 03</span>
-                <span className="delegation-stage-state">
-                  {preparingRevision || streaming
+          <nav className="delegation-stage-strip" aria-label="工作主时间轴">
+            <div className="delegation-stage-strip-head">
+              <span>需求主线</span>
+              <small>阶段由你逐步确认</small>
+            </div>
+            <ol className="delegation-stage-strip-track">
+              {scenario.stages.map((label, index) => {
+                const available = index <= acceptedCount;
+                const current = index === stage;
+                const completed = index < acceptedCount;
+                const currentState =
+                  preparingRevision || streaming
                     ? "正在准备演示修订"
                     : candidate
                       ? "修订候选 · 待你核对"
@@ -1039,16 +1006,54 @@ export default function DelegationPage() {
                           ? "已接受 · 只读"
                           : demoFinished
                             ? "全部阶段已接受"
-                            : "待你审阅"}
+                            : "待你审阅";
+                return (
+                  <li
+                    key={label}
+                    className={
+                      current
+                        ? "delegation-stage-strip-step is-current"
+                        : completed
+                          ? "delegation-stage-strip-step is-complete"
+                          : "delegation-stage-strip-step"
+                    }
+                  >
+                    <button
+                      type="button"
+                      onClick={() => reviewStage(index as DelegationStage)}
+                      disabled={!available || streaming || preparingRevision || candidate !== null}
+                      aria-current={current ? "step" : undefined}
+                    >
+                      <span className="delegation-step-icon">
+                        {completed ? (
+                          <Check size={13} aria-hidden="true" />
+                        ) : (
+                          String(index + 1).padStart(2, "0")
+                        )}
+                      </span>
+                      <span className="delegation-step-copy">
+                        <strong>{label}</strong>
+                        <small>
+                          {current ? currentState : completed ? "已接受" : "等待前一阶段"}
+                        </small>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+              <li className="delegation-stage-strip-step delegation-stage-strip-terminal">
+                <span className="delegation-step-icon" aria-hidden="true">
+                  ∞
                 </span>
-              </div>
-              <h2>{scenario.title}</h2>
-              <p>{scenario.tagline}</p>
-            </div>
-            <blockquote className="delegation-intent">
-              <Sparkles size={16} aria-hidden="true" />
-              <span>{draft.intent}</span>
-            </blockquote>
+                <span className="delegation-step-copy">
+                  <strong>长期托管</strong>
+                  <small>最终确认后成立</small>
+                </span>
+              </li>
+            </ol>
+          </nav>
+          <div className="delegation-paper-content">
+            <h2 className="delegation-stage-context-title">{scenario.title}</h2>
 
             {diffSource ? (
               <Suspense
