@@ -3,6 +3,8 @@
 **设计状态：Design baseline；AGT-041–044 已逐步建立本地 Web/API/DB 工程代码，但没有运行时部署。** 日期 2026-11-11。
 权威参照：[产品架构 v0.4](v0.4.md)、[ADR-003](../decisions/ADR-003-hono-drizzle-postgres-deployment.md)、[AGT-040](https://github.com/uichat-mira/mira-cloud/issues/4)。
 
+> **2026-11-18 后续讨论注释｜未经充分调研**：[OMM 私人 Agent 与独立运行时探索草案](../research/omm-personal-agent-exploration-2026-11-18.md)。本文件的「首期两名用户」「CP 执行与 OMM 适配器」「多用户隔离」等均是历史设计前提，现需重新审议；**不以本注释修改既有 ADR、运行事实或技术选型，不授权施工/迁移**。
+
 ## 1. 目标、MVP 与边界
 
 Mira Cloud 的首个真实工作闭环：用户通过 Cloud Auth 登录独立 Web 工作台，查看真实 Cloud Pi Task/Run 状态，按明确授权发起工作，持续观察、确认结果，保存并重用有来源的 Artifact。Web、Mobile WebView、Desktop 共享云端资源，但各自本地运行权限不合并。
