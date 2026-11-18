@@ -1,16 +1,33 @@
 # Mira Cloud「交代工作」——一期技术验证清单
 
 **版本**：v1.0 · 2026-11-14  
-**状态**：待验证清单，不是测试报告；尚未实施或验证成功的项目均不标“通过”。  
+**状态**：验证清单与进度跟踪，不是生产验收报告；局部 Fixture 证据不得替代真实 AI、云端运行时或真机验收。\
 **依据**：[「交代工作」Intelligent UI PRD](./delegation-intelligent-ui.md) D01–D31。
 
-## 0. 已核实的当前代码事实
+## 0. 已核实的当前代码事实（2026-11-17）
 
-- Web 基础为 React + TypeScript + Vite、MiraDesign Token；目前入口 `apps/web/src/features/work/workspace-view.tsx` 使用 `ComposerModal` / `ComposerOutline` 静态占位，无完整需求审阅及执行闭环。
-- `apps/web/package.json` 已引入 `@milkdown/crepe` / `@milkdown/react` **7.21.2**、`streamdown`。`MarkdownEditor.tsx` 是薄编辑器包装，目前只处理 Markdown 变化，未提供锚定批注、历史版本、阶段验收。
-- 已引入的 Milkdown Crepe 版本上游具有 AI diff 相关能力；这表示**有可复用基础**，不是 Mira Cloud 已集成或动态 UI diff 已通过。
-- 现行 Workbench 产品合同已改以[交代工作 PRD](./delegation-intelligent-ui.md)作为详细设计真相源；Web 端仍保留旧 Composer Modal Fixture，实施时须替换，不得当作最终交互。
+- Web 基础为 React + TypeScript + Vite、MiraDesign Token。正式 /new 页面由 apps/web/src/features/work/delegation-page.tsx 承载，包含意图进入、统一需求草稿、json-render 结构化字段、Milkdown/ProseMirror 正文与文字锚定批注；旧 Composer Modal 不再代表目标交互。
+- delegation-revision-fixture.ts 生成预设 Fixture 操作；delegation-revision-poc.ts 校验本地修订候选、来源指纹、批注响应与单次版本提交。它没有调用模型或服务端。
+- /new 已接入正文段落文字 Diff 与已登记结构化字段 Diff；旧批注按原始版本回看，不自动映射到新版。批注建议理由随本地草稿保存，阶段接受边界会阻断 open / suggested 批注。
+- 当前草稿仍使用 sessionStorage；没有跨设备持久化、云端版本锁、真实 SSE、Cloud Agent 提交或长期运行接线。
+- Milkdown Crepe 7.21.2、@milkdown/react 已在依赖中。当前 /new 复用 ProseMirror 差异与编辑能力；复杂 Markdown 格式、动态组件级锚定和跨版本行内定位仍需独立验证。
 - Cloud Auth 掌握身份/授权，Cloud Pi 持有现有云 Agent 运行时事实。不得为了原型另造第二套 Scheduler、Run writer 或服务授权主体。
+
+### 0.1 局部实现进度快照
+
+| 验证项 | 当前证据 | 状态与边界 |
+| --- | --- | --- |
+| TV02 正文与结构化字段一致性 | /new 的约定校验、字段更新及一致性阻断测试 | 部分验证；尚非服务端权威状态 |
+| TV03 文字锚点与来源版本 | ProseMirror 文字锚点；采用修订后可查看原始来源正文；旧锚点不自动重定位 | 部分验证；动态组件锚定未实现 |
+| TV04 批注审阅闭环 | open / suggested / resolved / abandoned；用户勾选后仅批量确认当前阶段已有建议的条目；逐条确认／放弃仍保留；领域层阻断未闭环批注验收 | 本地 Fixture + T1、jsdom UI、Chrome 桌面／移动模拟视口通过；未接真实 AI，非服务端权威状态或真机验收 |
+| TV05 流式生成与版本安全 | Fixture 候选、中止、放弃、采用前不改原稿 | 仅本地演示；无真实流式网络、断网或服务端恢复验证 |
+| TV06 自动保存与恢复 | 当前标签页 sessionStorage、同标签页刷新恢复与存储失败测试 | 部分验证；不代表跨会话或云端持久化 |
+| TV10 Diff 展示 | 正文段落文字差异、已登记字段变化、完整旧版正文回看 | 本地 Fixture 基础路径通过；复杂 Markdown 与组件级 Diff 未完成 |
+| TV12 移动端审阅 | 390 × 844 Chrome 模拟视口、底部批注面板、候选自动滚动及无横向溢出 | 模拟视口通过；软键盘、Safe Area 与真机未验收 |
+| TV14 性能与成本 | 修订引擎与 Diff 面板按需加载；生产构建记录 chunk 大小 | 局部优化；完整 MarkdownText 按需 chunk 仍较大，尚无完整性能基准 |
+
+详细实现范围、自动化结果、浏览器脚本与未覆盖边界见[Diff UI 接线记录](../research/delegation/10-diff-ui-fixture-implementation.md)。
+
 
 ## 1. 技术验证任务与退出条件
 

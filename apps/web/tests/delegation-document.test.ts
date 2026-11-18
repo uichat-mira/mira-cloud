@@ -10,6 +10,7 @@ import {
   createDelegationDraft,
   isAgreementConsistent,
   parseDelegationDraft,
+  resolveSelectedSuggestedComments,
   submitHistoricalRevision,
   updateReviewComments,
 } from "../src/features/work/delegation-document";
@@ -51,6 +52,61 @@ describe("single authority for delegation document, JSON UI and acceptance", () 
     expect(after.stages[0].revision).toBeGreaterThan(before.stages[0].revision);
     expect(changeDocumentConfig(before, 0, "unknown", true)).toBe(before);
     expect(changeDocumentConfig(before, 0, "focus", "__invalid__")).toBe(before);
+  });
+
+  it("preserves the exact source snapshot whenever a manual edit supersedes an anchored revision", () => {
+    let draft = createDelegationDraft("radar");
+    const original = draft.stages[0];
+    draft = updateReviewComments(draft, () => [
+      {
+        id: 31,
+        stage: 0,
+        excerpt: "持续关注",
+        text: "请保留原始来源",
+        status: "open",
+        anchor: {
+          from: 1,
+          to: 5,
+          version: { stage: 0, revision: 0 },
+          status: "active",
+        },
+      },
+    ]);
+    const firstEdit = changeDocumentMarkdown(
+      draft,
+      0,
+      original.markdown.replace("请持续观察 AI 行业", "请持续观察 AI 行业与独立开发者"),
+    );
+    expect(firstEdit.stages[0].reviewHistory).toEqual([
+      { markdown: original.markdown, config: original.config, revision: 0 },
+    ]);
+
+    const secondSource = firstEdit.stages[0];
+    const withNewAnchor = updateReviewComments(firstEdit, (items) => [
+      ...items,
+      {
+        id: 32,
+        stage: 0,
+        excerpt: "独立开发者",
+        text: "补充这个范围",
+        status: "open",
+        anchor: {
+          from: 8,
+          to: 12,
+          version: { stage: 0, revision: 1 },
+          status: "active",
+        },
+      },
+    ]);
+    const secondEdit = changeDocumentConfig(withNewAnchor, 0, "focus", "business");
+    expect(secondEdit.stages[0].reviewHistory).toEqual([
+      { markdown: original.markdown, config: original.config, revision: 0 },
+      {
+        markdown: secondSource.markdown,
+        config: secondSource.config,
+        revision: 1,
+      },
+    ]);
   });
 
   it("manual Markdown conflict remains visible and stops acceptance until reconciled", () => {
@@ -154,6 +210,53 @@ describe("single authority for delegation document, JSON UI and acceptance", () 
     expect(cancelled.comments).toHaveLength(0);
     expect(cancelled.historicalCommentBackup).toBeNull();
     expect(cancelled.stages[0].accepted).not.toBeNull();
+  });
+
+  it("batch-resolves only selected suggested comments in the active stage", () => {
+    const draft = updateReviewComments(createDelegationDraft(), () => [
+      {
+        id: 1,
+        stage: 0,
+        excerpt: "第一条建议",
+        text: "已提出处理方案",
+        status: "suggested",
+        suggestedReason: "补充来源核验",
+      },
+      { id: 2, stage: 0, excerpt: "未处理", text: "仍待判断", status: "open" },
+      {
+        id: 3,
+        stage: 0,
+        excerpt: "第三条建议",
+        text: "已有处理方案",
+        status: "suggested",
+      },
+      {
+        id: 4,
+        stage: 1,
+        excerpt: "其他阶段",
+        text: "不应跨阶段修改",
+        status: "suggested",
+      },
+      { id: 1, stage: 1, excerpt: "重复 ID", text: "也不应跨阶段修改", status: "open" },
+    ]);
+
+    const updated = resolveSelectedSuggestedComments(draft, 0, [1, 2, 4, 999]);
+    expect(updated.comments.map((comment) => comment.status)).toEqual([
+      "resolved",
+      "open",
+      "suggested",
+      "suggested",
+      "open",
+    ]);
+    expect(draft.comments.map((comment) => comment.status)).toEqual([
+      "suggested",
+      "open",
+      "suggested",
+      "suggested",
+      "open",
+    ]);
+    expect(acceptDocumentStage(updated, 0)).toBe(updated);
+    expect(resolveSelectedSuggestedComments(updated, 0, [2, 4, 999])).toBe(updated);
   });
 
   it("persists precise text anchors alongside existing stage-wide comments", () => {

@@ -10,7 +10,6 @@ import {
   MessageSquare,
   PenLine,
   Plus,
-  Sparkles,
   Square,
   WandSparkles,
   X,
@@ -20,13 +19,15 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { TextSelection } from "@milkdown/kit/prose/state";
 import type { EditorView } from "@milkdown/kit/prose/view";
 import type { TextReviewAnchor } from "./delegation-review-poc";
-import MarkdownText from "../../components/mira-design/MarkdownText";
 import DelegationIntentEntry from "./delegation-intent-entry";
 import ConfirmDialog from "../../components/mira-design/ConfirmDialog";
+import { StepIndicator } from "../../components/mira-design/StepIndicator";
 import { ModalShell } from "../../components/mira-design/Modal";
 import { useLocation, useNavigate } from "react-router";
 import { delegationRegistry } from "./delegation-catalog";
 import { findPreviewArtifact } from "./fixture-data";
+import { createFixtureRevisionProposal } from "./delegation-revision-fixture";
+import type { RevisionCandidate } from "./delegation-revision-poc";
 import {
   DRAFT_STORAGE_KEY,
   acceptDocumentStage,
@@ -38,6 +39,8 @@ import {
   createDelegationDraft,
   isAgreementConsistent,
   parseDelegationDraft,
+  type DocumentSnapshot,
+  resolveSelectedSuggestedComments,
   submitHistoricalRevision,
   updateReviewComments,
 } from "./delegation-document";
@@ -50,11 +53,16 @@ import {
 } from "./delegation-fixtures";
 
 const DelegationReviewDocument = lazy(() => import("./delegation-review-document"));
+const DelegationDiffReview = lazy(() => import("./delegation-diff-review"));
+const MarkdownText = lazy(async () => {
+  const { loadMarkdownText } = await import("../../components/mira-design/content");
+  return loadMarkdownText();
+});
 
 type CommentStatus = "open" | "suggested" | "resolved" | "abandoned";
 const statusLabels: Record<CommentStatus, string> = {
   open: "待处理",
-  suggested: "AI 已建议处理",
+  suggested: "已建议处理（演示）",
   resolved: "已解决",
   abandoned: "已放弃",
 };
@@ -180,16 +188,33 @@ export default function DelegationPage() {
     null,
   );
   const [activeCommentId, setActiveCommentId] = useState<number | null>(null);
+  const [selectedCommentIds, setSelectedCommentIds] = useState<number[]>([]);
   const documentViewRef = useRef<EditorView | null>(null);
   const sheetScrollRef = useRef(0);
   const commentIntentRef = useRef(false);
   const [revision, setRevision] = useState(0);
   const [streamStep, setStreamStep] = useState(0);
   const [streaming, setStreaming] = useState(false);
+  const [preparingRevision, setPreparingRevision] = useState(false);
+  const [candidate, setCandidate] = useState<RevisionCandidate | null>(null);
+  const pendingRevisionRef = useRef<RevisionCandidate | null>(null);
+  const revisionEngineRef = useRef<typeof import("./delegation-revision-poc") | null>(null);
+  const revisionRequestRef = useRef(0);
+  const [sourceCommentId, setSourceCommentId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+
+  useEffect(
+    () => () => {
+      revisionRequestRef.current += 1;
+    },
+    [],
+  );
+  useEffect(() => {
+    setSelectedCommentIds([]);
+  }, [scenarioId, stage]);
   const [editingBody, setEditingBody] = useState(false);
   const [providerEpoch, setProviderEpoch] = useState(0);
-  const [demoFinished, setDemoFinished] = useState(draft.acceptedCount === 3);
+  const [demoFinished, setDemoFinished] = useState(draft.acceptedCount === draft.stages.length);
   const [pendingScenario, setPendingScenario] = useState<DelegationScenarioId | null>(null);
   const scenario = delegationScenarios[scenarioId];
   const returnTo = parseReturnTo((location.state as { returnTo?: unknown } | null)?.returnTo);
@@ -205,10 +230,17 @@ export default function DelegationPage() {
   const currentComments = comments.filter(
     (comment) => comment.stage === stage && comment.status !== "abandoned",
   );
+  const suggestedComments = currentComments.filter((comment) => comment.status === "suggested");
+  const selectedSuggestedCommentIds = suggestedComments
+    .filter((comment) => selectedCommentIds.includes(comment.id))
+    .map((comment) => comment.id);
   const documentAnchors = useMemo(
     () =>
       comments.flatMap((comment): TextReviewAnchor[] =>
-        comment.stage === stage && comment.status !== "abandoned" && comment.anchor
+        comment.stage === stage &&
+        comment.status !== "abandoned" &&
+        comment.anchor &&
+        comment.anchor.version.revision === record.revision
           ? [
               {
                 id: String(comment.id),
@@ -221,7 +253,7 @@ export default function DelegationPage() {
             ]
           : [],
       ),
-    [comments, stage],
+    [comments, stage, record.revision],
   );
   const unresolved = currentComments.filter(
     (comment) => comment.status === "open" || comment.status === "suggested",
@@ -230,16 +262,61 @@ export default function DelegationPage() {
   const historical = historicStage && draft.editingHistorical !== stage;
   const revisingHistory = draft.editingHistorical === stage;
   const consistent = isAgreementConsistent(draft, stage);
-  const renderedBody =
-    streaming && streamStep > 0
-      ? record.markdown + "\n\n*正在演示修订过程，当前约定尚未改变。*"
-      : record.markdown;
+  const renderedBody = candidate?.preview.markdown ?? record.markdown;
+  const latestReviewSource = record.reviewHistory?.at(-1) ?? null;
+  const diffSource =
+    candidate?.baseline ?? (streaming || preparingRevision ? null : latestReviewSource);
+  const diffResult = candidate?.preview ?? record;
+  const sourceComment = currentComments.find((item) => item.id === sourceCommentId);
+  const sourceVersion = sourceComment?.anchor?.version.revision;
+  const sourceSnapshot: DocumentSnapshot | null =
+    sourceVersion === undefined
+      ? null
+      : sourceVersion === record.revision
+        ? record
+        : ((candidate?.baseline.revision === sourceVersion
+            ? candidate.baseline
+            : record.reviewHistory?.find((item) => item.revision === sourceVersion)) ?? null);
   const hasDraftProgress =
     streaming ||
+    preparingRevision ||
+    candidate !== null ||
     acceptedCount > 0 ||
     comments.length > 0 ||
     draft.editingHistorical !== null ||
     draft.stages.some((item) => item.revision > 0);
+
+  const stageCount = scenario.stages.length;
+  const finalStageIndex = stageCount - 1;
+  const currentStageState =
+    preparingRevision || streaming
+      ? "正在准备演示修订"
+      : candidate
+        ? "修订候选 · 待你核对"
+        : revisingHistory
+          ? "正在修改历史阶段"
+          : historical
+            ? "已接受 · 只读"
+            : "待你审阅";
+  const timelineSteps = [
+    ...scenario.stages.map((label, index) => ({
+      step: index,
+      label,
+      marker: String(index + 1).padStart(2, "0"),
+      description:
+        index === stage ? currentStageState : index < acceptedCount ? "已接受" : "等待前一阶段",
+      completed: index < acceptedCount,
+      disabled: index > acceptedCount || streaming || preparingRevision || candidate !== null,
+    })),
+    {
+      step: stageCount,
+      label: "长期托管",
+      marker: "∞",
+      description: demoFinished ? "演示流程已完成" : "最终确认后成立",
+      completed: false,
+      disabled: true,
+    },
+  ];
 
   // The entry is not a created task or a saved draft. Only commit the
   // document to browser session storage once the user explicitly asks to draft.
@@ -289,25 +366,22 @@ export default function DelegationPage() {
       setStreamStep(next);
       if (next >= 3) {
         window.clearInterval(timer);
-        setRevision((previous) => previous + 1);
-        setDraft((previous) =>
-          updateReviewComments(previous, (items) =>
-            items.map((comment) =>
-              comment.stage === stage && comment.status === "open"
-                ? { ...comment, status: "suggested" }
-                : comment,
-            ),
-          ),
-        );
+        setCandidate(pendingRevisionRef.current);
+        pendingRevisionRef.current = null;
         setStreaming(false);
-        setMessage("修订草稿已经生成。请确认每一条批注，最终决定仍由你作出。");
+        setMessage("本地 Fixture 修订候选已生成。先查看差异，再决定采用或放弃。");
       }
     }, 740);
     return () => window.clearInterval(timer);
   }, [streaming, stage]);
 
   const setScenario = (next: DelegationScenarioId) => {
+    revisionRequestRef.current += 1;
+    setPreparingRevision(false);
     setStreaming(false);
+    setCandidate(null);
+    pendingRevisionRef.current = null;
+    setSourceCommentId(null);
     setDraft(createDelegationDraft(next));
     setStage(0);
     setTimelineOpen(false);
@@ -352,7 +426,12 @@ export default function DelegationPage() {
     setPendingStart(null);
     setEntryPhase("entry");
     setRestartRequested(false);
+    revisionRequestRef.current += 1;
+    setPreparingRevision(false);
     setStreaming(false);
+    setCandidate(null);
+    pendingRevisionRef.current = null;
+    setSourceCommentId(null);
     setCommentsOpen(false);
     setPendingAnchor(null);
     setWholeStageComment(false);
@@ -360,7 +439,7 @@ export default function DelegationPage() {
   };
 
   const handleConfigChanges = (changes: Array<{ path: string; value: unknown }>) => {
-    if (streaming || historical || editingBody) return;
+    if (streaming || preparingRevision || candidate || historical || editingBody) return;
     setDraft((previous) =>
       changes.reduce((next, change) => {
         if (!change.path.startsWith("/config/")) return next;
@@ -405,7 +484,15 @@ export default function DelegationPage() {
     // Opening the review list alone never authorizes a new comment. Even a
     // programmatic submit needs either a proven text anchor or explicit
     // whole-stage intent, not an implicit fallthrough to "本阶段整体".
-    if (!text || (!pendingAnchor && !wholeStageComment) || streaming || historical) return;
+    if (
+      !text ||
+      (!pendingAnchor && !wholeStageComment) ||
+      streaming ||
+      preparingRevision ||
+      candidate ||
+      historical
+    )
+      return;
     const view = documentViewRef.current;
     if (
       pendingAnchor &&
@@ -455,6 +542,39 @@ export default function DelegationPage() {
     setMessage("批注已加入本次演示草稿。还没有提交给真实 Agent。");
   };
 
+  const loadDemoComments = () => {
+    if (
+      streaming ||
+      preparingRevision ||
+      candidate ||
+      historical ||
+      editingBody ||
+      currentComments.length > 0
+    )
+      return;
+    const examples = [
+      "请先说明如何核实资料来源。",
+      "研究重点需要更具体。",
+      "保留尚未确认的范围和风险。",
+    ];
+    setDraft((previous) =>
+      updateReviewComments(previous, (items) => {
+        const firstId = Math.max(0, ...items.map((item) => item.id)) + 1;
+        return [
+          ...items,
+          ...examples.map((text, offset) => ({
+            id: firstId + offset,
+            stage,
+            excerpt: "本阶段整体",
+            text,
+            status: "open" as const,
+          })),
+        ];
+      }),
+    );
+    setMessage("已加入三条演示批注，供集中修订体验；并未提交给 AI。");
+  };
+
   const updateAnchors = (nextAnchors: TextReviewAnchor[]) => {
     setDraft((previous) => {
       let changed = false;
@@ -497,8 +617,22 @@ export default function DelegationPage() {
   const jumpToCommentSource = (commentId: number) => {
     const entry = currentComments.find((item) => item.id === commentId);
     const anchor = entry?.anchor;
+    if (!anchor) return;
+    // Old anchors always belong to the source revision, not matching text in
+    // the new document. Never attempt implicit cross-version relocation.
+    if (candidate || anchor.version.revision !== record.revision) {
+      if (
+        !record.reviewHistory?.some((item) => item.revision === anchor.version.revision) &&
+        candidate?.baseline.revision !== anchor.version.revision
+      ) {
+        setMessage("批注来源版本未保存，不能猜测在新版中的位置。");
+        return;
+      }
+      setSourceCommentId(commentId);
+      return;
+    }
     const view = documentViewRef.current;
-    if (!anchor || anchor.status !== "active" || !view) return;
+    if (anchor.status !== "active" || !view) return;
     if (
       anchor.to > view.state.doc.content.size ||
       view.state.doc.textBetween(anchor.from, anchor.to, " ") !== entry.excerpt
@@ -532,11 +666,34 @@ export default function DelegationPage() {
   };
 
   const updateComment = (id: number, status: "resolved" | "abandoned") => {
-    if (streaming) return;
+    if (streaming || preparingRevision || candidate) return;
     setDraft((previous) =>
       updateReviewComments(previous, (items) =>
         items.map((comment) => (comment.id === id ? { ...comment, status } : comment)),
       ),
+    );
+    setSelectedCommentIds((previous) => previous.filter((selectedId) => selectedId !== id));
+  };
+
+  const toggleSuggestedCommentSelection = (id: number, checked: boolean) => {
+    if (streaming || preparingRevision || candidate || historical) return;
+    if (!suggestedComments.some((comment) => comment.id === id)) return;
+    setSelectedCommentIds((previous) =>
+      checked
+        ? previous.includes(id)
+          ? previous
+          : [...previous, id]
+        : previous.filter((selectedId) => selectedId !== id),
+    );
+  };
+
+  const confirmSelectedComments = () => {
+    if (streaming || preparingRevision || candidate || historical) return;
+    const selectedIds = selectedSuggestedCommentIds;
+    if (selectedIds.length === 0) return;
+    setDraft((previous) => resolveSelectedSuggestedComments(previous, stage, selectedIds));
+    setSelectedCommentIds((previous) =>
+      previous.filter((selectedId) => !selectedIds.includes(selectedId)),
     );
   };
 
@@ -552,7 +709,7 @@ export default function DelegationPage() {
     // A visible review rail must continue accepting new source selections.
     // The sidebar composer uses the latest stable range; the floating entry
     // is only needed while the review rail is closed.
-    if (streaming || historical || editingBody) return;
+    if (streaming || preparingRevision || candidate || historical || editingBody) return;
     if (anchor.excerpt.length > 600) {
       setMessage("选区过长，请选择不超过 600 字的段落。");
       return;
@@ -576,27 +733,98 @@ export default function DelegationPage() {
     }
   };
 
-  const beginRevision = () => {
-    if (streaming || historical) return;
+  const beginRevision = async () => {
+    if (
+      streaming ||
+      preparingRevision ||
+      candidate ||
+      historical ||
+      editingBody ||
+      !consistent ||
+      saveStatus === "failed"
+    )
+      return;
+    const request = ++revisionRequestRef.current;
+    setPreparingRevision(true);
+    setMessage("");
+    // On narrow screens, the bottom review sheet otherwise covers the actual
+    // proposed document. Preserve desktop's side-by-side review rail.
+    if (window.matchMedia?.("(max-width: 700px)").matches) closeComments(false);
     setEditingBody(false);
     setPendingAnchor(null);
     setWholeStageComment(false);
     setCommentText("");
     commentIntentRef.current = false;
     setStreamStep(0);
-    setMessage("");
-    setStreaming(true);
+    try {
+      // Keep the ProseMirror proposal engine out of /new's first-load bundle.
+      const engine = await import("./delegation-revision-poc");
+      if (revisionRequestRef.current !== request) return;
+      revisionEngineRef.current = engine;
+      const prepared = engine.prepareRevision(draft, createFixtureRevisionProposal(draft, stage));
+      setPreparingRevision(false);
+      if (!prepared.ok) {
+        setMessage("无法准备修订候选：" + prepared.reason + "。请核实当前草稿。");
+        return;
+      }
+      pendingRevisionRef.current = prepared;
+      setStreaming(true);
+    } catch {
+      if (revisionRequestRef.current !== request) return;
+      setPreparingRevision(false);
+      setMessage("本地演示修订模块加载失败；原稿和批注均未改变。");
+    }
   };
 
   const stopRevision = () => {
+    revisionRequestRef.current += 1;
+    pendingRevisionRef.current = null;
+    setPreparingRevision(false);
     setStreaming(false);
     setStreamStep(0);
+    setCandidate(null);
     setMessage("生成已中止；保留此前正文和批注，未接受不完整版本。");
+  };
+
+  const discardRevision = () => {
+    setCandidate(null);
+    setStreamStep(0);
+    setMessage("已放弃修订候选；原稿和批注均未修改。");
+  };
+
+  const adoptRevision = () => {
+    // Retrying a failed save is allowed; the source draft stays unmodified
+    // until sessionStorage accepts the new revision.
+    if (!candidate || streaming || preparingRevision || !revisionEngineRef.current) return;
+    const result = revisionEngineRef.current.commitRevision(draft, candidate);
+    if (!result.ok) {
+      setCandidate(null);
+      setMessage("草稿或批注已发生变化（" + result.reason + "），请重新生成候选。");
+      return;
+    }
+    try {
+      window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(result.proposedDraft));
+      setSaveStatus("saved");
+    } catch {
+      setSaveStatus("failed");
+      setMessage("无法保存修订。原稿保持不变，请检查浏览器存储状态。");
+      return;
+    }
+    setDraft(result.proposedDraft);
+    setCandidate(null);
+    setStreamStep(0);
+    setRevision((previous) => previous + 1);
+    setProviderEpoch((previous) => previous + 1);
+    setPendingAnchor(null);
+    setSelectionPosition(null);
+    setMessage("已采用本地演示修订，旧版本已保留。批注仍须由你逐条确认。");
   };
 
   const accept = () => {
     if (
       streaming ||
+      preparingRevision ||
+      candidate !== null ||
       unresolved > 0 ||
       historicStage ||
       stage !== acceptedCount ||
@@ -610,9 +838,9 @@ export default function DelegationPage() {
     setWholeStageComment(false);
     setCommentText("");
     commentIntentRef.current = false;
-    if (stage === 2) {
+    if (stage === finalStageIndex) {
       setDemoFinished(true);
-      setMessage("三个阶段已经验收（演示），没有创建真实任务，也没有启动执行。");
+      setMessage(`${stageCount} 个阶段已经验收（演示），没有创建真实任务，也没有启动执行。`);
       return;
     }
     setStage((stage + 1) as DelegationStage);
@@ -624,7 +852,14 @@ export default function DelegationPage() {
   };
 
   const reviewStage = (target: DelegationStage) => {
-    if (target > acceptedCount || draft.editingHistorical !== null) return;
+    if (
+      candidate ||
+      streaming ||
+      preparingRevision ||
+      target > acceptedCount ||
+      draft.editingHistorical !== null
+    )
+      return;
     setStage(target);
     setRevision(0);
     setStreamStep(0);
@@ -640,7 +875,7 @@ export default function DelegationPage() {
   };
 
   const startHistoricalRevision = () => {
-    if (streaming || !historical) return;
+    if (streaming || preparingRevision || candidate || !historical) return;
     setDraft((previous) => beginHistoricalEdit(previous, stage));
     setMessage("历史验收仍然有效。只有提交修改才会要求本阶段及后续阶段重新验收。");
   };
@@ -729,44 +964,6 @@ export default function DelegationPage() {
       ) : null}
 
       <div className={commentsOpen ? "delegation-layout has-comments" : "delegation-layout"}>
-        <aside className="delegation-timeline" aria-label="工作主时间轴">
-          <div className="delegation-timeline-kicker">需求主线</div>
-          <ol>
-            {scenario.stages.map((label, index) => {
-              const available = index <= acceptedCount;
-              const current = index === stage;
-              const completed = index < acceptedCount;
-              return (
-                <li key={label} className={current ? "is-current" : ""}>
-                  <button
-                    type="button"
-                    onClick={() => reviewStage(index as DelegationStage)}
-                    disabled={!available || streaming}
-                    aria-current={current ? "step" : undefined}
-                  >
-                    <span className="delegation-step-icon">
-                      {completed ? (
-                        <Check size={13} aria-hidden="true" />
-                      ) : (
-                        String(index + 1).padStart(2, "0")
-                      )}
-                    </span>
-                    <span className="delegation-step-copy">
-                      <strong>{label}</strong>
-                      <small>{completed ? "已接受" : current ? "正在审阅" : "等待前一阶段"}</small>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-          <div className="delegation-timeline-footer">
-            <span className="delegation-timeline-line" />
-            <span>长期托管</span>
-            <small>通过最终确认后才成立</small>
-          </div>
-        </aside>
-
         <article className="delegation-paper" aria-label="需求审阅画布">
           <button
             type="button"
@@ -775,7 +972,7 @@ export default function DelegationPage() {
             aria-expanded={timelineOpen}
           >
             <span>
-              阶段 {stage + 1} / 3 · {scenario.stages[stage]}
+              阶段 {stage + 1} / {stageCount} · {scenario.stages[stage]}
             </span>
             <ChevronDown size={16} aria-hidden="true" />
           </button>
@@ -785,7 +982,9 @@ export default function DelegationPage() {
                 <button
                   key={label}
                   type="button"
-                  disabled={index > acceptedCount || streaming}
+                  disabled={
+                    index > acceptedCount || streaming || preparingRevision || candidate !== null
+                  }
                   onClick={() => reviewStage(index as DelegationStage)}
                 >
                   {index + 1}. {label} {index < acceptedCount ? "✓" : ""}
@@ -794,9 +993,19 @@ export default function DelegationPage() {
             </nav>
           ) : null}
           <div className="delegation-paper-topline">
-            <span>
+            <span className="delegation-paper-identity">
               <FileText size={14} aria-hidden="true" /> 需求草稿 / {scenario.label}
             </span>
+            <StepIndicator
+              className="delegation-paper-stage-viewport"
+              ariaLabel="工作主时间轴"
+              currentStep={demoFinished ? stageCount : stage}
+              steps={timelineSteps}
+              onStepChange={(nextStep) => {
+                if (nextStep >= stageCount) return;
+                reviewStage(nextStep as DelegationStage);
+              }}
+            />
             <div className="delegation-topline-actions">
               {saveStatus === "failed" ? <span role="status">会话保存失败</span> : null}
               <button
@@ -820,29 +1029,37 @@ export default function DelegationPage() {
             </div>
           </div>
           <div className="delegation-paper-content">
-            <div className="delegation-paper-title">
-              <div className="delegation-paper-title-meta">
-                <span className="delegation-paper-index">0{stage + 1} / 03</span>
-                <span className="delegation-stage-state">
-                  {streaming
-                    ? "正在演示修订"
-                    : revisingHistory
-                      ? "正在修改历史阶段"
-                      : historical
-                        ? "已接受 · 只读"
-                        : demoFinished
-                          ? "全部阶段已接受"
-                          : "待你审阅"}
-                </span>
-              </div>
-              <h2>{scenario.title}</h2>
-              <p>{scenario.tagline}</p>
-            </div>
-            <blockquote className="delegation-intent">
-              <Sparkles size={16} aria-hidden="true" />
-              <span>{draft.intent}</span>
-            </blockquote>
+            <h2 className="delegation-stage-context-title">{scenario.title}</h2>
 
+            {diffSource ? (
+              <Suspense
+                fallback={
+                  <p className="delegation-loading" role="status">
+                    正在载入修订差异…
+                  </p>
+                }
+              >
+                <DelegationDiffReview
+                  key={
+                    scenarioId +
+                    "-" +
+                    stage +
+                    "-" +
+                    diffSource.revision +
+                    "-" +
+                    diffResult.revision +
+                    "-" +
+                    Boolean(candidate)
+                  }
+                  before={diffSource}
+                  after={diffResult}
+                  stage={stage}
+                  scenarioId={scenarioId}
+                  adopted={!candidate}
+                  autoScroll={Boolean(candidate)}
+                />
+              </Suspense>
+            ) : null}
             <div className="delegation-document-heading">
               <h3>工作说明</h3>
               {historical && !streaming ? (
@@ -854,7 +1071,7 @@ export default function DelegationPage() {
                   <PenLine size={13} aria-hidden="true" /> 修改本阶段
                 </button>
               ) : null}
-              {!streaming && !historical ? (
+              {!streaming && !preparingRevision && !candidate && !historical ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -882,24 +1099,44 @@ export default function DelegationPage() {
                     "-" +
                     (editingBody
                       ? "edit"
-                      : "read-" + record.revision + "-" + streamStep + "-" + historical)
+                      : "read-" +
+                        (candidate?.preview.revision ?? record.revision) +
+                        "-" +
+                        (candidate ? "preview" : "live") +
+                        "-" +
+                        historical)
                   }
                   markdown={renderedBody}
-                  editable={editingBody && !streaming && !historical}
-                  anchors={documentAnchors}
-                  version={{ stage, revision: record.revision }}
+                  editable={
+                    editingBody && !preparingRevision && !streaming && !candidate && !historical
+                  }
+                  anchors={candidate ? [] : documentAnchors}
+                  version={{ stage, revision: candidate?.preview.revision ?? record.revision }}
                   onReady={(view) => {
-                    documentViewRef.current = view;
+                    documentViewRef.current = candidate ? null : view;
                   }}
                   onChange={(value) =>
+                    !candidate &&
                     setDraft((previous) => changeDocumentMarkdown(previous, stage, value))
                   }
-                  onSelection={selectDocumentText}
+                  onSelection={(selection) => {
+                    if (!candidate) selectDocumentText(selection);
+                  }}
                   onSelectionCleared={clearDocumentSelection}
-                  onAnchorsChange={updateAnchors}
-                  onOpenAnchor={openAnchoredComment}
+                  onAnchorsChange={(anchors) => {
+                    if (!preparingRevision && !candidate) updateAnchors(anchors);
+                  }}
+                  onOpenAnchor={(id) => {
+                    if (!preparingRevision && !candidate) openAnchoredComment(id);
+                  }}
                 />
-                {pendingAnchor && !commentsOpen && !editingBody && !streaming && !historical ? (
+                {pendingAnchor &&
+                !commentsOpen &&
+                !editingBody &&
+                !preparingRevision &&
+                !streaming &&
+                !candidate &&
+                !historical ? (
                   <button
                     type="button"
                     className={
@@ -925,17 +1162,25 @@ export default function DelegationPage() {
               </div>
             </Suspense>
             {record.history.length > 0 ? (
-              <details className="delegation-history">
-                <summary>历史验收版本 · {record.history.length}</summary>
-                {record.history.map((snapshot, index) => (
-                  <div className="delegation-history-version" key={index}>
-                    <span>
-                      已接受版本 {index + 1} · 修订 {snapshot.revision}
-                    </span>
-                    <MarkdownText features="basic">{snapshot.markdown}</MarkdownText>
-                  </div>
-                ))}
-              </details>
+              <Suspense
+                fallback={
+                  <p className="delegation-loading" role="status">
+                    正在载入历史正文…
+                  </p>
+                }
+              >
+                <details className="delegation-history">
+                  <summary>历史验收版本 · {record.history.length}</summary>
+                  {record.history.map((snapshot, index) => (
+                    <div className="delegation-history-version" key={index}>
+                      <span>
+                        已接受版本 {index + 1} · 修订 {snapshot.revision}
+                      </span>
+                      <MarkdownText features="basic">{snapshot.markdown}</MarkdownText>
+                    </div>
+                  ))}
+                </details>
+              </Suspense>
             ) : null}
             {!consistent && !streaming ? (
               <div className="delegation-consistency-warning" role="alert">
@@ -954,21 +1199,33 @@ export default function DelegationPage() {
               </div>
             ) : null}
             <ReviewSurface
-              key={`${scenarioId}-${stage}-${providerEpoch}`}
+              key={
+                scenarioId +
+                "-" +
+                stage +
+                "-" +
+                providerEpoch +
+                "-" +
+                (candidate?.preview.revision ?? record.revision)
+              }
               scenario={scenario}
               stage={stage}
               revision={revision}
               streamStep={streamStep}
-              readonly={streaming || historical || editingBody}
-              config={record.config}
+              readonly={
+                preparingRevision || streaming || candidate !== null || historical || editingBody
+              }
+              config={candidate?.preview.config ?? record.config}
               onConfigChange={handleConfigChanges}
             />
 
-            {streaming ? (
+            {preparingRevision || streaming ? (
               <div className="delegation-streaming" role="status">
                 <WandSparkles size={15} aria-hidden="true" />
                 <span>
-                  Mira 正在同时更新正文与确认组件（演示） · {Math.min(streamStep + 1, 3)}/3
+                  {preparingRevision
+                    ? "正在载入本地演示修订模块…"
+                    : "正在准备正文与字段的演示差异 · " + Math.min(streamStep + 1, 3) + "/3"}
                 </span>
                 <button type="button" onClick={stopRevision}>
                   <Square size={12} aria-hidden="true" /> 中止
@@ -1011,24 +1268,46 @@ export default function DelegationPage() {
                   </button>
                 </>
               ) : null}
-              {!historicStage && !demoFinished ? (
+              {!historicStage && !demoFinished && !candidate ? (
                 <button
                   type="button"
                   className="delegation-quiet-action"
                   onClick={beginRevision}
-                  disabled={streaming}
+                  disabled={
+                    preparingRevision ||
+                    streaming ||
+                    editingBody ||
+                    !consistent ||
+                    saveStatus === "failed"
+                  }
                 >
                   <WandSparkles size={16} aria-hidden="true" />
                   {unresolved > 0 ? "根据批注修订" : "演示流式修订"}
                 </button>
               ) : null}
-              {!revisingHistory ? (
+              {candidate ? (
+                <>
+                  <button
+                    type="button"
+                    className="delegation-quiet-action"
+                    onClick={discardRevision}
+                  >
+                    放弃修订
+                  </button>
+                  <button type="button" className="delegation-accept" onClick={adoptRevision}>
+                    <Check size={15} aria-hidden="true" /> 采用这版
+                  </button>
+                </>
+              ) : null}
+              {!revisingHistory && !candidate ? (
                 <button
                   type="button"
                   className="delegation-accept"
                   onClick={accept}
                   disabled={
                     streaming ||
+                    preparingRevision ||
+                    candidate !== null ||
                     unresolved > 0 ||
                     historicStage ||
                     !consistent ||
@@ -1037,7 +1316,7 @@ export default function DelegationPage() {
                     demoFinished
                   }
                 >
-                  {stage === 2 ? "接受并交代（演示）" : "接受本阶段"}
+                  {stage === finalStageIndex ? "接受并交代（演示）" : "接受本阶段"}
                   <ArrowRight size={16} aria-hidden="true" />
                 </button>
               ) : null}
@@ -1073,8 +1352,25 @@ export default function DelegationPage() {
                 </button>
               </div>
               <p className="delegation-comment-caption">
-                批注属于当前阶段。Mira 提出处理建议后，仍由你确认是否解决。
+                批注属于当前阶段。预设修订不等于真正理解意见，仍由你逐条确认。
               </p>
+              {suggestedComments.length > 0 &&
+              !streaming &&
+              !preparingRevision &&
+              !candidate &&
+              !historical ? (
+                <div className="delegation-comment-batch">
+                  <span>只确认已勾选且已有处理建议的批注</span>
+                  <button
+                    type="button"
+                    disabled={selectedSuggestedCommentIds.length === 0}
+                    onClick={confirmSelectedComments}
+                  >
+                    <CheckCircle2 size={13} aria-hidden="true" />
+                    确认选中（{selectedSuggestedCommentIds.length}）
+                  </button>
+                </div>
+              ) : null}
               <div
                 className="delegation-comment-list"
                 role="region"
@@ -1092,14 +1388,20 @@ export default function DelegationPage() {
                       <span className="delegation-comment-status">
                         {statusLabels[comment.status]}
                       </span>
-                      {comment.anchor?.status === "active" ? (
+                      {comment.anchor &&
+                      (comment.anchor.status === "active" ||
+                        comment.anchor.version.revision !== record.revision) ? (
                         <button
                           type="button"
                           className="delegation-comment-source"
                           onClick={() => jumpToCommentSource(comment.id)}
                         >
                           <blockquote>{comment.excerpt}</blockquote>
-                          <span>返回原文</span>
+                          <span>
+                            {candidate || comment.anchor.version.revision !== record.revision
+                              ? "查看来源版本 r" + comment.anchor.version.revision
+                              : "返回原文"}
+                          </span>
                         </button>
                       ) : (
                         <blockquote>
@@ -1110,22 +1412,58 @@ export default function DelegationPage() {
                         </blockquote>
                       )}
                       <p>{comment.text}</p>
-                      {comment.status === "suggested" ? (
-                        <div className="delegation-comment-actions">
-                          <button
-                            type="button"
-                            onClick={() => updateComment(comment.id, "resolved")}
-                          >
-                            <Check size={13} aria-hidden="true" /> 确认解决
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateComment(comment.id, "abandoned")}
-                          >
-                            放弃
-                          </button>
-                        </div>
-                      ) : comment.status === "open" ? (
+                      {(() => {
+                        const reason =
+                          candidate?.commentResponses.find(
+                            (response) => response.commentId === comment.id,
+                          )?.reason ?? comment.suggestedReason;
+                        return reason ? (
+                          <p className="delegation-comment-proposal">
+                            <span>处理建议：</span>
+                            {reason}
+                          </p>
+                        ) : null;
+                      })()}
+                      {comment.status === "suggested" &&
+                      !streaming &&
+                      !preparingRevision &&
+                      !candidate &&
+                      !historical ? (
+                        <>
+                          <label className="delegation-comment-select">
+                            <input
+                              type="checkbox"
+                              aria-label={`选择批注 ${comment.id} 进行批量确认`}
+                              checked={selectedSuggestedCommentIds.includes(comment.id)}
+                              onChange={(event) =>
+                                toggleSuggestedCommentSelection(
+                                  comment.id,
+                                  event.currentTarget.checked,
+                                )
+                              }
+                            />
+                            <span>纳入批量确认</span>
+                          </label>
+                          <div className="delegation-comment-actions">
+                            <button
+                              type="button"
+                              onClick={() => updateComment(comment.id, "resolved")}
+                            >
+                              <Check size={13} aria-hidden="true" /> 确认解决
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateComment(comment.id, "abandoned")}
+                            >
+                              放弃
+                            </button>
+                          </div>
+                        </>
+                      ) : comment.status === "open" &&
+                        !streaming &&
+                        !preparingRevision &&
+                        !candidate &&
+                        !historical ? (
                         <button
                           type="button"
                           className="delegation-comment-abandon"
@@ -1137,12 +1475,21 @@ export default function DelegationPage() {
                     </article>
                   ))
                 ) : (
-                  <p className="delegation-comment-empty">
-                    当前没有需要查看的批注。请先框选正文；也可以明确选择批注整个阶段。
-                  </p>
+                  <div className="delegation-comment-empty">
+                    <p>当前没有需要查看的批注。请先框选正文；也可以明确选择批注整个阶段。</p>
+                    {!historical && !candidate && !streaming && !preparingRevision ? (
+                      <button
+                        type="button"
+                        className="delegation-comment-demo"
+                        onClick={loadDemoComments}
+                      >
+                        载入三条演示批注
+                      </button>
+                    ) : null}
+                  </div>
                 )}
               </div>
-              {!streaming && !historical ? (
+              {!streaming && !preparingRevision && !candidate && !historical ? (
                 pendingAnchor || wholeStageComment ? (
                   <div className="delegation-comment-compose">
                     <label htmlFor="delegation-comment-input">
@@ -1196,6 +1543,33 @@ export default function DelegationPage() {
         <CornerUpLeft size={13} aria-hidden="true" />
         交互演示 · 仅在当前浏览器标签页保存，不会创建或运行真实任务。
       </p>
+      <ModalShell
+        open={sourceCommentId !== null}
+        title="批注来源版本"
+        width={640}
+        footer={null}
+        onClose={() => setSourceCommentId(null)}
+      >
+        <div className="delegation-diff-source" aria-label="批注来源正文">
+          <p>
+            这条批注属于修订 r{sourceVersion ?? "—"}。只展示来源版本，不会把旧锚点猜测映射到新版。
+          </p>
+          {sourceComment ? <blockquote>{sourceComment.excerpt}</blockquote> : null}
+          {sourceSnapshot ? (
+            <Suspense
+              fallback={
+                <p className="delegation-loading" role="status">
+                  正在载入来源正文…
+                </p>
+              }
+            >
+              <MarkdownText features="basic">{sourceSnapshot.markdown}</MarkdownText>
+            </Suspense>
+          ) : (
+            <p>来源版本未保留完整正文，无法安全定位。</p>
+          )}
+        </div>
+      </ModalShell>
       <ModalShell
         open={restartRequested}
         title="重新交代工作"
