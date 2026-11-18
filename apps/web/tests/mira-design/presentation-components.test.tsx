@@ -176,10 +176,12 @@ describe("StepIndicator", () => {
     );
 
     expect(container.firstChild).toHaveClass("custom-class");
-    expect(screen.getByText("STEP 2")).toHaveClass("text-text-inverted");
-    expect(screen.getByText("1")).toHaveClass("bg-primary/10");
-    expect(screen.getByText("3")).toHaveClass("border", "text-text-tertiary");
-    expect(container.querySelectorAll(".h-px")).toHaveLength(steps.length - 1);
+    expect(screen.getByText("02")).toHaveClass("bg-primary", "text-text-inverted");
+    expect(screen.getByText("Upload").closest("li")?.querySelector("svg")).toBeInTheDocument();
+    expect(screen.getByText("03")).toHaveClass("border-border", "text-text-tertiary");
+    expect(container.querySelectorAll("[data-step-indicator-connector]")).toHaveLength(
+      steps.length - 1,
+    );
   });
 });
 

@@ -21,6 +21,7 @@ import type { EditorView } from "@milkdown/kit/prose/view";
 import type { TextReviewAnchor } from "./delegation-review-poc";
 import DelegationIntentEntry from "./delegation-intent-entry";
 import ConfirmDialog from "../../components/mira-design/ConfirmDialog";
+import { StepIndicator } from "../../components/mira-design/StepIndicator";
 import { ModalShell } from "../../components/mira-design/Modal";
 import { useLocation, useNavigate } from "react-router";
 import { delegationRegistry } from "./delegation-catalog";
@@ -213,7 +214,7 @@ export default function DelegationPage() {
   }, [scenarioId, stage]);
   const [editingBody, setEditingBody] = useState(false);
   const [providerEpoch, setProviderEpoch] = useState(0);
-  const [demoFinished, setDemoFinished] = useState(draft.acceptedCount === 3);
+  const [demoFinished, setDemoFinished] = useState(draft.acceptedCount === draft.stages.length);
   const [pendingScenario, setPendingScenario] = useState<DelegationScenarioId | null>(null);
   const scenario = delegationScenarios[scenarioId];
   const returnTo = parseReturnTo((location.state as { returnTo?: unknown } | null)?.returnTo);
@@ -284,6 +285,38 @@ export default function DelegationPage() {
     comments.length > 0 ||
     draft.editingHistorical !== null ||
     draft.stages.some((item) => item.revision > 0);
+
+  const stageCount = scenario.stages.length;
+  const finalStageIndex = stageCount - 1;
+  const currentStageState =
+    preparingRevision || streaming
+      ? "正在准备演示修订"
+      : candidate
+        ? "修订候选 · 待你核对"
+        : revisingHistory
+          ? "正在修改历史阶段"
+          : historical
+            ? "已接受 · 只读"
+            : "待你审阅";
+  const timelineSteps = [
+    ...scenario.stages.map((label, index) => ({
+      step: index,
+      label,
+      marker: String(index + 1).padStart(2, "0"),
+      description:
+        index === stage ? currentStageState : index < acceptedCount ? "已接受" : "等待前一阶段",
+      completed: index < acceptedCount,
+      disabled: index > acceptedCount || streaming || preparingRevision || candidate !== null,
+    })),
+    {
+      step: stageCount,
+      label: "长期托管",
+      marker: "∞",
+      description: demoFinished ? "演示流程已完成" : "最终确认后成立",
+      completed: false,
+      disabled: true,
+    },
+  ];
 
   // The entry is not a created task or a saved draft. Only commit the
   // document to browser session storage once the user explicitly asks to draft.
@@ -805,9 +838,9 @@ export default function DelegationPage() {
     setWholeStageComment(false);
     setCommentText("");
     commentIntentRef.current = false;
-    if (stage === 2) {
+    if (stage === finalStageIndex) {
       setDemoFinished(true);
-      setMessage("三个阶段已经验收（演示），没有创建真实任务，也没有启动执行。");
+      setMessage(`${stageCount} 个阶段已经验收（演示），没有创建真实任务，也没有启动执行。`);
       return;
     }
     setStage((stage + 1) as DelegationStage);
@@ -939,7 +972,7 @@ export default function DelegationPage() {
             aria-expanded={timelineOpen}
           >
             <span>
-              阶段 {stage + 1} / 3 · {scenario.stages[stage]}
+              阶段 {stage + 1} / {stageCount} · {scenario.stages[stage]}
             </span>
             <ChevronDown size={16} aria-hidden="true" />
           </button>
@@ -960,9 +993,19 @@ export default function DelegationPage() {
             </nav>
           ) : null}
           <div className="delegation-paper-topline">
-            <span>
+            <span className="delegation-paper-identity">
               <FileText size={14} aria-hidden="true" /> 需求草稿 / {scenario.label}
             </span>
+            <StepIndicator
+              className="delegation-paper-stage-viewport"
+              ariaLabel="工作主时间轴"
+              currentStep={demoFinished ? stageCount : stage}
+              steps={timelineSteps}
+              onStepChange={(nextStep) => {
+                if (nextStep >= stageCount) return;
+                reviewStage(nextStep as DelegationStage);
+              }}
+            />
             <div className="delegation-topline-actions">
               {saveStatus === "failed" ? <span role="status">会话保存失败</span> : null}
               <button
@@ -985,73 +1028,6 @@ export default function DelegationPage() {
               </button>
             </div>
           </div>
-          <nav className="delegation-stage-strip" aria-label="工作主时间轴">
-            <div className="delegation-stage-strip-head">
-              <span>需求主线</span>
-              <small>阶段由你逐步确认</small>
-            </div>
-            <ol className="delegation-stage-strip-track">
-              {scenario.stages.map((label, index) => {
-                const available = index <= acceptedCount;
-                const current = index === stage;
-                const completed = index < acceptedCount;
-                const currentState =
-                  preparingRevision || streaming
-                    ? "正在准备演示修订"
-                    : candidate
-                      ? "修订候选 · 待你核对"
-                      : revisingHistory
-                        ? "正在修改历史阶段"
-                        : historical
-                          ? "已接受 · 只读"
-                          : demoFinished
-                            ? "全部阶段已接受"
-                            : "待你审阅";
-                return (
-                  <li
-                    key={label}
-                    className={
-                      current
-                        ? "delegation-stage-strip-step is-current"
-                        : completed
-                          ? "delegation-stage-strip-step is-complete"
-                          : "delegation-stage-strip-step"
-                    }
-                  >
-                    <button
-                      type="button"
-                      onClick={() => reviewStage(index as DelegationStage)}
-                      disabled={!available || streaming || preparingRevision || candidate !== null}
-                      aria-current={current ? "step" : undefined}
-                    >
-                      <span className="delegation-step-icon">
-                        {completed ? (
-                          <Check size={13} aria-hidden="true" />
-                        ) : (
-                          String(index + 1).padStart(2, "0")
-                        )}
-                      </span>
-                      <span className="delegation-step-copy">
-                        <strong>{label}</strong>
-                        <small>
-                          {current ? currentState : completed ? "已接受" : "等待前一阶段"}
-                        </small>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-              <li className="delegation-stage-strip-step delegation-stage-strip-terminal">
-                <span className="delegation-step-icon" aria-hidden="true">
-                  ∞
-                </span>
-                <span className="delegation-step-copy">
-                  <strong>长期托管</strong>
-                  <small>最终确认后成立</small>
-                </span>
-              </li>
-            </ol>
-          </nav>
           <div className="delegation-paper-content">
             <h2 className="delegation-stage-context-title">{scenario.title}</h2>
 
@@ -1330,6 +1306,7 @@ export default function DelegationPage() {
                   onClick={accept}
                   disabled={
                     streaming ||
+                    preparingRevision ||
                     candidate !== null ||
                     unresolved > 0 ||
                     historicStage ||
@@ -1339,7 +1316,7 @@ export default function DelegationPage() {
                     demoFinished
                   }
                 >
-                  {stage === 2 ? "接受并交代（演示）" : "接受本阶段"}
+                  {stage === finalStageIndex ? "接受并交代（演示）" : "接受本阶段"}
                   <ArrowRight size={16} aria-hidden="true" />
                 </button>
               ) : null}

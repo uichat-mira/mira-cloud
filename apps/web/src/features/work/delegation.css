@@ -34,7 +34,6 @@
 .delegation-quiet-action:focus-visible,
 .delegation-scenario:focus-visible,
 .delegation-accept:focus-visible,
-.delegation-stage-strip button:focus-visible,
 .delegation-compact-progress:focus-visible,
 .delegation-compact-steps button:focus-visible {
   outline: 2px solid rgb(var(--mira-color-primary));
@@ -110,126 +109,6 @@
   grid-template-columns: minmax(0, 1fr) minmax(240px, 294px);
   gap: 22px;
 }
-.delegation-step-icon {
-  display: grid;
-  flex: 0 0 23px;
-  width: 23px;
-  height: 23px;
-  place-items: center;
-  border: 1px solid rgb(var(--mira-color-border));
-  border-radius: 50%;
-  background: rgb(var(--mira-color-surface-primary));
-  color: rgb(var(--mira-color-text-tertiary));
-  font-size: 10px;
-}
-.delegation-step-copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding-top: 1px;
-  gap: 4px;
-}
-.delegation-step-copy strong {
-  color: rgb(var(--mira-color-text-primary));
-  font-size: 12px;
-  font-weight: 500;
-}
-.delegation-step-copy small {
-  color: rgb(var(--mira-color-text-tertiary));
-  font-size: 10px;
-  line-height: 1.5;
-}
-.delegation-stage-strip {
-  display: grid;
-  grid-template-columns: minmax(112px, 0.72fr) minmax(0, 4fr);
-  align-items: center;
-  gap: clamp(18px, 2.6vw, 34px);
-  padding: 18px clamp(22px, 4.3vw, 52px) 19px;
-  border-bottom: 1px solid rgb(var(--mira-color-border));
-  background: rgb(var(--mira-color-surface-primary));
-}
-.delegation-stage-strip-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-.delegation-stage-strip-head > span {
-  color: rgb(var(--mira-color-text-primary));
-  font-size: 12px;
-  font-weight: 600;
-}
-.delegation-stage-strip-head > small {
-  color: rgb(var(--mira-color-text-tertiary));
-  font-size: 10px;
-  line-height: 1.5;
-}
-.delegation-stage-strip-track {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: start;
-  gap: 0;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.delegation-stage-strip-step {
-  position: relative;
-  min-width: 0;
-}
-.delegation-stage-strip-step:not(:last-child)::after {
-  position: absolute;
-  z-index: 0;
-  top: 11px;
-  left: 28px;
-  right: 6px;
-  height: 1px;
-  background: rgb(var(--mira-color-border));
-  content: "";
-}
-.delegation-stage-strip-step button,
-.delegation-stage-strip-terminal {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-  width: 100%;
-  border: 0;
-  padding: 0 10px 0 0;
-  background: transparent;
-  text-align: left;
-}
-.delegation-stage-strip-step button {
-  position: relative;
-  z-index: 1;
-  color: rgb(var(--mira-color-text-primary));
-  cursor: pointer;
-}
-.delegation-stage-strip-step button:disabled {
-  cursor: default;
-  opacity: 0.5;
-}
-.delegation-stage-strip-step.is-current .delegation-step-icon {
-  border-color: rgb(var(--mira-color-primary));
-  background: rgb(var(--mira-color-primary));
-  color: rgb(var(--mira-color-text-inverted));
-}
-.delegation-stage-strip-step.is-complete .delegation-step-icon {
-  border-color: rgb(var(--mira-color-primary) / 0.42);
-  color: rgb(var(--mira-color-primary));
-}
-.delegation-stage-strip-step.is-complete::after {
-  background: rgb(var(--mira-color-primary) / 0.34);
-}
-.delegation-stage-strip-terminal {
-  position: relative;
-  z-index: 1;
-  color: rgb(var(--mira-color-text-secondary));
-}
-.delegation-stage-strip-terminal .delegation-step-icon {
-  color: rgb(var(--mira-color-text-secondary));
-}
 .delegation-paper {
   min-width: 0;
   border: 1px solid rgb(var(--mira-color-border));
@@ -238,21 +117,27 @@
   box-shadow: var(--mira-shadow-ui-panel, none);
 }
 .delegation-paper-topline {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(132px, auto) minmax(0, 1fr) auto;
   align-items: center;
-  flex-wrap: wrap;
   line-height: 1.5;
-  justify-content: space-between;
-  gap: 12px;
+  gap: clamp(10px, 1.6vw, 20px);
   border-bottom: 1px solid rgb(var(--mira-color-border));
-  padding: 14px clamp(20px, 3vw, 40px);
+  padding: 8px clamp(18px, 2.6vw, 34px);
   color: rgb(var(--mira-color-text-tertiary));
   font-size: 10px;
 }
-.delegation-paper-topline > span:first-child {
+.delegation-paper-identity {
   display: flex;
   align-items: center;
   gap: 7px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.delegation-paper-stage-viewport {
+  width: 100%;
+  max-width: 760px;
+  justify-self: center;
 }
 .delegation-topline-actions {
   display: inline-flex;
@@ -823,9 +708,6 @@
   }
 }
 @media (max-width: 700px) {
-  .delegation-stage-strip {
-    display: none;
-  }
   .delegation-compact-progress {
     display: flex;
     width: 100%;
@@ -880,7 +762,11 @@
     padding: 25px 21px 16px;
   }
   .delegation-paper-topline {
-    padding: 13px 18px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 8px 18px;
+  }
+  .delegation-paper-stage-viewport {
+    display: none;
   }
   .delegation-paper-footer {
     align-items: stretch;
@@ -1094,24 +980,6 @@
   }
   .delegation-page .delegation-introduction {
     max-width: none;
-  }
-}
-
-/* The timeline now belongs to the paper itself. Keep it readable when the
-   review rail reserves width without restoring a separate left navigation. */
-@media (min-width: 701px) and (max-width: 1360px) {
-  .delegation-stage-strip {
-    grid-template-columns: 108px minmax(0, 1fr);
-    gap: 16px;
-    padding-inline: 24px;
-  }
-  .delegation-stage-strip-step button,
-  .delegation-stage-strip-terminal {
-    gap: 8px;
-    padding-right: 6px;
-  }
-  .delegation-stage-strip-step .delegation-step-copy small {
-    max-width: 92px;
   }
 }
 

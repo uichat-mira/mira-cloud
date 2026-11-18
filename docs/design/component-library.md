@@ -43,6 +43,10 @@ Additional components such as DatePicker, charts, resource tree, command palette
 
 `WorkspaceTabs` is the compact page/workspace-view primitive for low-height topic navigation. It measures its **actual container and tab widths**, keeps the selected view visible, and moves excess views behind an explicit overflow menu instead of relying on viewport breakpoints or horizontal scrolling. The overflow menu exposes the complete view set with the current value selected. Work/Task surfaces may style through the component's typed density plus stable `data-mira-workspace-tabs` / `data-slot` hooks; they must not copy the measurement algorithm into feature code. The older `NavigationCardTabs` remains a separate retained primitive for card-like navigation and is not removed by this contract.
 
+### StepIndicator
+
+`StepIndicator` is the shared progressive-step viewport. It accepts an arbitrary ordered step list, optional per-step descriptions/markers and explicit completed/disabled state. When the full track exceeds its real container width, it measures the rendered viewport/track, keeps the current step centered where possible, and clips the remaining track behind restrained edge fades; it must not assume a fixed number of steps or a particular viewport breakpoint. Product surfaces supply domain status and navigation permission through props—the primitive does not infer workflow authority. Narrow product layouts may still choose a separate compact disclosure when preserving reading space is more important than showing the full track.
+
 
 ## 3. State semantics matter more than decoration
 

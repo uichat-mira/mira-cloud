@@ -60,7 +60,7 @@ export type {
 export { default as Slider } from "./Slider.tsx";
 export type { SliderProps } from "./Slider.tsx";
 export { StepIndicator } from "./StepIndicator.tsx";
-export type { StepIndicatorProps, StepItem } from "./StepIndicator.tsx";
+export type { StepIndicatorProps, StepItem, StepValue } from "./StepIndicator.tsx";
 export { default as Switch } from "./Switch.tsx";
 export type { SwitchProps } from "./Switch.tsx";
 export { default as TabCard } from "./TabCard.tsx";

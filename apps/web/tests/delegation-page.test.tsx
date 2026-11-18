@@ -209,11 +209,11 @@ describe("delegation Intelligent UI fixture / json-render integration", () => {
     renderPage();
     const paper = screen.getByRole("article", { name: "需求审阅画布" });
     const timeline = within(paper).getByRole("navigation", { name: "工作主时间轴" });
-    expect(timeline).toHaveTextContent("需求主线");
     expect(timeline).toHaveTextContent("研究目标");
     expect(timeline).toHaveTextContent("工作节奏");
     expect(timeline).toHaveTextContent("交付与边界");
     expect(timeline).toHaveTextContent("长期托管");
+    expect(timeline.parentElement).toHaveClass("delegation-paper-topline");
     expect(document.querySelector(".delegation-timeline")).toBeNull();
     expect(document.querySelector(".delegation-intent")).toBeNull();
   });
